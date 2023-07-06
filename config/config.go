@@ -30,6 +30,7 @@ type Config struct {
 	L1         L1Config
 }
 
+// L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
 	WsURL       string         `mapstructure:"WsURL"`
 	Contract    string         `mapstructure:"Contract"`

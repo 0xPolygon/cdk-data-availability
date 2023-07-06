@@ -25,6 +25,7 @@ type SequencerTracker struct {
 	retry   time.Duration
 }
 
+// NewSequencerTracker creates a new SequencerTracker
 func NewSequencerTracker(cfg config.L1Config) (*SequencerTracker, error) {
 	client, err := newEtherman(cfg)
 	if err != nil {
@@ -64,6 +65,7 @@ func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
 	}, nil
 }
 
+// GetAddr returns the last known address of the Sequencer
 func (st *SequencerTracker) GetAddr() common.Address {
 	st.lock.Lock()
 	defer st.lock.Unlock()
@@ -76,13 +78,14 @@ func (st *SequencerTracker) setAddr(addr common.Address) {
 	st.addr = addr
 }
 
+// Start starts the SequencerTracker
 func (st *SequencerTracker) Start() {
 	events := make(chan *polygonzkevm.PolygonzkevmSetTrustedSequencer)
 	defer close(events)
 	for {
 		var (
-			sub event.Subscription = nil
-			err error              = nil
+			sub event.Subscription
+			err error
 		)
 
 		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
@@ -91,13 +94,10 @@ func (st *SequencerTracker) Start() {
 
 		// if no subscription, retry until established
 		for sub == nil {
-			log.Warn("retrying event subscription")
-			select {
-			case <-time.After(st.retry):
-				sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
-				if err != nil {
-					log.Errorf("error subscribing to trusted sequencer event, retrying", err)
-				}
+			<-time.After(st.retry)
+			sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
+			if err != nil {
+				log.Errorf("error subscribing to trusted sequencer event, retrying", err)
 			}
 		}
 
@@ -122,6 +122,7 @@ func (st *SequencerTracker) Start() {
 	}
 }
 
+// Stop stops the SequencerTracker
 func (st *SequencerTracker) Stop() {
 	close(st.stop)
 }
