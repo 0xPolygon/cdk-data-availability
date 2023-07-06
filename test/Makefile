@@ -1,5 +1,5 @@
 STOP := docker compose down
-RUN-DB := docker compose up -d supernets2.0-data-availability-db
+RUN-DB := docker compose up -d supernets2-data-availability-db
 
 .PHONY: run
 run: ## Runs a full data node
@@ -7,7 +7,7 @@ run: ## Runs a full data node
 
 .PHONY: run-local
 run-local: ## Runs a full data node
-	docker compose up -d supernets2.0-data-availability-db
+	docker compose up -d supernets2-data-availability-db
 	docker compose up -d zkevm-mock-l1-network
 	go run ../cmd run --cfg config/test.local.toml
 

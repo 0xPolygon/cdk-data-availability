@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/0xPolygon/supernets2.0-data-availability/sequence"
+	"github.com/0xPolygon/supernets2-data-availability/sequence"
 	"github.com/ethereum/go-ethereum/common"
 )
 

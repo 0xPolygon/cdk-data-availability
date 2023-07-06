@@ -1,4 +1,4 @@
-module github.com/0xPolygon/supernets2.0-data-availability
+module github.com/0xPolygon/supernets2-data-availability
 
 go 1.19
 

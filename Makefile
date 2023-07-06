@@ -12,13 +12,13 @@ endif
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/dist
 GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH)
-GOBINARY := supernets2.0-data-availability
+GOBINARY := supernets2-data-availability
 GOCMD := $(GOBASE)/cmd
 
-LDFLAGS += -X 'github.com/0xPolygon/supernets2.0-data-availability.Version=$(VERSION)'
-LDFLAGS += -X 'github.com/0xPolygon/supernets2.0-data-availability.GitRev=$(GITREV)'
-LDFLAGS += -X 'github.com/0xPolygon/supernets2.0-data-availability.GitBranch=$(GITBRANCH)'
-LDFLAGS += -X 'github.com/0xPolygon/supernets2.0-data-availability.BuildDate=$(DATE)'
+LDFLAGS += -X 'github.com/0xPolygon/supernets2-data-availability.Version=$(VERSION)'
+LDFLAGS += -X 'github.com/0xPolygon/supernets2-data-availability.GitRev=$(GITREV)'
+LDFLAGS += -X 'github.com/0xPolygon/supernets2-data-availability.GitBranch=$(GITBRANCH)'
+LDFLAGS += -X 'github.com/0xPolygon/supernets2-data-availability.BuildDate=$(DATE)'
 
 .PHONY: build
 build: ## Builds the binary locally into ./dist
@@ -26,11 +26,11 @@ build: ## Builds the binary locally into ./dist
 
 .PHONY: build-docker
 build-docker: ## Builds a docker image with the node binary
-	docker build -t supernets2.0-data-availability -f ./Dockerfile .
+	docker build -t supernets2-data-availability -f ./Dockerfile .
 
 .PHONY: build-docker-nc
 build-docker-nc: ## Builds a docker image with the node binary - but without build cache
-	docker build --no-cache=true -t supernets2.0-data-availability -f ./Dockerfile .
+	docker build --no-cache=true -t supernets2-data-availability -f ./Dockerfile .
 
 .PHONY: install-linter
 install-linter: ## Installs the linter
