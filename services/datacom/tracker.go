@@ -93,7 +93,7 @@ func (st *SequencerTracker) Start() {
 		sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
 
 		// if no subscription, retry until established
-		for sub == nil {
+		for err != nil {
 			<-time.After(st.retry)
 			sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
 			if err != nil {
