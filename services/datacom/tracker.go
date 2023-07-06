@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0xPolygon/supernets2.0-data-availability/config"
+	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygonHermez/zkevm-node/etherman"
 	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
 	"github.com/0xPolygonHermez/zkevm-node/log"

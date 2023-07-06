@@ -1,16 +1,16 @@
 version: "3.5"
 networks:
   default:
-    name: supernets2.0
+    name: supernets2
 services:
 
-  supernets2.0-data-availability:
-    container_name: supernets2.0-data-availability
+  supernets2-data-availability:
+    container_name: supernets2-data-availability
     restart: unless-stopped
     depends_on:
-      supernets2.0-data-availability-db:
+      supernets2-data-availability-db:
         condition: service_healthy
-    image: supernets2.0-data-availability
+    image: supernets2-data-availability
     deploy:
       resources:
         limits:
@@ -25,10 +25,10 @@ services:
     command:
       - "/bin/sh"
       - "-c"
-      - "/app/supernets2.0-data-availability run --cfg /app/config.toml"
+      - "/app/supernets2-data-availability run --cfg /app/config.toml"
 
-  supernets2.0-data-availability-db:
-    container_name: supernets2.0-data-availability-db
+  supernets2-data-availability-db:
+    container_name: supernets2-data-availability-db
     restart: unless-stopped
     image: postgres
     healthcheck:

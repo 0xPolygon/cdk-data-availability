@@ -6,11 +6,11 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/0xPolygon/supernets2.0-data-availability/config"
-	"github.com/0xPolygon/supernets2.0-data-availability/db"
-	"github.com/0xPolygon/supernets2.0-data-availability/dummyinterfaces"
-	"github.com/0xPolygon/supernets2.0-data-availability/services/datacom"
-	"github.com/0xPolygon/supernets2.0-data-availability/services/sync"
+	"github.com/0xPolygon/supernets2-data-availability/config"
+	"github.com/0xPolygon/supernets2-data-availability/db"
+	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
+	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
+	"github.com/0xPolygon/supernets2-data-availability/services/sync"
 	"github.com/0xPolygonHermez/zkevm-node"
 	dbConf "github.com/0xPolygonHermez/zkevm-node/db"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-const appName = "supernets2.0-data-availability"
+const appName = "supernets2-data-availability"
 
 var (
 	configFileFlag = cli.StringFlag{

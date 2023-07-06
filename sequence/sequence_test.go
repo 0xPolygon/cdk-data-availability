@@ -4,7 +4,7 @@ import (
 	"crypto/ecdsa"
 	"testing"
 
-	"github.com/0xPolygon/supernets2.0-data-availability/batch"
+	"github.com/0xPolygon/supernets2-data-availability/batch"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
