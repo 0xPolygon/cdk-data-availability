@@ -32,6 +32,5 @@ test-e2e: stop ## Runs the E2E tests
 	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -race -v -p 1 -timeout 600s ./e2e/...
 
 .PHONY: test-unit
-test-unit: stop ## Runs the unit tests
-	$(RUN-DB)
-	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -short -race -v -p 1 -timeout 600s ../...
+test-unit: ## Runs the unit tests, skips e2e
+	go test `go list ../... | grep -v /e2e`
