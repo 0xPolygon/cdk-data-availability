@@ -23,11 +23,19 @@ const (
 
 // Config represents the full configuration of the data node
 type Config struct {
-	SequencerAddr string `mapstructure:"SequencerAddr"`
-	PrivateKey    types.KeystoreFileConfig
-	DB            db.Config
-	Log           log.Config
-	RPC           jsonrpc.Config
+	PrivateKey types.KeystoreFileConfig
+	DB         db.Config
+	Log        log.Config
+	RPC        jsonrpc.Config
+	L1         L1Config
+}
+
+// L1Config is a struct that defines L1 contract and service settings
+type L1Config struct {
+	WsURL       string         `mapstructure:"WsURL"`
+	Contract    string         `mapstructure:"Contract"`
+	Timeout     types.Duration `mapstructure:"Timeout"`
+	RetryPeriod types.Duration `mapstructure:"RetryPeriod"`
 }
 
 // Load loads the configuration baseed on the cli context
