@@ -1,0 +1,48 @@
+version: "3.5"
+networks:
+  default:
+    name: supernets2.0
+services:
+
+  supernets2.0-data-availability:
+    container_name: supernets2.0-data-availability
+    restart: unless-stopped
+    depends_on:
+      supernets2.0-data-availability-db:
+        condition: service_healthy
+    image: supernets2.0-data-availability
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    ports:
+      - 8444:8444
+    volumes:
+      - ./config/test.docker.toml:/app/config.toml
+      - ./config/test-member.keystore:/pk/test-member.keystore
+    command:
+      - "/bin/sh"
+      - "-c"
+      - "/app/supernets2.0-data-availability run --cfg /app/config.toml"
+
+  supernets2.0-data-availability-db:
+    container_name: supernets2.0-data-availability-db
+    restart: unless-stopped
+    image: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=committee_user
+      - POSTGRES_PASSWORD=committee_password
+      - POSTGRES_DB=committee_db
+    command:
+      - "postgres"
+      - "-N"
+      - "500"
