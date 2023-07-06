@@ -7,7 +7,6 @@ import (
 	"github.com/0xPolygon/supernets2.0-data-availability/sequence"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -16,20 +15,20 @@ const APIDATACOM = "datacom"
 
 // DataComEndpoints contains implementations for the "datacom" RPC endpoints
 type DataComEndpoints struct {
-	db            DBInterface
-	txMan         jsonrpc.DBTxManager
-	sequencerAddr common.Address
-	privateKey    *ecdsa.PrivateKey
+	db               DBInterface
+	txMan            jsonrpc.DBTxManager
+	privateKey       *ecdsa.PrivateKey
+	sequencerTracker *SequencerTracker
 }
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db DBInterface, sequencerAddr common.Address, privateKey *ecdsa.PrivateKey,
+	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
-		db:            db,
-		sequencerAddr: sequencerAddr,
-		privateKey:    privateKey,
+		db:               db,
+		privateKey:       privateKey,
+		sequencerTracker: sequencerTracker,
 	}
 }
 
@@ -42,7 +41,7 @@ func (d *DataComEndpoints) SignSequence(signedSequence sequence.SignedSequence) 
 	if err != nil {
 		return "0x0", types.NewRPCError(types.DefaultErrorCode, "failed to verify sender")
 	}
-	if sender != d.sequencerAddr {
+	if sender != d.sequencerTracker.GetAddr() {
 		return "0x0", types.NewRPCError(types.DefaultErrorCode, "unauthorized")
 	}
 	// Store off-chain data by hash (hash(L2Data): L2Data)

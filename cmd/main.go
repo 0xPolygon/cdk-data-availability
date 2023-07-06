@@ -15,7 +15,6 @@ import (
 	dbConf "github.com/0xPolygonHermez/zkevm-node/db"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
 	"github.com/0xPolygonHermez/zkevm-node/log"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli/v2"
 )
 
@@ -74,7 +73,17 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sequencerAddr := common.HexToAddress(c.SequencerAddr)
+
+	sequencerTracker, err := datacom.NewSequencerTracker(c.L1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go sequencerTracker.Start()
+
+	var cancelFuncs []context.CancelFunc
+
+	// Register the tracker's shutdown method
+	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
 	// Register services
 	server := jsonrpc.NewServer(
@@ -92,8 +101,8 @@ func start(cliCtx *cli.Context) error {
 				Name: datacom.APIDATACOM,
 				Service: datacom.NewDataComEndpoints(
 					storage,
-					sequencerAddr,
 					pk,
+					sequencerTracker,
 				),
 			},
 		},
@@ -103,7 +112,7 @@ func start(cliCtx *cli.Context) error {
 	if err := server.Start(); err != nil {
 		log.Fatal(err)
 	}
-	var cancelFuncs []context.CancelFunc
+
 	waitSignal(cancelFuncs)
 	return nil
 }

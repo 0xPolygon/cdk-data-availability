@@ -9,8 +9,13 @@ import (
 
 // DefaultValues is the default configuration
 const DefaultValues = `
-SequencerAddr = "0xf39Fd651aad88F6F4ce6aB8827279cffFb92266"
 PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
+
+[L1]
+WsURL = "ws://localhost:8546"
+Contract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+Timeout = "1m"
+RetryPeriod = "5s"
 
 [Log]
 Environment = "development" # "production" or "development"

@@ -1,5 +1,10 @@
-SequencerAddr = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
+
+[L1]
+WsURL = "ws://localhost:8546"
+Contract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+Timeout = "3m"
+RetryPeriod = "5s"
 
 [Log]
 Environment = "development" # "production" or "development"

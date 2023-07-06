@@ -14,6 +14,13 @@ run-local: ## Runs a full data node
 	docker compose up -d supernets2.0-data-availability-db
 	go run ../cmd run --cfg config/test.local.toml
 
+.PHONY: zkevm-mock-l1-network
+zkevm-mock-l1-network: ## Run the zklidium contracts
+	docker compose up -d zkevm-mock-l1-network
+
+.PHONY: run-deps
+run-deps: zkevm-mock-l1-network run-db
+
 .PHONY: stop
 stop: ## Stop a full data node
 	$(STOP)
