@@ -9,6 +9,7 @@ import (
 	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygon/supernets2-data-availability/db"
 	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
+	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
 	"github.com/0xPolygon/supernets2-data-availability/services/sync"
 	"github.com/0xPolygonHermez/zkevm-node"
@@ -74,7 +75,7 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	sequencerTracker, err := datacom.NewSequencerTracker(c.L1)
+	sequencerTracker, err := l1.NewSequencerTracker(c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}

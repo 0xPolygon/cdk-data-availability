@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 
+	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/sequence"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
@@ -18,12 +19,12 @@ type DataComEndpoints struct {
 	db               DBInterface
 	txMan            jsonrpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
-	sequencerTracker *SequencerTracker
+	sequencerTracker *l1.SequencerTracker
 }
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *SequencerTracker,
+	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *l1.SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,

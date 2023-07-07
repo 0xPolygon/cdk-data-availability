@@ -68,3 +68,31 @@ func (p *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) 
 	}
 	return common.Hex2Bytes(valueStr), nil
 }
+
+// GetLastProcessedBlock returns the latest block successfully processed by the synchronizer
+func (p *DB) GetLastProcessedBlock(ctx context.Context, dbTx pgx.Tx) (uint64, error) {
+	const getLastProcessedBlockSQL = "SELECT max(block) from data_node.sync_info;"
+	var (
+		lastBlock uint64
+	)
+
+	if err := dbTx.QueryRow(ctx, getLastProcessedBlockSQL).Scan(&lastBlock); err != nil {
+		return 0, err
+	}
+	return lastBlock, nil
+}
+
+// StoreLastProcessedBlock stores a record of a block processed by the synchronizer
+func (p *DB) StoreLastProcessedBlock(ctx context.Context, block uint64, dbTx pgx.Tx) error {
+	const storeLastProcessedBlockSQL = `
+		INSERT INTO data_node.sync_info (block) 
+		VALUES ($1) 
+		ON CONFLICT (block) DO UPDATE 
+		SET processed = NOW();
+	`
+
+	if _, err := dbTx.Exec(ctx, storeLastProcessedBlockSQL, block); err != nil {
+		return err
+	}
+	return nil
+}

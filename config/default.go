@@ -13,7 +13,7 @@ PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 
 [L1]
 WsURL = "ws://localhost:8546"
-Contract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+ZkEVMContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
 Timeout = "1m"
 RetryPeriod = "5s"
 

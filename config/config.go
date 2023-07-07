@@ -8,6 +8,7 @@ import (
 
 	"github.com/0xPolygonHermez/zkevm-node/config/types"
 	"github.com/0xPolygonHermez/zkevm-node/db"
+	"github.com/0xPolygonHermez/zkevm-node/etherman"
 	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
 	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -27,15 +28,16 @@ type Config struct {
 	DB         db.Config
 	Log        log.Config
 	RPC        jsonrpc.Config
-	L1         L1Config
+	L1         etherman.L1Config
 }
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
-	WsURL       string         `mapstructure:"WsURL"`
-	Contract    string         `mapstructure:"Contract"`
-	Timeout     types.Duration `mapstructure:"Timeout"`
-	RetryPeriod types.Duration `mapstructure:"RetryPeriod"`
+	WsURL                string         `mapstructure:"WsURL"`
+	ZkEVMAddress         string         `mapstructure:"ZkEVMAddress"`
+	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
+	Timeout              types.Duration `mapstructure:"Timeout"`
+	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
 }
 
 // Load loads the configuration baseed on the cli context

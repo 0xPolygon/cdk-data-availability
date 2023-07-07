@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
+	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
@@ -16,7 +16,7 @@ func TestTracker(t *testing.T) {
 	cfg, err := config.Load(ctx)
 	require.NoError(t, err)
 
-	tracker, err := datacom.NewSequencerTracker(cfg.L1)
+	tracker, err := l1.NewSequencerTracker(cfg.L1)
 	require.NoError(t, err)
 
 	addr := tracker.GetAddr()
