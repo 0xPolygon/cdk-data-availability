@@ -10,7 +10,7 @@ import (
 	"github.com/0xPolygon/supernets2-data-availability/client"
 	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygon/supernets2-data-availability/sequence"
-	cfgTypes "github.com/0xPolygonHermez/zkevm-node/config/types"
+	cfgTypes "github.com/0xPolygon/supernets2-node/config/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"

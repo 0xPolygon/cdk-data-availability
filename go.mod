@@ -3,7 +3,7 @@ module github.com/0xPolygon/supernets2-data-availability
 go 1.19
 
 require (
-	github.com/0xPolygonHermez/zkevm-node v0.1.0-RC8.0.20230601153103-86d9fb808691
+	github.com/0xPolygon/supernets2-node v0.0.0-20230707112214-f7e23fc2f1c4
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/websocket v1.5.0
@@ -116,7 +116,7 @@ require (
 	golang.org/x/time v0.1.0 // indirect
 	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
 	google.golang.org/grpc v1.55.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
+	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
