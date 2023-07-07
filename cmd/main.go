@@ -6,16 +6,16 @@ import (
 	"os"
 	"os/signal"
 
+	dataavailability "github.com/0xPolygon/supernets2-data-availability"
 	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygon/supernets2-data-availability/db"
 	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
 	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
 	"github.com/0xPolygon/supernets2-data-availability/services/sync"
-	"github.com/0xPolygonHermez/zkevm-node"
-	dbConf "github.com/0xPolygonHermez/zkevm-node/db"
-	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
-	"github.com/0xPolygonHermez/zkevm-node/log"
+	dbConf "github.com/0xPolygon/supernets2-node/db"
+	"github.com/0xPolygon/supernets2-node/jsonrpc"
+	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/urfave/cli/v2"
 )
 
@@ -33,7 +33,7 @@ var (
 func main() {
 	app := cli.NewApp()
 	app.Name = appName
-	app.Version = zkevm.Version
+	app.Version = dataavailability.Version
 	app.Commands = []*cli.Command{
 		{
 			Name:    "run",

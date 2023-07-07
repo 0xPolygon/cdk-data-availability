@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygonHermez/zkevm-node/etherman"
-	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevm"
-	"github.com/0xPolygonHermez/zkevm-node/log"
-	"github.com/0xPolygonHermez/zklidium-node/etherman/smartcontracts/polygonzklidiumdatacommittee"
+	"github.com/0xPolygon/supernets2-node/etherman"
+	"github.com/0xPolygon/supernets2-node/etherman/smartcontracts/supernets2"
+	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -21,18 +20,12 @@ func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
 		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
 		return nil, err
 	}
-	zkEvm, err := polygonzkevm.NewPolygonzkevm(common.HexToAddress(cfg.ZkEVMAddress), ethClient)
+	supernets2, err := supernets2.NewSupernets2(common.HexToAddress(cfg.ZkEVMAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
-
-	dataCommittee, err := polygonzklidiumdatacommittee.NewPolygonzklidiumdatacommittee(cfg.DataCommitteeAddress, ethClient)
-	if err != nil {
-		return nil, err
-	}
-
 	return &etherman.Client{
-		EthClient: ethClient,
-		ZkEVM:     zkEvm,
+		EthClient:  ethClient,
+		Supernets2: supernets2,
 	}, nil
 }

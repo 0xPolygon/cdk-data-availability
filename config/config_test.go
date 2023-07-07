@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xPolygonHermez/zkevm-node/config/types"
+	"github.com/0xPolygon/supernets2-node/config/types"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )

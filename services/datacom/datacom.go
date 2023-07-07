@@ -6,8 +6,8 @@ import (
 
 	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/sequence"
-	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
-	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
+	"github.com/0xPolygon/supernets2-node/jsonrpc"
+	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 	"github.com/jackc/pgx/v4"
 )
 
