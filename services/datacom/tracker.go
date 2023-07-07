@@ -90,12 +90,12 @@ func (st *SequencerTracker) Start() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
 		opts := &bind.WatchOpts{Context: ctx}
-		sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
+		sub, err = st.client.Supernets2.WatchSetTrustedSequencer(opts, events)
 
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
-			sub, err = st.client.ZkEVM.WatchSetTrustedSequencer(opts, events)
+			sub, err = st.client.Supernets2.WatchSetTrustedSequencer(opts, events)
 			if err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying", err)
 			}
