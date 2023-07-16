@@ -53,6 +53,10 @@ func (bs *BatchSynchronizer) Start() {
 		)
 
 		start, err = bs.getStartBlock()
+		for err != nil {
+			<-time.After(bs.retry)
+			start, err = bs.getStartBlock()
+		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), bs.timeout)
 		opts := &bind.WatchOpts{Context: ctx, Start: &start}
