@@ -23,7 +23,7 @@ MaxConns = 200
 
 [RPC]
 Host = "0.0.0.0"
-Port = 8445
+Port = 8444
 ReadTimeout = "60s"
 WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
