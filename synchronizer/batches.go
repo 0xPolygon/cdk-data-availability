@@ -29,6 +29,8 @@ type BatchSynchronizer struct {
 	committee *DataCommitteeTracker
 }
 
+const dbTimeout = 2 * time.Second
+
 // NewBatchSynchronizer creates the BatchSynchronizer
 func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
@@ -97,7 +99,7 @@ func (bs *BatchSynchronizer) Start() {
 }
 
 func (bs *BatchSynchronizer) getStartBlock() (uint64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // TODO: make configurable
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	start, err := bs.db.GetLastProcessedBlock(ctx)
@@ -132,7 +134,7 @@ func (bs *BatchSynchronizer) handleSequenceBatches(event *supernets2.Supernets2S
 }
 
 func (bs *BatchSynchronizer) exists(key common.Hash) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second) // TODO: make configurable
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	return bs.db.Exists(ctx, key)
 }
@@ -150,7 +152,7 @@ func (bs *BatchSynchronizer) resolveAndStore(block uint64, keys []common.Hash) e
 }
 
 func (bs *BatchSynchronizer) store(block uint64, data []offchaindata.OffChainData) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // TODO: configure
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	var (
 		dbTx pgx.Tx
