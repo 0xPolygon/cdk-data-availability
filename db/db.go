@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
 	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
@@ -25,12 +26,12 @@ func New(pg *pgxpool.Pool) *DB {
 }
 
 // BeginStateTransaction begins a DB transaction. The caller is responsible for committing or rolling back the transaction
-func (d *DB) BeginStateTransaction(ctx context.Context) (pgx.Tx, error) {
-	return d.pg.Begin(ctx)
+func (db *DB) BeginStateTransaction(ctx context.Context) (pgx.Tx, error) {
+	return db.pg.Begin(ctx)
 }
 
-// StoreOffChainData stores and array of key valeus in the Db
-func (p *DB) StoreOffChainData(ctx context.Context, od []offchaindata.OffChainData, dbTx pgx.Tx) error {
+// StoreOffChainData stores and array of key values in the Db
+func (db *DB) StoreOffChainData(ctx context.Context, od []offchaindata.OffChainData, dbTx pgx.Tx) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)
@@ -50,7 +51,7 @@ func (p *DB) StoreOffChainData(ctx context.Context, od []offchaindata.OffChainDa
 }
 
 // GetOffChainData returns the value identified by the key
-func (p *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (types.ArgBytes, error) {
+func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (types.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 
@@ -60,30 +61,45 @@ func (p *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) 
 		valueStr string
 	)
 
+	println(key.Hex())
+
 	if err := dbTx.QueryRow(ctx, getOffchainDataSQL, key.Hex()).Scan(&valueStr); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, state.ErrStateNotSynchronized
 		}
 		return nil, err
 	}
+	valueStr = strings.TrimPrefix(valueStr, "0x") // is this right?
 	return common.Hex2Bytes(valueStr), nil
 }
 
+func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
+	var keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1"
+	var (
+		count uint
+	)
+
+	if err := db.pg.QueryRow(ctx, keyExists, key.Hex()).Scan(&count); err != nil {
+		return false
+	}
+	return count > 0
+}
+
 // GetLastProcessedBlock returns the latest block successfully processed by the synchronizer
-func (p *DB) GetLastProcessedBlock(ctx context.Context, dbTx pgx.Tx) (uint64, error) {
+func (db *DB) GetLastProcessedBlock(ctx context.Context) (uint64, error) {
 	const getLastProcessedBlockSQL = "SELECT max(block) from data_node.sync_info;"
 	var (
 		lastBlock uint64
 	)
 
-	if err := dbTx.QueryRow(ctx, getLastProcessedBlockSQL).Scan(&lastBlock); err != nil {
+	if err := db.pg.QueryRow(ctx, getLastProcessedBlockSQL).Scan(&lastBlock); err != nil {
 		return 0, err
 	}
 	return lastBlock, nil
 }
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer
-func (p *DB) StoreLastProcessedBlock(ctx context.Context, block uint64, dbTx pgx.Tx) error {
+func (db *DB) StoreLastProcessedBlock(ctx context.Context, block uint64, dbTx pgx.Tx) error {
 	const storeLastProcessedBlockSQL = `
 		INSERT INTO data_node.sync_info (block) 
 		VALUES ($1) 

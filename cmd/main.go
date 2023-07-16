@@ -10,9 +10,9 @@ import (
 	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygon/supernets2-data-availability/db"
 	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
-	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
 	"github.com/0xPolygon/supernets2-data-availability/services/sync"
+	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
 	dbConf "github.com/0xPolygon/supernets2-node/db"
 	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
@@ -75,16 +75,28 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	sequencerTracker, err := l1.NewSequencerTracker(c.L1)
+	var cancelFuncs []context.CancelFunc
+
+	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
 	go sequencerTracker.Start()
-
-	var cancelFuncs []context.CancelFunc
-
-	// Register the tracker's shutdown method
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
+
+	committeeTracker, err := synchronizer.NewDataCommitteeTracker(c.L1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	go committeeTracker.Start()
+	cancelFuncs = append(cancelFuncs, committeeTracker.Stop)
+
+	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, committeeTracker)
+	if err != nil {
+		log.Fatal(err)
+	}
+	batchesSynchronizer.Start()
+	cancelFuncs = append(cancelFuncs, batchesSynchronizer.Stop)
 
 	// Register services
 	server := jsonrpc.NewServer(

@@ -21,7 +21,7 @@ func Test_Defaults(t *testing.T) {
 			expectedValue: "ws://localhost:8546",
 		},
 		{
-			path:          "L1.ZkEVMAddress",
+			path:          "L1.Supernets2Address",
 			expectedValue: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
 		},
 		{

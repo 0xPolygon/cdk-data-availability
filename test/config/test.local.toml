@@ -3,6 +3,7 @@ PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
 [L1]
 WsURL = "ws://localhost:8546"
 ZkEVMContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+DataCommitteeContract = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
 Timeout = "3m"
 RetryPeriod = "5s"
 
@@ -22,7 +23,7 @@ MaxConns = 200
 
 [RPC]
 Host = "0.0.0.0"
-Port = 8444
+Port = 8445
 ReadTimeout = "60s"
 WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500

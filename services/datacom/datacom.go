@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/ecdsa"
 
-	"github.com/0xPolygon/supernets2-data-availability/l1"
 	"github.com/0xPolygon/supernets2-data-availability/sequence"
+	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
 	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 	"github.com/jackc/pgx/v4"
@@ -19,12 +19,12 @@ type DataComEndpoints struct {
 	db               DBInterface
 	txMan            jsonrpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
-	sequencerTracker *l1.SequencerTracker
+	sequencerTracker *synchronizer.SequencerTracker
 }
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *l1.SequencerTracker,
+	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *synchronizer.SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,
@@ -33,8 +33,8 @@ func NewDataComEndpoints(
 	}
 }
 
-// SignSequence generates the accumlated input hash aka accInputHash of the sequence and sign it.
-// After storing the data that will be send hashed to the contract, it returns the signature.
+// SignSequence generates the accumulated input hash aka accInputHash of the sequence and sign it.
+// After storing the data that will be sent hashed to the contract, it returns the signature.
 // This endpoint is only accessible to the sequencer
 func (d *DataComEndpoints) SignSequence(signedSequence sequence.SignedSequence) (interface{}, types.Error) {
 	// Verify that the request comes from the sequencer
@@ -62,6 +62,6 @@ func (d *DataComEndpoints) SignSequence(signedSequence sequence.SignedSequence) 
 	if err != nil {
 		return "0x0", types.NewRPCError(types.DefaultErrorCode, "failed to sign")
 	}
-	// Return signtature
-	return types.ArgBytes(signedSequenceByMe.Signature), nil
+	// Return signature
+	return signedSequenceByMe.Signature, nil
 }

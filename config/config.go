@@ -8,7 +8,6 @@ import (
 
 	"github.com/0xPolygon/supernets2-node/config/types"
 	"github.com/0xPolygon/supernets2-node/db"
-	"github.com/0xPolygon/supernets2-node/etherman"
 	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -28,13 +27,13 @@ type Config struct {
 	DB         db.Config
 	Log        log.Config
 	RPC        jsonrpc.Config
-	L1         etherman.L1Config
+	L1         L1Config
 }
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
 	WsURL                string         `mapstructure:"WsURL"`
-	ZkEVMAddress         string         `mapstructure:"ZkEVMAddress"`
+	Supernets2Address    string         `mapstructure:"Supernets2Address"`
 	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
 	Timeout              types.Duration `mapstructure:"Timeout"`
 	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
