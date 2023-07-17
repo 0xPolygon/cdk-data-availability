@@ -192,7 +192,6 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 			continue // did not have data or errored out
 		}
 		return value, nil
-
 	}
 	return offchaindata.OffChainData{}, types.NewRPCError(types.NotFoundErrorCode, "no data found for key %v", key)
 }
