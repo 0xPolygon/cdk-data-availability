@@ -73,6 +73,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx)
 	return common.Hex2Bytes(valueStr), nil
 }
 
+// Exists checks if a key exists in offchain data table
 func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 	var keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1"
 	var (

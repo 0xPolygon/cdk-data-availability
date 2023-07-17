@@ -30,6 +30,7 @@ type BatchSynchronizer struct {
 }
 
 const dbTimeout = 2 * time.Second
+const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
 func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker) (*BatchSynchronizer, error) {
@@ -198,7 +199,7 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 
 func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (offchaindata.OffChainData, error) {
 	cm := client.New(member.URL)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second) // TODO: configure
+	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
 	defer cancel()
 	bytes, err := cm.GetOffChainData(ctx, key)
 	if len(bytes) == 0 {
