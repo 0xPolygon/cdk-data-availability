@@ -8,19 +8,19 @@ run: ## Runs a full data node
 .PHONY: run-local
 run-local: ## Runs a full data node
 	docker compose up -d supernets2-data-availability-db
-	docker compose up -d zkevm-mock-l1-network
+	docker compose up -d supernets2-mock-l1-network
 	go run ../cmd run --cfg config/test.local.toml
 
 .PHONY: run-db
 run-db: ## Runs the data store
 	$(RUN-DB)
 
-.PHONY: zkevm-mock-l1-network
-zkevm-mock-l1-network: ## Run the zklidium contracts
-	docker compose up -d zkevm-mock-l1-network
+.PHONY: supernets2-mock-l1-network
+supernets2-mock-l1-network: ## Run the zklidium contracts
+	docker compose up -d supernets2-mock-l1-network
 
 .PHONY: run-deps
-run-deps: zkevm-mock-l1-network run-db ## Runs the service dependencies
+run-deps: supernets2-mock-l1-network run-db ## Runs the service dependencies
 
 .PHONY: stop
 stop: ## Stop a full data node

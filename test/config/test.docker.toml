@@ -1,7 +1,7 @@
 PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "ws://zkevm-mock-l1-network:8546"
+WsURL = "ws://supernets2-mock-l1-network:8546"
 ZkEVMContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
 
 Timeout = "3m"
