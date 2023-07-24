@@ -46,10 +46,10 @@ services:
       - "postgres"
       - "-N"
       - "500"
-        
+
   supernets2-mock-l1-network:
     container_name: supernets2-mock-l1-network
-    image: hermeznetwork/geth-zklidium-contracts:v0.0.3
+    image: hermeznetwork/geth-supernets2-contracts:v0.0.1
     healthcheck:
       test: [ "CMD-SHELL", "geth attach --datadir /geth_data --exec eth.blockNumber" ]
       interval: 10s
