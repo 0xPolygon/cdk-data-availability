@@ -58,3 +58,9 @@ func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
 		DataCommittee: dataCommittee,
 	}, nil
 }
+
+func handleSubscriptionContextDone(ctx context.Context) {
+	if ctx.Err() != nil && ctx.Err().Error() != "context deadline exceeded" {
+		log.Warnf("re-establishing subscription: %v", ctx.Err())
+	}
+}

@@ -33,7 +33,7 @@ const dbTimeout = 2 * time.Second
 const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker) (*BatchSynchronizer, error) {
+func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker, db *db.DB) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
@@ -41,11 +41,13 @@ func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker) 
 	return &BatchSynchronizer{
 		watcher:   *watcher,
 		committee: committee,
+		db:        db,
 	}, nil
 }
 
 // Start starts the BatchSynchronizer event subscription
 func (bs *BatchSynchronizer) Start() {
+	log.Info("starting batch synchronizer")
 	events := make(chan *supernets2.Supernets2SequenceBatches)
 	defer close(events)
 	for {
@@ -86,9 +88,7 @@ func (bs *BatchSynchronizer) Start() {
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Warn("re-establishing subscription: %v", ctx.Err())
-			}
+			handleSubscriptionContextDone(ctx)
 		case <-bs.stop:
 			if sub != nil {
 				sub.Unsubscribe()

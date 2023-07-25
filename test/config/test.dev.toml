@@ -1,10 +1,10 @@
-PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
+PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "ws://supernets2-mock-l1-network:8546"
-Supernets2Address = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
-
-Timeout = "3m"
+WsURL = "wss://rootchain.hardfork.dev/ws"
+Supernets2Address = "0x0775AAFB6dD38417581F7C583053Fa3B78FD4FD1"
+DataCommitteeAddress = "0xE660928f13F51bEbb553063A1317EDC0e7038949"
+Timeout = "1m"
 RetryPeriod = "5s"
 
 [Log]
@@ -16,7 +16,7 @@ Outputs = ["stderr"]
 User = "committee_user"
 Password = "committee_password"
 Name = "committee_db"
-Host = "supernets2-data-availability-db"
+Host = "localhost"
 Port = "5432"
 EnableLog = false
 MaxConns = 200
@@ -29,5 +29,5 @@ WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
 SequencerNodeURI = ""
 EnableL2SuggestedGasPricePolling = false
-	[RPC.WebSockets]
-		Enabled = false
+[RPC.WebSockets]
+Enabled = false

@@ -22,6 +22,7 @@ type SequencerTracker struct {
 
 // NewSequencerTracker creates a new SequencerTracker
 func NewSequencerTracker(cfg config.L1Config) (*SequencerTracker, error) {
+	log.Info("starting sequencer tracker")
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
@@ -82,9 +83,7 @@ func (st *SequencerTracker) Start() {
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Warn("re-establishing subscription: %v", ctx.Err())
-			}
+			handleSubscriptionContextDone(ctx)
 		case <-st.stop:
 			if sub != nil {
 				sub.Unsubscribe()

@@ -22,6 +22,7 @@ type DataCommitteeTracker struct {
 
 // NewDataCommitteeTracker creates the DataCommitteeTracker
 func NewDataCommitteeTracker(cfg config.L1Config) (*DataCommitteeTracker, error) {
+	log.Info("starting data committee watcher")
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
@@ -31,6 +32,7 @@ func NewDataCommitteeTracker(cfg config.L1Config) (*DataCommitteeTracker, error)
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("data committee: %v", committee.Members)
 	w := &DataCommitteeTracker{
 		watcher:   *watcher,
 		committee: committee,
@@ -89,9 +91,7 @@ func (dct *DataCommitteeTracker) Start() {
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 		case <-ctx.Done():
-			if ctx.Err() != nil {
-				log.Warnf("re-establishing subscription: %v", ctx.Err())
-			}
+			handleSubscriptionContextDone(ctx)
 		case <-dct.stop:
 			if sub != nil {
 				sub.Unsubscribe()

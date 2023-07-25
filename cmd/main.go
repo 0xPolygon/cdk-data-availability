@@ -91,11 +91,11 @@ func start(cliCtx *cli.Context) error {
 	go committeeTracker.Start()
 	cancelFuncs = append(cancelFuncs, committeeTracker.Stop)
 
-	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, committeeTracker)
+	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, committeeTracker, storage)
 	if err != nil {
 		log.Fatal(err)
 	}
-	batchesSynchronizer.Start()
+	go batchesSynchronizer.Start()
 	cancelFuncs = append(cancelFuncs, batchesSynchronizer.Stop)
 
 	// Register services
