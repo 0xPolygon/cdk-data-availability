@@ -16,6 +16,7 @@ import (
 	dbConf "github.com/0xPolygon/supernets2-node/db"
 	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )
 
@@ -91,7 +92,8 @@ func start(cliCtx *cli.Context) error {
 	go committeeTracker.Start()
 	cancelFuncs = append(cancelFuncs, committeeTracker.Stop)
 
-	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, committeeTracker, storage)
+	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(
+		c.L1, crypto.PubkeyToAddress(pk.PublicKey), committeeTracker, storage)
 	if err != nil {
 		log.Fatal(err)
 	}

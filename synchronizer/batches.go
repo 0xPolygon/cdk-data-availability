@@ -25,6 +25,7 @@ import (
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
 	watcher
+	self      common.Address
 	db        *db.DB
 	committee *DataCommitteeTracker
 }
@@ -33,13 +34,14 @@ const dbTimeout = 2 * time.Second
 const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, committee *DataCommitteeTracker, db *db.DB) (*BatchSynchronizer, error) {
+func NewBatchSynchronizer(cfg config.L1Config, self common.Address, committee *DataCommitteeTracker, db *db.DB) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
 	}
 	return &BatchSynchronizer{
 		watcher:   *watcher,
+		self:      self,
 		committee: committee,
 		db:        db,
 	}, nil
@@ -185,8 +187,11 @@ func rollback(ctx context.Context, err error, dbTx pgx.Tx) {
 func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData, error) {
 	rand.NewSource(time.Now().UnixNano())
 	committee := bs.committee.GetMembers().Members
-	random := rand.Perm(len(committee))
-	for i := 0; i < len(random); i++ {
+	shuffled := rand.Perm(len(committee))
+	for i := 0; i < len(shuffled); i++ {
+		if bs.self == committee[i].Addr {
+			continue
+		}
 		value, err := resolveWithMember(key, committee[i])
 		if err != nil {
 			continue // did not have data or errored out
