@@ -60,9 +60,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx)
 	var (
 		valueStr string
 	)
-
-	println(key.Hex())
-
+	
 	if err := dbTx.QueryRow(ctx, getOffchainDataSQL, key.Hex()).Scan(&valueStr); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, state.ErrStateNotSynchronized
