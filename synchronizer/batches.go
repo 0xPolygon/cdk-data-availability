@@ -221,7 +221,6 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 		members = append(members, member)
 	}
 	// iterate through them randomly until data is resolved
-	rand.NewSource(time.Now().UnixNano())
 	for _, r := range rand.Perm(len(members)) {
 		member := members[r]
 		value, err := resolveWithMember(key, member)
