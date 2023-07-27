@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/0xPolygon/supernets2-data-availability/client"
@@ -27,24 +28,47 @@ type BatchSynchronizer struct {
 	watcher
 	self      common.Address
 	db        *db.DB
-	committee *DataCommitteeTracker
+	committee map[common.Address]etherman.DataCommitteeMember
+	lock      sync.Mutex
 }
 
 const dbTimeout = 2 * time.Second
 const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, self common.Address, committee *DataCommitteeTracker, db *db.DB) (*BatchSynchronizer, error) {
+func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &BatchSynchronizer{
-		watcher:   *watcher,
-		self:      self,
-		committee: committee,
-		db:        db,
-	}, nil
+	synchronizer := &BatchSynchronizer{
+		watcher: *watcher,
+		self:    self,
+		db:      db,
+	}
+	err = synchronizer.resolveCommittee()
+	if err != nil {
+		return nil, err
+	}
+	return synchronizer, nil
+}
+
+func (bs *BatchSynchronizer) resolveCommittee() error {
+	bs.lock.Lock()
+	defer bs.lock.Unlock()
+
+	committee := make(map[common.Address]etherman.DataCommitteeMember)
+	current, err := bs.client.GetCurrentDataCommittee()
+	if err != nil {
+		return err
+	}
+	for _, member := range current.Members {
+		if bs.self != member.Addr {
+			committee[member.Addr] = member
+		}
+	}
+	bs.committee = committee
+	return nil
 }
 
 // Start starts the BatchSynchronizer event subscription
@@ -185,15 +209,25 @@ func rollback(ctx context.Context, err error, dbTx pgx.Tx) {
 }
 
 func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData, error) {
-	rand.NewSource(time.Now().UnixNano())
-	committee := bs.committee.GetMembers().Members
-	shuffled := rand.Perm(len(committee))
-	for i := 0; i < len(shuffled); i++ {
-		if bs.self == committee[i].Addr {
-			continue
-		}
-		value, err := resolveWithMember(key, committee[i])
+	if len(bs.committee) == 0 {
+		err := bs.resolveCommittee()
 		if err != nil {
+			return offchaindata.OffChainData{}, err
+		}
+	}
+	// pull out the members, iterating will change the map on error
+	members := make([]etherman.DataCommitteeMember, len(bs.committee))
+	for _, member := range bs.committee {
+		members = append(members, member)
+	}
+	// iterate through them randomly until data is resolved
+	rand.NewSource(time.Now().UnixNano())
+	for _, r := range rand.Perm(len(members)) {
+		member := members[r]
+		value, err := resolveWithMember(key, member)
+		if err != nil {
+			log.Warnf("resolve member %v failed, removing from local committee cache: %v", member.Addr, err)
+			delete(bs.committee, member.Addr)
 			continue // did not have data or errored out
 		}
 		return value, nil

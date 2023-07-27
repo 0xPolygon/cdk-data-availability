@@ -85,15 +85,7 @@ func start(cliCtx *cli.Context) error {
 	go sequencerTracker.Start()
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
-	committeeTracker, err := synchronizer.NewDataCommitteeTracker(c.L1)
-	if err != nil {
-		log.Fatal(err)
-	}
-	go committeeTracker.Start()
-	cancelFuncs = append(cancelFuncs, committeeTracker.Stop)
-
-	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(
-		c.L1, crypto.PubkeyToAddress(pk.PublicKey), committeeTracker, storage)
+	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, crypto.PubkeyToAddress(pk.PublicKey), storage)
 	if err != nil {
 		log.Fatal(err)
 	}
