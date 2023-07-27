@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"errors"
-	"strings"
 
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
 	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
@@ -58,17 +57,16 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx)
 		WHERE key = $1 LIMIT 1;
 	`
 	var (
-		valueStr string
+		hexValue string
 	)
-	
-	if err := dbTx.QueryRow(ctx, getOffchainDataSQL, key.Hex()).Scan(&valueStr); err != nil {
+
+	if err := dbTx.QueryRow(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, state.ErrStateNotSynchronized
 		}
 		return nil, err
 	}
-	valueStr = strings.TrimPrefix(valueStr, "0x") // is this right?
-	return common.Hex2Bytes(valueStr), nil
+	return common.FromHex(hexValue), nil
 }
 
 // Exists checks if a key exists in offchain data table
