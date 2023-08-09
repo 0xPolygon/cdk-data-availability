@@ -30,14 +30,14 @@ type BatchSynchronizer struct {
 	db        *db.DB
 	committee map[common.Address]etherman.DataCommitteeMember
 	lock      sync.Mutex
-	reorgs    <-chan ReorgBlock
+	reorgs    <-chan BlockReorg
 }
 
 const dbTimeout = 2 * time.Second
 const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan ReorgBlock) (*BatchSynchronizer, error) {
+func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan BlockReorg) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
