@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/umbracle/ethgo"
 	"github.com/umbracle/ethgo/blocktracker"
 	"github.com/umbracle/ethgo/jsonrpc"
@@ -14,13 +15,14 @@ import (
 type ReorgDetector struct {
 	rpcUrl        string
 	pollingPeriod time.Duration
-	subscribers   []chan ReorgBlock
+	subscribers   []chan BlockReorg
 	cancel        context.CancelFunc
 }
 
-// ReorgBlock is emitted to subscribers when a reorg is detected. Number is the block to which the chain rewound.
-type ReorgBlock struct {
+// BlockReorg is emitted to subscribers when a reorg is detected. Number is the block to which the chain rewound.
+type BlockReorg struct {
 	Number uint64
+	Hash   ethgo.Hash
 }
 
 // NewReorgDetector creates a new ReorgDetector
@@ -32,14 +34,16 @@ func NewReorgDetector(rpcUrl string, pollingPeriod time.Duration) (*ReorgDetecto
 }
 
 // Subscribe returns a channel on which the caller can receive reorg messages
-func (rd *ReorgDetector) Subscribe() <-chan ReorgBlock {
-	ch := make(chan ReorgBlock)
+func (rd *ReorgDetector) Subscribe() <-chan BlockReorg {
+	ch := make(chan BlockReorg)
 	rd.subscribers = append(rd.subscribers, ch)
 	return ch
 }
 
 // Start starts the ReorgDetector tracking for reorg events
 func (rd *ReorgDetector) Start() error {
+	log.Info("starting block reorganization detector")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	rd.cancel = cancel
 
@@ -56,7 +60,7 @@ func (rd *ReorgDetector) Start() error {
 			case block := <-blocks:
 				if lastBlock != nil {
 					if lastBlock.Number+1 >= block.Number {
-						lca := ReorgBlock{Number: block.Number}
+						lca := BlockReorg{Number: block.Number, Hash: block.Hash}
 						for _, ch := range rd.subscribers {
 							ch <- lca
 						}
@@ -75,10 +79,12 @@ func (rd *ReorgDetector) Start() error {
 
 // Stop stops the chain reorganization detector loop
 func (rd *ReorgDetector) Stop() {
-	if rd.cancel == nil {
-		return
+	if rd.cancel != nil {
+		rd.cancel()
 	}
-	rd.cancel()
+	for _, ch := range rd.subscribers {
+		close(ch)
+	}
 }
 
 func (rd *ReorgDetector) trackBlocks(ctx context.Context, ch chan *ethgo.Block) error {

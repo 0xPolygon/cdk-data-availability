@@ -11,6 +11,10 @@ run-local: ## Runs a full data node
 	docker compose up -d supernets2-mock-l1-network
 	go run ../cmd run --cfg config/test.local.toml
 
+.PHONY: run-dev
+run-dev: run-db
+	go run ../cmd run --cfg config/test.dev.toml
+
 .PHONY: run-db
 run-db: ## Runs the data store
 	$(RUN-DB)
