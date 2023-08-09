@@ -4,14 +4,16 @@ ARCH := $(shell arch)
 
 ifeq ($(ARCH),x86_64)
 	ARCH = amd64
-else 
+else
 	ifeq ($(ARCH),aarch64)
 		ARCH = arm64
 	endif
 endif
+
+GOOS := $(shell uname -s  | awk '{print tolower($0)}')
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/dist
-GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH)
+GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(ARCH)
 GOBINARY := supernets2-data-availability
 GOCMD := $(GOBASE)/cmd
 

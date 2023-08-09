@@ -8,6 +8,7 @@ import (
 	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 	"github.com/0xPolygon/supernets2-node/state"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -84,7 +85,7 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 
 // GetLastProcessedBlock returns the latest block successfully processed by the synchronizer
 func (db *DB) GetLastProcessedBlock(ctx context.Context) (uint64, error) {
-	const getLastProcessedBlockSQL = "SELECT max(block) from data_node.sync_info;"
+	const getLastProcessedBlockSQL = "SELECT max(block) FROM data_node.sync_info;"
 	var (
 		lastBlock uint64
 	)
@@ -93,6 +94,18 @@ func (db *DB) GetLastProcessedBlock(ctx context.Context) (uint64, error) {
 		return 0, err
 	}
 	return lastBlock, nil
+}
+
+func (db *DB) ResetLastProcessedBlock(ctx context.Context, block uint64) (uint64, error) {
+	const resetLastProcessedBlock = "DELETE FROM data_node.sync_info WHERE block > $1"
+	var (
+		ct  pgconn.CommandTag
+		err error
+	)
+	if ct, err = db.pg.Exec(ctx, resetLastProcessedBlock, block); err != nil {
+		return 0, err
+	}
+	return uint64(ct.RowsAffected()), nil
 }
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer

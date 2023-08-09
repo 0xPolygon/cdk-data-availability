@@ -30,13 +30,14 @@ type BatchSynchronizer struct {
 	db        *db.DB
 	committee map[common.Address]etherman.DataCommitteeMember
 	lock      sync.Mutex
+	reorgs    <-chan ReorgBlock
 }
 
 const dbTimeout = 2 * time.Second
 const rpcTimeout = 3 * time.Second
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB) (*BatchSynchronizer, error) {
+func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan ReorgBlock) (*BatchSynchronizer, error) {
 	watcher, err := newWatcher(cfg)
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB) (
 		watcher: *watcher,
 		self:    self,
 		db:      db,
+		reorgs:  reorgs,
 	}
 	err = synchronizer.resolveCommittee()
 	if err != nil {
@@ -74,55 +76,61 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the BatchSynchronizer event subscription
 func (bs *BatchSynchronizer) Start() {
 	log.Info("starting batch synchronizer")
-	events := make(chan *supernets2.Supernets2SequenceBatches)
-	defer close(events)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	resubscribe := true
+	for resubscribe {
+		events := make(chan *supernets2.Supernets2SequenceBatches)
+		sub := bs.untilSubscribed(ctx, events)
+		resubscribe = bs.consumeEvents(ctx, sub, events)
+		sub.Unsubscribe()
+		close(events)
+	}
+}
+
+func (bs *BatchSynchronizer) consumeEvents(
+	ctx context.Context, sub event.Subscription, events chan *supernets2.Supernets2SequenceBatches) bool {
 	for {
-		var (
-			sub   event.Subscription
-			err   error
-			start uint64
-		)
-
-		start, err = bs.getStartBlock()
-		for err != nil {
-			<-time.After(bs.retry)
-			start, err = bs.getStartBlock()
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), bs.timeout)
-		opts := &bind.WatchOpts{Context: ctx, Start: &start}
-		sub, err = bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
-
-		// if no subscription, retry until established
-		for err != nil {
-			<-time.After(bs.retry)
-			sub, err = bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
-			if err != nil {
-				log.Errorf("error subscribing to sequence batch events, retrying: %v", err)
-			}
-		}
-
-		// wait on events, timeouts, and signals to stop
 		select {
 		case sb := <-events:
-			err = bs.handleSequenceBatches(sb)
+			err := bs.handleSequenceBatches(sb)
 			if err != nil {
 				log.Errorf("failed to process batches: %v", sb)
-				sub.Unsubscribe()
-				continue // restart subscription
+				return true
 			}
-		case err := <-sub.Err():
-			log.Warnf("subscription error, resubscribing: %v", err)
+		case r := <-bs.reorgs:
+			bs.setStartBlock(r.Number)
+			return true
+		case _ = <-sub.Err():
+			return true
+			// warn error
 		case <-ctx.Done():
 			handleSubscriptionContextDone(ctx)
+			return true
 		case <-bs.stop:
-			if sub != nil {
-				sub.Unsubscribe()
-			}
-			cancel()
-			return
+			return false // stop resubscribing
 		}
 	}
+}
+
+func (bs *BatchSynchronizer) untilSubscribed(ctx context.Context, events chan *supernets2.Supernets2SequenceBatches) event.Subscription {
+	start, err := bs.getStartBlock()
+	for err != nil {
+		<-time.After(bs.retry)
+		start, err = bs.getStartBlock()
+	}
+
+	opts := &bind.WatchOpts{Context: ctx, Start: &start}
+	sub, err := bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
+	// retry until established
+	for err != nil {
+		<-time.After(bs.retry)
+		sub, err = bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
+		if err != nil {
+			log.Errorf("error subscribing to sequence batch events, retrying: %v", err)
+		}
+	}
+	return sub
 }
 
 func (bs *BatchSynchronizer) getStartBlock() (uint64, error) {
@@ -137,6 +145,20 @@ func (bs *BatchSynchronizer) getStartBlock() (uint64, error) {
 		start = start - 1 // since a block may have been partially processed
 	}
 	return start, err
+}
+
+func (bs *BatchSynchronizer) setStartBlock(lca uint64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	rows, err := bs.db.ResetLastProcessedBlock(ctx, lca)
+	if err != nil {
+		return err
+	}
+	if rows > 0 {
+		log.Infof("rewound %d blocks", rows)
+	}
+	return nil
 }
 
 // Stop stops the BatchSynchronizer

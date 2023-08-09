@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
 
 	dataavailability "github.com/0xPolygon/supernets2-data-availability"
 	"github.com/0xPolygon/supernets2-data-availability/config"
@@ -75,6 +76,8 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// derive address
+	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
 	var cancelFuncs []context.CancelFunc
 
@@ -85,12 +88,24 @@ func start(cliCtx *cli.Context) error {
 	go sequencerTracker.Start()
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
-	batchesSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, crypto.PubkeyToAddress(pk.PublicKey), storage)
+	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, 1*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
-	go batchesSynchronizer.Start()
-	cancelFuncs = append(cancelFuncs, batchesSynchronizer.Stop)
+
+	err = detector.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cancelFuncs = append(cancelFuncs, detector.Stop)
+
+	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe())
+	if err != nil {
+		log.Fatal(err)
+	}
+	go batchSynchronizer.Start()
+	cancelFuncs = append(cancelFuncs, batchSynchronizer.Stop)
 
 	// Register services
 	server := jsonrpc.NewServer(

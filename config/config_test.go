@@ -18,7 +18,11 @@ func Test_Defaults(t *testing.T) {
 	}{
 		{
 			path:          "L1.WsURL",
-			expectedValue: "ws://localhost:8546",
+			expectedValue: "ws://127.0.0.1:8546",
+		},
+		{
+			path:          "L1.RpcURL",
+			expectedValue: "http://127.0.0.1:8545",
 		},
 		{
 			path:          "L1.Supernets2Address",
