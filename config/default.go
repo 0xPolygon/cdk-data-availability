@@ -12,8 +12,10 @@ const DefaultValues = `
 PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "ws://localhost:8546"
-Contract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+WsURL = "ws://127.0.0.1:8546"
+RpcURL = "http://127.0.0.1:8545"
+Supernets2Address = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+DataCommitteeAddress = "0x0"
 Timeout = "1m"
 RetryPeriod = "5s"
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
 
 	dataavailability "github.com/0xPolygon/supernets2-data-availability"
 	"github.com/0xPolygon/supernets2-data-availability/config"
@@ -12,9 +13,11 @@ import (
 	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
 	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
 	"github.com/0xPolygon/supernets2-data-availability/services/sync"
+	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
 	dbConf "github.com/0xPolygon/supernets2-node/db"
 	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )
 
@@ -73,17 +76,36 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// derive address
+	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
-	sequencerTracker, err := datacom.NewSequencerTracker(c.L1)
+	var cancelFuncs []context.CancelFunc
+
+	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
 	go sequencerTracker.Start()
-
-	var cancelFuncs []context.CancelFunc
-
-	// Register the tracker's shutdown method
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
+
+	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, 1*time.Second)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = detector.Start()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cancelFuncs = append(cancelFuncs, detector.Stop)
+
+	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe())
+	if err != nil {
+		log.Fatal(err)
+	}
+	go batchSynchronizer.Start()
+	cancelFuncs = append(cancelFuncs, batchSynchronizer.Stop)
 
 	// Register services
 	server := jsonrpc.NewServer(

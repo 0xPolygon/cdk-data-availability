@@ -1,11 +1,11 @@
 PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "ws://127.0.0.1:8546"
-RpcURL = "http://127.0.0.1:8545"
-Supernets2Address = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
-DataCommitteeAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
-Timeout = "3m"
+WsURL = "wss://rootchain.hardfork.dev/ws"
+RpcURL = "https://rootchain.hardfork.dev/"
+Supernets2Address = "0x0775AAFB6dD38417581F7C583053Fa3B78FD4FD1"
+DataCommitteeAddress = "0xE660928f13F51bEbb553063A1317EDC0e7038949"
+Timeout = "1m"
 RetryPeriod = "5s"
 
 [Log]
@@ -30,5 +30,5 @@ WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
 SequencerNodeURI = ""
 EnableL2SuggestedGasPricePolling = false
-	[RPC.WebSockets]
-		Enabled = false
+[RPC.WebSockets]
+Enabled = false

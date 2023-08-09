@@ -32,10 +32,12 @@ type Config struct {
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
-	WsURL       string         `mapstructure:"WsURL"`
-	Contract    string         `mapstructure:"Contract"`
-	Timeout     types.Duration `mapstructure:"Timeout"`
-	RetryPeriod types.Duration `mapstructure:"RetryPeriod"`
+	WsURL                string         `mapstructure:"WsURL"`
+	RpcURL               string         `mapstructure:"RpcURL"`
+	Supernets2Address    string         `mapstructure:"Supernets2Address"`
+	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
+	Timeout              types.Duration `mapstructure:"Timeout"`
+	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
 }
 
 // Load loads the configuration baseed on the cli context

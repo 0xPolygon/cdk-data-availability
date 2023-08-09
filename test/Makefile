@@ -8,19 +8,19 @@ run: ## Runs a full data node
 .PHONY: run-local
 run-local: ## Runs a full data node
 	docker compose up -d supernets2-data-availability-db
-	docker compose up -d zkevm-mock-l1-network
+	docker compose up -d supernets2-mock-l1-network
 	go run ../cmd run --cfg config/test.local.toml
 
 .PHONY: run-db
 run-db: ## Runs the data store
 	$(RUN-DB)
 
-.PHONY: zkevm-mock-l1-network
-zkevm-mock-l1-network: ## Run the zklidium contracts
-	docker compose up -d zkevm-mock-l1-network
+.PHONY: supernets2-mock-l1-network
+supernets2-mock-l1-network: ## Run the zklidium contracts
+	docker compose up -d supernets2-mock-l1-network
 
 .PHONY: run-deps
-run-deps: zkevm-mock-l1-network run-db # run the service dependencies
+run-deps: supernets2-mock-l1-network run-db ## Runs the service dependencies
 
 .PHONY: stop
 stop: ## Stop a full data node
@@ -34,3 +34,14 @@ test-e2e: stop ## Runs the E2E tests
 .PHONY: test-unit
 test-unit: ## Runs the unit tests, skips e2e
 	go test `go list ../... | grep -v /e2e`
+
+## Help display.
+## Pulls comments from beside commands and prints a nicely formatted
+## display with the commands and their usage information.
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help: ## Prints this help
+		@grep -h -E '^[a-zA-Z0-9_-]*:.*?## .*$$' $(MAKEFILE_LIST) \
+		| sort \
+		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
