@@ -40,7 +40,6 @@ func (rd *ReorgDetector) Subscribe() <-chan ReorgBlock {
 
 // Start starts the ReorgDetector tracking for reorg events
 func (rd *ReorgDetector) Start() error {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	rd.cancel = cancel
 
@@ -74,6 +73,7 @@ func (rd *ReorgDetector) Start() error {
 	return nil
 }
 
+// Stop stops the chain reorganization detector loop
 func (rd *ReorgDetector) Stop() {
 	if rd.cancel == nil {
 		return

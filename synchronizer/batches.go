@@ -99,9 +99,13 @@ func (bs *BatchSynchronizer) consumeEvents(
 				return true
 			}
 		case r := <-bs.reorgs:
-			bs.setStartBlock(r.Number)
+			err := bs.setStartBlock(r.Number)
+			if err != nil {
+				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
+			}
 			return true
-		case _ = <-sub.Err():
+		case err := <-sub.Err():
+			log.Warnf("subscription error: %v", err)
 			return true
 			// warn error
 		case <-ctx.Done():

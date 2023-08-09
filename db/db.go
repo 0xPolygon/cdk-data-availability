@@ -96,6 +96,7 @@ func (db *DB) GetLastProcessedBlock(ctx context.Context) (uint64, error) {
 	return lastBlock, nil
 }
 
+// ResetLastProcessedBlock removes all sync_info for blocks greater than `block`
 func (db *DB) ResetLastProcessedBlock(ctx context.Context, block uint64) (uint64, error) {
 	const resetLastProcessedBlock = "DELETE FROM data_node.sync_info WHERE block > $1"
 	var (
