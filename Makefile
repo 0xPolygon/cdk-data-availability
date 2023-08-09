@@ -10,10 +10,9 @@ else
 	endif
 endif
 
-GOOS := $(shell uname -s  | awk '{print tolower($0)}')
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/dist
-GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(ARCH)
+GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH)
 GOBINARY := supernets2-data-availability
 GOCMD := $(GOBASE)/cmd
 

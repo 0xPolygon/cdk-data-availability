@@ -2,8 +2,9 @@ PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 
 [L1]
 WsURL = "ws://supernets2-mock-l1-network:8546"
+RpcURL = "http://supernets2-mock-l1-network:8545"
 Supernets2Address = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
-
+DataCommitteeAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
 Timeout = "3m"
 RetryPeriod = "5s"
 
