@@ -74,7 +74,6 @@ func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
 			vByte = 0
 		}
 	}
-	log.Warn("+27")
 	vByte += 27
 
 	actualSignature := []byte{}
