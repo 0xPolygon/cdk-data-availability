@@ -8,7 +8,6 @@ import (
 	"github.com/0xPolygon/supernets2-data-availability/batch"
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
 	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
-	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
@@ -74,7 +73,6 @@ func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
 			vByte = 0
 		}
 	}
-	log.Warn("+27")
 	vByte += 27
 
 	actualSignature := []byte{}
