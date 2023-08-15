@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/config/types"
 	"github.com/0xPolygon/supernets2-node/db"
-	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/mitchellh/mapstructure"

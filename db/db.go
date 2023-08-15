@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 	"github.com/0xPolygon/supernets2-node/state"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgconn"

@@ -3,29 +3,26 @@ package sync
 import (
 	"context"
 
-	"github.com/0xPolygon/supernets2-node/jsonrpc"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/jackc/pgx/v4"
 )
 
-// APISYNC  is the namespace of the sync service
-const APISYNC = "sync"
-
-// SyncEndpoints contains implementations for the "zkevm" RPC endpoints
-type SyncEndpoints struct {
+// Endpoints contains implementations for the "sync" RPC endpoints
+type Endpoints struct {
 	db    DBInterface
 	txMan jsonrpc.DBTxManager
 }
 
-// NewSyncEndpoints returns ZKEVMEndpoints
-func NewSyncEndpoints(db DBInterface) *SyncEndpoints {
-	return &SyncEndpoints{
+// NewEndpoints returns ZKEVMEndpoints
+func NewEndpoints(db DBInterface) *Endpoints {
+	return &Endpoints{
 		db: db,
 	}
 }
 
 // GetOffChainData returns the image of the given hash
-func (z *SyncEndpoints) GetOffChainData(hash types.ArgHash) (interface{}, types.Error) {
+func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, types.Error) {
 	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx pgx.Tx) (interface{}, types.Error) {
 		data, err := z.db.GetOffChainData(ctx, hash.Hash(), dbTx)
 		if err != nil {

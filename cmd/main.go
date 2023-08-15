@@ -10,12 +10,11 @@ import (
 	dataavailability "github.com/0xPolygon/supernets2-data-availability"
 	"github.com/0xPolygon/supernets2-data-availability/config"
 	"github.com/0xPolygon/supernets2-data-availability/db"
-	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc"
 	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
 	"github.com/0xPolygon/supernets2-data-availability/services/sync"
 	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
 	dbConf "github.com/0xPolygon/supernets2-node/db"
-	"github.com/0xPolygon/supernets2-node/jsonrpc"
 	"github.com/0xPolygon/supernets2-node/log"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
@@ -59,7 +58,9 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		panic(err)
 	}
-	setupLog(c.Log)
+
+	// Configure logging
+	log.Init(c.Log)
 
 	// Prepare DB
 	pg, err := dbConf.NewSQLDB(c.DB)
@@ -76,74 +77,73 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// derive address
+	// Derive own address
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
-	var cancelFuncs []context.CancelFunc
+	var cancel cancelManager
 
+	// Get and track the sequencer address
 	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
 	go sequencerTracker.Start()
-	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
+	cancel.add(sequencerTracker.Stop)
 
+	// Start a chain reorganization detector for components that need to reset when this happens
 	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, 1*time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	err = detector.Start()
 	if err != nil {
 		log.Fatal(err)
 	}
+	cancel.add(detector.Stop)
 
-	cancelFuncs = append(cancelFuncs, detector.Stop)
-
+	// Start the batch synchronizer for back-filling missed batches
 	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe())
 	if err != nil {
 		log.Fatal(err)
 	}
 	go batchSynchronizer.Start()
-	cancelFuncs = append(cancelFuncs, batchSynchronizer.Stop)
+	cancel.add(batchSynchronizer.Stop)
 
-	// Register services
-	server := jsonrpc.NewServer(
-		c.RPC,
-		0,
-		&dummyinterfaces.DummyPool{},
-		&dummyinterfaces.DummyState{},
-		&dummyinterfaces.DummyStorage{},
-		[]jsonrpc.Service{
-			{
-				Name:    sync.APISYNC,
-				Service: sync.NewSyncEndpoints(storage),
-			},
-			{
-				Name: datacom.APIDATACOM,
-				Service: datacom.NewDataComEndpoints(
-					storage,
-					pk,
-					sequencerTracker,
-				),
-			},
+	services := []jsonrpc.Service{
+		{
+			Name:    sync.APISYNC,
+			Service: sync.NewEndpoints(storage),
 		},
-	)
+		{
+			Name: datacom.APIDATACOM,
+			Service: datacom.NewEndpoints(
+				storage,
+				pk,
+				sequencerTracker,
+			),
+		},
+	}
 
-	// Run!
-	if err := server.Start(); err != nil {
+	server := jsonrpc.NewServer(c.RPC, services)
+
+	if err = server.Start(); err != nil {
 		log.Fatal(err)
 	}
 
-	waitSignal(cancelFuncs)
+	cancel.waitSignal()
+
 	return nil
 }
 
-func setupLog(c log.Config) {
-	log.Init(c)
+type cancelManager struct {
+	cancels []context.CancelFunc
 }
 
-func waitSignal(cancelFuncs []context.CancelFunc) {
+func (cm *cancelManager) add(cancel context.CancelFunc) {
+	cm.cancels = append(cm.cancels, cancel)
+}
+
+func (cm *cancelManager) waitSignal() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt)
 
@@ -153,7 +153,7 @@ func waitSignal(cancelFuncs []context.CancelFunc) {
 			log.Info("terminating application gracefully...")
 
 			exitStatus := 0
-			for _, cancel := range cancelFuncs {
+			for _, cancel := range cm.cancels {
 				cancel()
 			}
 			os.Exit(exitStatus)
