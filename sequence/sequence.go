@@ -6,8 +6,8 @@ import (
 	"math/big"
 
 	"github.com/0xPolygon/supernets2-data-availability/batch"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
@@ -29,7 +29,7 @@ type Sequence struct {
 func (s *Sequence) HashToSign() []byte {
 	currentHash := s.OldAccInputHash.Bytes()
 	for _, b := range s.Batches {
-		types := []string{
+		t := []string{
 			"bytes32", // oldAccInputHash
 			"bytes32", // currentTransactionsHash
 			"bytes32", // globalExitRoot
@@ -43,7 +43,7 @@ func (s *Sequence) HashToSign() []byte {
 			uint64(b.Timestamp),
 			b.Coinbase,
 		}
-		currentHash = solsha3.SoliditySHA3(types, values)
+		currentHash = solsha3.SoliditySHA3(t, values)
 	}
 	return currentHash
 }

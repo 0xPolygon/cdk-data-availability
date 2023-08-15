@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/0xPolygon/supernets2-node/jsonrpc/client"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/client"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 

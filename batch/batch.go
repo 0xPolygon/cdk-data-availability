@@ -3,7 +3,7 @@ package batch
 import (
 	"crypto/ecdsa"
 
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )

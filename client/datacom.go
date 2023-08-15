@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/client"
+	"github.com/0xPolygon/supernets2-data-availability/jsonrpc/types"
 	"github.com/0xPolygon/supernets2-data-availability/sequence"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/client"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
 )
 
 // SignSequence sends a request to sign the given sequence by the data committee member
