@@ -39,7 +39,8 @@ endif
 
 GOBASE := $(shell pwd)
 GOBIN := $(GOBASE)/dist
-GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH)
+GOOS := $(shell uname -s  | tr '[:upper:]' '[:lower:]')
+GOENVVARS := GOBIN=$(GOBIN) CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(ARCH)
 GOBINARY := supernets2-data-availability
 GOCMD := $(GOBASE)/cmd
 
