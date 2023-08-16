@@ -1,6 +1,33 @@
 include version.mk
 
-ARCH := $(shell arch)
+# Check for required dependencies
+CHECK_GO := $(shell command -v go 2> /dev/null)
+CHECK_CURL := $(shell command -v curl 2> /dev/null)
+CHECK_DOCKER := $(shell command -v docker 2> /dev/null)
+
+check-go:
+ifndef CHECK_GO
+	$(error "Go is not installed. Please install Go and retry.")
+endif
+
+check-curl:
+ifndef CHECK_CURL
+	$(error "curl is not installed. Please install curl and retry.")
+endif
+
+check-docker:
+ifndef CHECK_DOCKER
+	$(error "Docker is not installed. Please install Docker and retry.")
+endif
+
+# Targets that require the checks
+build: check-go
+build-docker: check-docker
+build-docker-nc: check-docker
+install-linter: check-go check-curl
+lint: check-go
+
+ARCH := $(shell uname -m)
 
 ifeq ($(ARCH),x86_64)
 	ARCH = amd64
