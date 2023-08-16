@@ -21,11 +21,11 @@ ifndef CHECK_DOCKER
 endif
 
 # Targets that require the checks
-build: check-go check-curl
-build-docker: check-go check-curl check-docker
-build-docker-nc: check-go check-curl check-docker
-lint: check-go check-curl check-docker
+build: check-go
+build-docker: check-docker
+build-docker-nc: check-docker
 install-linter: check-go check-curl
+lint: check-go
 
 ARCH := $(shell uname -m)
 
