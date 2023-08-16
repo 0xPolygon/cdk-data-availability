@@ -25,6 +25,7 @@ build: check-go check-curl
 build-docker: check-go check-curl
 build-docker-nc: check-go check-curl
 lint: check-go check-curl check-docker
+install-linter: check-go check-curl
 
 ARCH := $(shell uname -m)
 
@@ -60,7 +61,7 @@ build-docker-nc: ## Builds a docker image with the node binary - but without bui
 	docker build --no-cache=true -t supernets2-data-availability -f ./Dockerfile .
 
 .PHONY: install-linter
-install-linter: check-go check-curl ## Installs the linter
+install-linter: ## Installs the linter
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.52.2
 
 .PHONY: lint
