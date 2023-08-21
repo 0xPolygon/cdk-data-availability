@@ -171,7 +171,14 @@ func (bs *BatchSynchronizer) Stop() {
 }
 
 func (bs *BatchSynchronizer) handleSequenceBatches(event *supernets2.Supernets2SequenceBatches) error {
-	block, keys, err := parseEvent(event)
+	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
+	defer cancel()
+	tx, _, err := bs.client.GetTx(ctx, event.Raw.TxHash)
+	if err != nil {
+		return err
+	}
+	txData := tx.Data()
+	block, keys, err := parseEvent(event, txData)
 	if err != nil {
 		return err
 	}
@@ -278,16 +285,16 @@ func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (of
 	return data, err
 }
 
-func parseEvent(event *supernets2.Supernets2SequenceBatches) (uint64, []common.Hash, error) {
+func parseEvent(event *supernets2.Supernets2SequenceBatches, txData []byte) (uint64, []common.Hash, error) {
 	a, err := abi.JSON(strings.NewReader(supernets2.Supernets2ABI))
 	if err != nil {
 		return 0, nil, err
 	}
-	method, err := a.MethodById(event.Raw.Data[:4])
+	method, err := a.MethodById(txData[:4])
 	if err != nil {
 		return 0, nil, err
 	}
-	data, err := method.Inputs.Unpack(event.Raw.Data[4:])
+	data, err := method.Inputs.Unpack(txData[4:])
 	if err != nil {
 		return 0, nil, err
 	}
