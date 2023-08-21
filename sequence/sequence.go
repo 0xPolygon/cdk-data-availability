@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"math/big"
+	"strings"
 
 	"github.com/0xPolygon/supernets2-data-availability/batch"
 	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
@@ -61,7 +62,7 @@ func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
 	sBytes := sig[32:64]
 	vByte := sig[64]
 
-	if common.Bytes2Hex(sBytes) > "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0" {
+	if strings.ToUpper(common.Bytes2Hex(sBytes)) > "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0" {
 		magicNumber := common.Hex2Bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141")
 		sBig := big.NewInt(0).SetBytes(sBytes)
 		magicBig := big.NewInt(0).SetBytes(magicNumber)
