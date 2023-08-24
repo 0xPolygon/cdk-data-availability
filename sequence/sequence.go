@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/0xPolygon/supernets2-data-availability/batch"
-	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-data-availability/batch"
+	"github.com/0xPolygon/cdk-data-availability/offchaindata"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"

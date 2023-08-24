@@ -3,7 +3,7 @@ package datacom
 import (
 	"context"
 
-	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
+	"github.com/0xPolygon/cdk-data-availability/offchaindata"
 	"github.com/jackc/pgx/v4"
 )
 

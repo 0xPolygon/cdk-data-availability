@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xPolygon/supernets2-node/config/types"
+	"github.com/0xPolygon/cdk-validium-node/config/types"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
@@ -25,7 +25,7 @@ func Test_Defaults(t *testing.T) {
 			expectedValue: "http://127.0.0.1:8545",
 		},
 		{
-			path:          "L1.Supernets2Address",
+			path:          "L1.CDKValidiumAddress",
 			expectedValue: "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
 		},
 		{

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"

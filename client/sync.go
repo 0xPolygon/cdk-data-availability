@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/0xPolygon/supernets2-node/jsonrpc/client"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc/client"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 

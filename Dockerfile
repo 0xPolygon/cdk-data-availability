@@ -13,6 +13,6 @@ RUN cd /src && make build
 
 # CONTAINER FOR RUNNING BINARY
 FROM alpine:3.16.0
-COPY --from=build /src/dist/supernets2-data-availability /app/supernets2-data-availability
+COPY --from=build /src/dist/cdk-data-availability /app/cdk-data-availability
 EXPOSE 8444
-CMD ["/bin/sh", "-c", "/app/supernets2-data-availability run"]
+CMD ["/bin/sh", "-c", "/app/cdk-data-availability run"]

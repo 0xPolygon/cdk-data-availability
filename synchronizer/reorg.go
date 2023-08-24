@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/umbracle/ethgo"
 	"github.com/umbracle/ethgo/blocktracker"
 	"github.com/umbracle/ethgo/jsonrpc"

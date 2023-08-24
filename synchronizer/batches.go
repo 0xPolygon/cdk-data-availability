@@ -8,14 +8,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0xPolygon/supernets2-data-availability/client"
-	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygon/supernets2-data-availability/db"
-	"github.com/0xPolygon/supernets2-data-availability/offchaindata"
-	"github.com/0xPolygon/supernets2-node/etherman"
-	"github.com/0xPolygon/supernets2-node/etherman/smartcontracts/supernets2"
-	"github.com/0xPolygon/supernets2-node/jsonrpc/types"
-	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/0xPolygon/cdk-data-availability/client"
+	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/offchaindata"
+	"github.com/0xPolygon/cdk-validium-node/etherman"
+	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -80,7 +80,7 @@ func (bs *BatchSynchronizer) Start() {
 	defer cancel()
 	resubscribe := true
 	for resubscribe {
-		events := make(chan *supernets2.Supernets2SequenceBatches)
+		events := make(chan *cdkvalidium.CdkvalidiumSequenceBatches)
 		sub := bs.untilSubscribed(ctx, events)
 		resubscribe = bs.consumeEvents(ctx, sub, events)
 		sub.Unsubscribe()
@@ -89,7 +89,7 @@ func (bs *BatchSynchronizer) Start() {
 }
 
 func (bs *BatchSynchronizer) consumeEvents(
-	ctx context.Context, sub event.Subscription, events chan *supernets2.Supernets2SequenceBatches) bool {
+	ctx context.Context, sub event.Subscription, events chan *cdkvalidium.CdkvalidiumSequenceBatches) bool {
 	for {
 		select {
 		case sb := <-events:
@@ -117,7 +117,7 @@ func (bs *BatchSynchronizer) consumeEvents(
 	}
 }
 
-func (bs *BatchSynchronizer) untilSubscribed(ctx context.Context, events chan *supernets2.Supernets2SequenceBatches) event.Subscription {
+func (bs *BatchSynchronizer) untilSubscribed(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) event.Subscription {
 	start, err := bs.getStartBlock()
 	for err != nil {
 		<-time.After(bs.retry)
@@ -125,11 +125,11 @@ func (bs *BatchSynchronizer) untilSubscribed(ctx context.Context, events chan *s
 	}
 
 	opts := &bind.WatchOpts{Context: ctx, Start: &start}
-	sub, err := bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
+	sub, err := bs.client.CDKValidium.WatchSequenceBatches(opts, events, nil)
 	// retry until established
 	for err != nil {
 		<-time.After(bs.retry)
-		sub, err = bs.client.Supernets2.WatchSequenceBatches(opts, events, nil)
+		sub, err = bs.client.CDKValidium.WatchSequenceBatches(opts, events, nil)
 		if err != nil {
 			log.Errorf("error subscribing to sequence batch events, retrying: %v", err)
 		}
@@ -170,7 +170,7 @@ func (bs *BatchSynchronizer) Stop() {
 	close(bs.stop)
 }
 
-func (bs *BatchSynchronizer) handleSequenceBatches(event *supernets2.Supernets2SequenceBatches) error {
+func (bs *BatchSynchronizer) handleSequenceBatches(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
 	defer cancel()
 	tx, _, err := bs.client.GetTx(ctx, event.Raw.TxHash)
@@ -285,8 +285,8 @@ func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (of
 	return data, err
 }
 
-func parseEvent(event *supernets2.Supernets2SequenceBatches, txData []byte) (uint64, []common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(supernets2.Supernets2ABI))
+func parseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
+	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -298,7 +298,7 @@ func parseEvent(event *supernets2.Supernets2SequenceBatches, txData []byte) (uin
 	if err != nil {
 		return 0, nil, err
 	}
-	var batches []supernets2.Supernets2BatchData
+	var batches []cdkvalidium.CDKValidiumBatchData
 	bytes, err := json.Marshal(data[0])
 	if err != nil {
 		return 0, nil, err

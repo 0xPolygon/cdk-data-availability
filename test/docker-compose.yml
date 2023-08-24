@@ -1,16 +1,16 @@
 version: "3.5"
 networks:
   default:
-    name: supernets2
+    name: cdk-data-availability
 services:
 
-  supernets2-data-availability:
-    container_name: supernets2-data-availability
+  cdk-data-availability:
+    container_name: cdk-data-availability
     restart: unless-stopped
     depends_on:
-      supernets2-data-availability-db:
+      cdk-data-availability-db:
         condition: service_healthy
-    image: supernets2-data-availability
+    image: cdk-data-availability
     deploy:
       resources:
         limits:
@@ -25,10 +25,10 @@ services:
     command:
       - "/bin/sh"
       - "-c"
-      - "/app/supernets2-data-availability run --cfg /app/config.toml"
+      - "/app/cdk-data-availability run --cfg /app/config.toml"
 
-  supernets2-data-availability-db:
-    container_name: supernets2-data-availability-db
+  cdk-data-availability-db:
+    container_name: cdk-data-availability-db
     restart: unless-stopped
     image: postgres
     healthcheck:
@@ -47,9 +47,9 @@ services:
       - "-N"
       - "500"
 
-  supernets2-mock-l1-network:
-    container_name: supernets2-mock-l1-network
-    image: hermeznetwork/geth-supernets2-contracts:v0.0.1
+  cdk-validium-mock-l1-network:
+    container_name: cdk-validium-mock-l1-network
+    image: hermeznetwork/geth-cdk-validium-contracts:v0.0.1
     healthcheck:
       test: [ "CMD-SHELL", "geth attach --datadir /geth_data --exec eth.blockNumber" ]
       interval: 10s

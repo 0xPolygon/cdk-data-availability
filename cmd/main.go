@@ -7,21 +7,21 @@ import (
 	"os/signal"
 	"time"
 
-	dataavailability "github.com/0xPolygon/supernets2-data-availability"
-	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygon/supernets2-data-availability/db"
-	"github.com/0xPolygon/supernets2-data-availability/dummyinterfaces"
-	"github.com/0xPolygon/supernets2-data-availability/services/datacom"
-	"github.com/0xPolygon/supernets2-data-availability/services/sync"
-	"github.com/0xPolygon/supernets2-data-availability/synchronizer"
-	dbConf "github.com/0xPolygon/supernets2-node/db"
-	"github.com/0xPolygon/supernets2-node/jsonrpc"
-	"github.com/0xPolygon/supernets2-node/log"
+	dataavailability "github.com/0xPolygon/cdk-data-availability"
+	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/dummyinterfaces"
+	"github.com/0xPolygon/cdk-data-availability/services/datacom"
+	"github.com/0xPolygon/cdk-data-availability/services/sync"
+	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	dbConf "github.com/0xPolygon/cdk-validium-node/db"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
+	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )
 
-const appName = "supernets2-data-availability"
+const appName = "cdk-data-availability"
 
 var (
 	configFileFlag = cli.StringFlag{
