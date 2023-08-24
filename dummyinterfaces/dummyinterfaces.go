@@ -28,6 +28,7 @@ func (*DummyPool) GetGasPrices(ctx context.Context) (pool.GasPrices, error) {
 	panic("unimplemented")
 }
 
+// CheckPolicy foo bar
 func (d *DummyPool) CheckPolicy(ctx context.Context, policy pool.PolicyName, address common.Address) (bool, error) {
 	return false, errors.New(notImplemented)
 }
