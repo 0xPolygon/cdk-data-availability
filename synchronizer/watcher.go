@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/0xPolygon/supernets2-data-availability/config"
-	"github.com/0xPolygon/supernets2-node/etherman"
-	"github.com/0xPolygon/supernets2-node/etherman/smartcontracts/supernets2"
-	"github.com/0xPolygon/supernets2-node/etherman/smartcontracts/supernets2datacommittee"
-	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-validium-node/etherman"
+	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
+	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -43,18 +43,18 @@ func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
 		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
 		return nil, err
 	}
-	supernets2, err := supernets2.NewSupernets2(common.HexToAddress(cfg.Supernets2Address), ethClient)
+	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
 	dataCommittee, err :=
-		supernets2datacommittee.NewSupernets2datacommittee(common.HexToAddress(cfg.DataCommitteeAddress), ethClient)
+		cdkdatacommittee.NewCdkdatacommittee(common.HexToAddress(cfg.DataCommitteeAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
 	return &etherman.Client{
 		EthClient:     ethClient,
-		Supernets2:    supernets2,
+		CDKValidium:   cdkValidium,
 		DataCommittee: dataCommittee,
 	}, nil
 }

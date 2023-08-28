@@ -1,5 +1,5 @@
 STOP := docker compose down
-RUN-DB := docker compose up -d supernets2-data-availability-db
+RUN-DB := docker compose up -d cdk-data-availability-db
 
 .PHONY: run
 run: ## Runs a full data node
@@ -7,8 +7,8 @@ run: ## Runs a full data node
 
 .PHONY: run-local
 run-local: ## Runs a full data node
-	docker compose up -d supernets2-data-availability-db
-	docker compose up -d supernets2-mock-l1-network
+	docker compose up -d cdk-data-availability-db
+	docker compose up -d cdk-validium-mock-l1-network
 	go run ../cmd run --cfg config/test.local.toml
 
 .PHONY: run-dev
@@ -19,12 +19,12 @@ run-dev: run-db
 run-db: ## Runs the data store
 	$(RUN-DB)
 
-.PHONY: supernets2-mock-l1-network
-supernets2-mock-l1-network: ## Run the zklidium contracts
-	docker compose up -d supernets2-mock-l1-network
+.PHONY: cdk-validium-mock-l1-network
+cdk-validium-mock-l1-network: ## Run the zklidium contracts
+	docker compose up -d cdk-validium-mock-l1-network
 
 .PHONY: run-deps
-run-deps: supernets2-mock-l1-network run-db ## Runs the service dependencies
+run-deps: cdk-validium-mock-l1-network run-db ## Runs the service dependencies
 
 .PHONY: stop
 stop: ## Stop a full data node

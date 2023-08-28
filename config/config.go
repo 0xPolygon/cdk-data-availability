@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0xPolygon/supernets2-node/config/types"
-	"github.com/0xPolygon/supernets2-node/db"
-	"github.com/0xPolygon/supernets2-node/jsonrpc"
-	"github.com/0xPolygon/supernets2-node/log"
+	"github.com/0xPolygon/cdk-validium-node/config/types"
+	"github.com/0xPolygon/cdk-validium-node/db"
+	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
+	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -34,7 +34,7 @@ type Config struct {
 type L1Config struct {
 	WsURL                string         `mapstructure:"WsURL"`
 	RpcURL               string         `mapstructure:"RpcURL"`
-	Supernets2Address    string         `mapstructure:"Supernets2Address"`
+	CDKValidiumAddress   string         `mapstructure:"CDKValidiumAddress"`
 	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
 	Timeout              types.Duration `mapstructure:"Timeout"`
 	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
