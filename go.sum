@@ -40,8 +40,8 @@ cloud.google.com/go/storage v1.8.0/go.mod h1:Wv1Oy7z6Yz3DshWRJFhqM/UCfaWIRTdp0RX
 cloud.google.com/go/storage v1.10.0/go.mod h1:FLPqc6j+Ki4BU591ie1oL6qBQGu2Bl/tZ9ullr3+Kg0=
 cloud.google.com/go/storage v1.14.0/go.mod h1:GrKmX003DSIwi9o29oFT7YDnHYwZoctc3fOKtUw0Xmo=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-github.com/0xPolygon/cdk-validium-node v0.2.2-RC1.0.20230824141037-97d338779d83 h1:45xcEQCy+FbmCRVgIvaWKD3oa7Y9JE5OxIUlkCT8ztI=
-github.com/0xPolygon/cdk-validium-node v0.2.2-RC1.0.20230824141037-97d338779d83/go.mod h1:y3N/cAy5mDE8JDigBIzqfoS5bV8PnoRiWNiReWvbmEU=
+github.com/0xPolygon/cdk-validium-node v0.0.0-20230828091841-53a4ff42575c h1:/AT9WTGa5TXbmSn5BzTznjZL7WNVKHHO4KhTnCAH0Q8=
+github.com/0xPolygon/cdk-validium-node v0.0.0-20230828091841-53a4ff42575c/go.mod h1:oepsDPkqB4bnRzlho4oCcqf86KMS1LKldtAgfkgI1Lw=
 github.com/0xPolygonHermez/zkevm-node v0.1.0-RC8.0.20230601153103-86d9fb808691 h1:PTbLJ6HEQ9J0CzKrv62n/l4GsGYygyAVX4kRAWY530Q=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 h1:w+iIsaOQNcT7OZ575w+acHgRric5iCyQh+xv+KJ4HB8=
