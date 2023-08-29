@@ -12,6 +12,7 @@
 
 - [Overview of Validium](#overview-of-validium)
 - [Introduction](#introduction)
+    - [Off-Chain Data](#off-chain-data)
 - [License](#license)
 
 ## Overview of Validium
@@ -38,6 +39,10 @@ As blockchain networks grow, the volume of data that needs to be stored and vali
 Data Availability Nodes facilitate a separation between transaction execution and data storage. They allow transaction data to reside off-chain while remaining accessible for validation. This significantly improves scalability and reduces costs. Within the framework of Polygon's CDK, Data Availability Committees (DAC) members run DA nodes to ensure the security, accessibility, and reliability of off-chain data.
 
 To learn more about how the data availability layer works in the validium, please see the CDK documentation [here](https://wiki.polygon.technology/docs/cdk/dac-overview/).
+
+### Off-Chain Data
+
+The off-chain data is stored in a distributed manner and managed by a data availability committee, ensuring that it is available for validation. The data availability committee is defined as a core smart contract, available [here](https://github.com/0xPolygon/cdk-validium-contracts/blob/main/contracts/CDKDataCommittee.sol). This is crucial for the Validium model, where data computation happens off-chain but needs to be verifiable on-chain.
 
 ## License
 
