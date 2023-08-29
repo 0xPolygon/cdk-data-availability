@@ -1,19 +1,7 @@
-<div align="center">
-<h1>CDK Data Availability</h1>
-<h3>Data Availability Layer for CDK Validium</h3>
+# CDK Data Availability
+### Data Availability Layer for CDK Validium
 
-</div>
-
-<p align="left">
-  The cdk-data-availability project is a specialized Data Availability Node (DA Node) that is part of Polygon's CDK (Chain Development Kit) Validium.
-</p>
-
-<!-- TOC -->
-
-- [Overview of Validium](#overview-of-validium)
-- [Introduction](#introduction)
-    - [Off-Chain Data](#off-chain-data)
-- [License](#license)
+The cdk-data-availability project is a specialized Data Availability Node (DA Node) that is part of Polygon's CDK (Chain Development Kit) Validium.
 
 ## Overview of Validium
 
