@@ -4,16 +4,7 @@
 
 </div>
 
-<p align="left">
-  The cdk-data-availability project is a specialized Data Availability Node (DA Node) that is part of Polygon's CDK (Chain Development Kit) Validium.
-</p>
-
-<!-- TOC -->
-
-- [Overview of Validium](#overview-of-validium)
-- [Introduction](#introduction)
-    - [Off-Chain Data](#off-chain-data)
-- [License](#license)
+The cdk-data-availability project is a specialized Data Availability Node (DA Node) that is part of Polygon's CDK (Chain Development Kit) Validium.
 
 ## Overview of Validium
 
