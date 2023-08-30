@@ -3,7 +3,7 @@ module github.com/0xPolygon/cdk-data-availability
 go 1.19
 
 require (
-	github.com/0xPolygon/cdk-validium-node v0.0.0-20230828091841-53a4ff42575c
+	github.com/0xPolygon/cdk-validium-node v0.0.0-20230830125933-503fef88585d
 	github.com/ethereum/go-ethereum v1.12.0
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/websocket v1.5.0
