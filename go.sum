@@ -46,6 +46,8 @@ github.com/0xPolygon/cdk-validium-node v0.0.0-20230830125933-503fef88585d h1:Oq1
 github.com/0xPolygon/cdk-validium-node v0.0.0-20230830125933-503fef88585d/go.mod h1:oepsDPkqB4bnRzlho4oCcqf86KMS1LKldtAgfkgI1Lw=
 github.com/0xPolygon/cdk-validium-node v0.0.0-20230830141128-b425892819ee h1:SSe+AG9tEyQJrLlZapJwx7Jmq3bREQdWU4qoSKCySlM=
 github.com/0xPolygon/cdk-validium-node v0.0.0-20230830141128-b425892819ee/go.mod h1:ItzCrVSs2aANhYALEhUYBCt+EHtVqML7nIMItHMDPXA=
+github.com/0xPolygon/cdk-validium-node v0.0.0-20230831094457-8d07bc9043a8 h1:YAE4/B4nufZNzNgytGjO7nmWxkeo8zIk1sNJvLSslC8=
+github.com/0xPolygon/cdk-validium-node v0.0.0-20230831094457-8d07bc9043a8/go.mod h1:fRivadZM1gxM3n00U1jIt/udwYaN/ktap0GRGiwLBug=
 github.com/0xPolygonHermez/zkevm-node v0.1.0-RC8.0.20230601153103-86d9fb808691 h1:PTbLJ6HEQ9J0CzKrv62n/l4GsGYygyAVX4kRAWY530Q=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 h1:w+iIsaOQNcT7OZ575w+acHgRric5iCyQh+xv+KJ4HB8=
