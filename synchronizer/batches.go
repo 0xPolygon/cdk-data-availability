@@ -95,7 +95,7 @@ func (bs *BatchSynchronizer) consumeEvents(
 		case sb := <-events:
 			err := bs.handleSequenceBatches(sb)
 			if err != nil {
-				log.Errorf("failed to process batches: %v", sb)
+				log.Errorf("failed to process batches: %v", err)
 				return true
 			}
 		case r := <-bs.reorgs:
