@@ -31,12 +31,12 @@ func setStartBlock(db *db.DB, lca uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	rows, err := db.ResetLastProcessedBlock(ctx, lca)
+	rewind, err := db.ResetLastProcessedBlock(ctx, lca)
 	if err != nil {
 		return err
 	}
-	if rows > 0 {
-		log.Infof("rewound %d blocks", rows)
+	if rewind > 0 {
+		log.Infof("rewound %d blocks", rewind)
 	}
 	return nil
 }

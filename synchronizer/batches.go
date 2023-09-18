@@ -142,8 +142,6 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 		return err
 	}
 	for iter.Next() {
-		// NOTE: batch number is _not_ block number
-		log.Infof("filter event batch number %d in block %d", iter.Event.NumBatch, iter.Event.Raw.BlockNumber)
 		events <- iter.Event
 	}
 	return nil
@@ -183,8 +181,9 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 			missing = append(missing, key)
 		}
 	}
-
-	log.Infof("checking data %d missing keys", len(missing))
+	if len(missing) == 0 {
+		return nil
+	}
 
 	var data []offchaindata.OffChainData
 	for _, key := range missing {
@@ -201,7 +200,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 }
 
 func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData, error) {
-	log.Infof("resolving missing data for key %v", key.Hex())
+	log.Debugf("resolving missing data for key %v", key.Hex())
 	if len(bs.committee) == 0 {
 		err := bs.resolveCommittee()
 		if err != nil {
