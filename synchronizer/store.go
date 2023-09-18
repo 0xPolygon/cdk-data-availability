@@ -27,7 +27,27 @@ func getStartBlock(db *db.DB) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(db *db.DB, lca uint64) error {
+func setStartBlock(db *db.DB, block uint64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+	var (
+		dbTx pgx.Tx
+		err  error
+	)
+	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
+		return err
+	}
+	err = db.StoreLastProcessedBlock(ctx, block, dbTx)
+	if err != nil {
+		return err
+	}
+	if err = dbTx.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func rewindStartBlock(db *db.DB, lca uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 

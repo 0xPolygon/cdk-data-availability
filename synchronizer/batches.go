@@ -32,7 +32,7 @@ type BatchSynchronizer struct {
 
 // NewBatchSynchronizer creates the BatchSynchronizer
 func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan BlockReorg) (*BatchSynchronizer, error) {
-	ethClient, err := newEtherman(cfg)
+	ethClient, err := newRPCEtherman(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 				// only reset start block if necessary
 				continue
 			}
-			err = setStartBlock(bs.db, r.Number)
+			err = rewindStartBlock(bs.db, r.Number)
 			if err != nil {
 				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
 			}
@@ -156,7 +156,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	}
 
 	// advance to the last block filtered
-	err = setStartBlock(bs.db, end)
+	err = setStartBlock(bs.db, 1+end)
 	if err != nil {
 		return err
 	}

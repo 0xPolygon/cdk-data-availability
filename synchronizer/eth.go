@@ -15,8 +15,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+func newRPCEtherman(cfg config.L1Config) (*etherman.Client, error) {
+	return newEtherman(cfg, cfg.RpcURL)
+}
+
+func newWSEtherman(cfg config.L1Config) (*etherman.Client, error) {
+	return newEtherman(cfg, cfg.WsURL)
+}
+
 // newEtherman constructs an etherman client that only needs the free contract calls
-func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
+func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
 	defer cancel()
 	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
