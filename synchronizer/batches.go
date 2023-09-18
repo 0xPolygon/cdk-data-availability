@@ -17,6 +17,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const blockIterationBatchSize = 128
+
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
 	client    *etherman.Client
@@ -133,16 +135,30 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	if err != nil {
 		return err
 	}
+
+	// block iteration end
+	end := start + blockIterationBatchSize
+
 	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
 		&bind.FilterOpts{
 			Start:   start,
+			End:     &end,
 			Context: ctx,
 		}, nil)
 	if err != nil {
 		return err
 	}
 	for iter.Next() {
+		if iter.Error() != nil {
+			return iter.Error()
+		}
 		events <- iter.Event
+	}
+
+	// advance to the last block filtered
+	err = setStartBlock(bs.db, end+1)
+	if err != nil {
+		return err
 	}
 	return nil
 }
