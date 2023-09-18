@@ -72,6 +72,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 	return nil
 }
 
+// Start starts the synchronizer
 func (bs *BatchSynchronizer) Start() {
 	log.Info("starting batch synchronizer")
 
@@ -88,6 +89,7 @@ func (bs *BatchSynchronizer) Start() {
 	<-bs.stop
 }
 
+// Stop stops the synchronizer
 func (bs *BatchSynchronizer) Stop() {
 	close(bs.stop)
 }
