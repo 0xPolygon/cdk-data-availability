@@ -2,13 +2,10 @@ package synchronizer
 
 import (
 	"context"
-	"encoding/json"
 	"math/rand"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
@@ -16,16 +13,16 @@ import (
 	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
 	"github.com/0xPolygon/cdk-validium-node/log"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/event"
-	"github.com/jackc/pgx/v4"
 )
 
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	watcher
+	client    *etherman.Client
+	stop      chan struct{}
+	timeout   time.Duration
+	retry     time.Duration
 	self      common.Address
 	db        *db.DB
 	committee map[common.Address]etherman.DataCommitteeMember
@@ -33,17 +30,17 @@ type BatchSynchronizer struct {
 	reorgs    <-chan BlockReorg
 }
 
-const dbTimeout = 2 * time.Second
-const rpcTimeout = 3 * time.Second
-
 // NewBatchSynchronizer creates the BatchSynchronizer
 func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan BlockReorg) (*BatchSynchronizer, error) {
-	watcher, err := newWatcher(cfg)
+	ethClient, err := newEtherman(cfg)
 	if err != nil {
 		return nil, err
 	}
 	synchronizer := &BatchSynchronizer{
-		watcher: *watcher,
+		client:  ethClient,
+		stop:    make(chan struct{}),
+		timeout: cfg.Timeout.Duration,
+		retry:   cfg.RetryPeriod.Duration,
 		self:    self,
 		db:      db,
 		reorgs:  reorgs,
@@ -73,106 +70,102 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 	return nil
 }
 
-// Start starts the BatchSynchronizer event subscription
 func (bs *BatchSynchronizer) Start() {
 	log.Info("starting batch synchronizer")
+
+	events := make(chan *cdkvalidium.CdkvalidiumSequenceBatches)
+	defer close(events)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	resubscribe := true
-	for resubscribe {
-		events := make(chan *cdkvalidium.CdkvalidiumSequenceBatches)
-		sub := bs.untilSubscribed(ctx, events)
-		resubscribe = bs.consumeEvents(ctx, sub, events)
-		sub.Unsubscribe()
-		close(events)
-	}
+
+	go bs.consumeEvents(ctx, events)
+	go bs.produceEvents(ctx, events)
+	go bs.handleReorgs(ctx)
+
+	<-bs.stop
 }
 
-func (bs *BatchSynchronizer) consumeEvents(
-	ctx context.Context, sub event.Subscription, events chan *cdkvalidium.CdkvalidiumSequenceBatches) bool {
-	for {
-		select {
-		case sb := <-events:
-			err := bs.handleSequenceBatches(sb)
-			if err != nil {
-				log.Errorf("failed to process batches: %v", err)
-				return true
-			}
-		case r := <-bs.reorgs:
-			err := bs.setStartBlock(r.Number)
-			if err != nil {
-				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
-			}
-			return true
-		case err := <-sub.Err():
-			log.Warnf("subscription error: %v", err)
-			return true
-			// warn error
-		case <-ctx.Done():
-			handleSubscriptionContextDone(ctx)
-			return true
-		case <-bs.stop:
-			return false // stop resubscribing
-		}
-	}
-}
-
-func (bs *BatchSynchronizer) untilSubscribed(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) event.Subscription {
-	start, err := bs.getStartBlock()
-	for err != nil {
-		<-time.After(bs.retry)
-		start, err = bs.getStartBlock()
-	}
-
-	opts := &bind.WatchOpts{Context: ctx, Start: &start}
-	sub, err := bs.client.CDKValidium.WatchSequenceBatches(opts, events, nil)
-	// retry until established
-	for err != nil {
-		<-time.After(bs.retry)
-		sub, err = bs.client.CDKValidium.WatchSequenceBatches(opts, events, nil)
-		if err != nil {
-			log.Errorf("error subscribing to sequence batch events, retrying: %v", err)
-		}
-	}
-	return sub
-}
-
-func (bs *BatchSynchronizer) getStartBlock() (uint64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	start, err := bs.db.GetLastProcessedBlock(ctx)
-	if err != nil {
-		log.Errorf("error retrieving last processed block, starting from 0: %v", err)
-	}
-	if start > 0 {
-		start = start - 1 // since a block may have been partially processed
-	}
-	return start, err
-}
-
-func (bs *BatchSynchronizer) setStartBlock(lca uint64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	rows, err := bs.db.ResetLastProcessedBlock(ctx, lca)
-	if err != nil {
-		return err
-	}
-	if rows > 0 {
-		log.Infof("rewound %d blocks", rows)
-	}
-	return nil
-}
-
-// Stop stops the BatchSynchronizer
 func (bs *BatchSynchronizer) Stop() {
 	close(bs.stop)
 }
 
-func (bs *BatchSynchronizer) handleSequenceBatches(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
+func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
+	for {
+		select {
+		case r := <-bs.reorgs:
+			latest, err := getStartBlock(bs.db)
+			if err != nil {
+				log.Errorf("could not determine latest processed block: %v", err)
+				continue
+			}
+			if latest < r.Number {
+				// only reset start block if necessary
+				continue
+			}
+			err = setStartBlock(bs.db, r.Number)
+			if err != nil {
+				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (bs *BatchSynchronizer) produceEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) {
+	for {
+		delay := time.NewTimer(bs.retry)
+		select {
+		case <-delay.C:
+			if err := bs.filterEvents(ctx, events); err != nil {
+				log.Errorf("error filtering events: %v", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// Start an iterator from last block processed, picking off SequenceBatches events
+func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) error {
+	start, err := getStartBlock(bs.db)
+	if err != nil {
+		return err
+	}
+	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
+		&bind.FilterOpts{
+			Start:   start,
+			Context: ctx,
+		}, nil)
+	if err != nil {
+		return err
+	}
+	for iter.Next() {
+		// NOTE: batch number is _not_ block number
+		log.Debugf("filter event batch number %d in block %d", iter.Event.NumBatch, iter.Event.Raw.BlockNumber)
+		events <- iter.Event
+	}
+	return nil
+}
+
+func (bs *BatchSynchronizer) consumeEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) {
+	for {
+		select {
+		case sb := <-events:
+			if err := bs.handleEvent(sb); err != nil {
+				log.Errorf("failed to handle event: %v", err)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
 	defer cancel()
+
 	tx, _, err := bs.client.GetTx(ctx, event.Raw.TxHash)
 	if err != nil {
 		return err
@@ -186,62 +179,29 @@ func (bs *BatchSynchronizer) handleSequenceBatches(event *cdkvalidium.Cdkvalidiu
 	// collect keys that need to be resolved
 	var missing []common.Hash
 	for _, key := range keys {
-		if !bs.exists(key) {
+		if !exists(bs.db, key) { // this could be a single query that takes the whole list and returns missing ones
 			missing = append(missing, key)
 		}
 	}
-	return bs.resolveAndStore(block, missing)
-}
 
-func (bs *BatchSynchronizer) exists(key common.Hash) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-	return bs.db.Exists(ctx, key)
-}
+	log.Debugf("checking data %d missing keys", len(missing))
 
-func (bs *BatchSynchronizer) resolveAndStore(block uint64, keys []common.Hash) error {
 	var data []offchaindata.OffChainData
-	for _, key := range keys {
-		value, err := bs.resolve(key)
+	for _, key := range missing {
+		var value offchaindata.OffChainData
+		value, err = bs.resolve(key)
 		if err != nil {
 			return err // return so that the block does not get updated in sync info
 		}
 		data = append(data, value)
 	}
-	return bs.store(block, data)
-}
 
-func (bs *BatchSynchronizer) store(block uint64, data []offchaindata.OffChainData) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-	var (
-		dbTx pgx.Tx
-		err  error
-	)
-	if dbTx, err = bs.db.BeginStateTransaction(ctx); err != nil {
-		return err
-	}
-	if err = bs.db.StoreOffChainData(ctx, data, dbTx); err != nil {
-		rollback(ctx, err, dbTx)
-		return err
-	}
-	if err = bs.db.StoreLastProcessedBlock(ctx, block, dbTx); err != nil {
-		rollback(ctx, err, dbTx)
-		return err
-	}
-	if err = dbTx.Commit(ctx); err != nil {
-		return err
-	}
-	return nil
-}
-
-func rollback(ctx context.Context, err error, dbTx pgx.Tx) {
-	if txErr := dbTx.Rollback(ctx); txErr != nil {
-		log.Errorf("failed to roll back transaction after error %v : %v", err, txErr)
-	}
+	// Finally, store the data
+	return store(bs.db, block, data)
 }
 
 func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData, error) {
+	log.Debugf("resolving missing data for key %v", key.Hex())
 	if len(bs.committee) == 0 {
 		err := bs.resolveCommittee()
 		if err != nil {
@@ -265,52 +225,4 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 		return value, nil
 	}
 	return offchaindata.OffChainData{}, types.NewRPCError(types.NotFoundErrorCode, "no data found for key %v", key)
-}
-
-func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (offchaindata.OffChainData, error) {
-	cm := client.New(member.URL)
-	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
-	defer cancel()
-	bytes, err := cm.GetOffChainData(ctx, key)
-	if len(bytes) == 0 {
-		err = types.NewRPCError(types.NotFoundErrorCode, "data not found")
-	}
-	var data offchaindata.OffChainData
-	if len(bytes) > 0 {
-		data = offchaindata.OffChainData{
-			Key:   key,
-			Value: bytes,
-		}
-	}
-	return data, err
-}
-
-func parseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
-	if err != nil {
-		return 0, nil, err
-	}
-	method, err := a.MethodById(txData[:4])
-	if err != nil {
-		return 0, nil, err
-	}
-	data, err := method.Inputs.Unpack(txData[4:])
-	if err != nil {
-		return 0, nil, err
-	}
-	var batches []cdkvalidium.CDKValidiumBatchData
-	bytes, err := json.Marshal(data[0])
-	if err != nil {
-		return 0, nil, err
-	}
-	err = json.Unmarshal(bytes, &batches)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	var keys []common.Hash
-	for _, batch := range batches {
-		keys = append(keys, batch.TransactionsHash)
-	}
-	return event.Raw.BlockNumber, keys, nil
 }

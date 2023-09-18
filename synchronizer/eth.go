@@ -2,37 +2,18 @@ package synchronizer
 
 import (
 	"context"
-	"time"
+	"encoding/json"
+	"strings"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-validium-node/etherman"
 	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
-
-// watcher is the base struct for components that watch events on chain. These watchers must only use free RPC calls.
-type watcher struct {
-	client  *etherman.Client
-	stop    chan struct{}
-	timeout time.Duration
-	retry   time.Duration
-}
-
-func newWatcher(config config.L1Config) (*watcher, error) {
-	client, err := newEtherman(config)
-	if err != nil {
-		return nil, err
-	}
-	return &watcher{
-		client:  client,
-		stop:    make(chan struct{}),
-		timeout: config.Timeout.Duration,
-		retry:   config.RetryPeriod.Duration,
-	}, nil
-}
 
 // newEtherman constructs an etherman client that only needs the free contract calls
 func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
@@ -59,9 +40,32 @@ func newEtherman(cfg config.L1Config) (*etherman.Client, error) {
 	}, nil
 }
 
-func handleSubscriptionContextDone(ctx context.Context) {
-	// Deadline exceeded is expected since we use finite context timeout
-	if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
-		log.Warnf("re-establishing subscription: %v", ctx.Err())
+func parseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
+	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
+	if err != nil {
+		return 0, nil, err
 	}
+	method, err := a.MethodById(txData[:4])
+	if err != nil {
+		return 0, nil, err
+	}
+	data, err := method.Inputs.Unpack(txData[4:])
+	if err != nil {
+		return 0, nil, err
+	}
+	var batches []cdkvalidium.CDKValidiumBatchData
+	bytes, err := json.Marshal(data[0])
+	if err != nil {
+		return 0, nil, err
+	}
+	err = json.Unmarshal(bytes, &batches)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var keys []common.Hash
+	for _, batch := range batches {
+		keys = append(keys, batch.TransactionsHash)
+	}
+	return event.Raw.BlockNumber, keys, nil
 }
