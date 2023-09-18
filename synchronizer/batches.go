@@ -17,19 +17,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const blockIterationBatchSize = 128
-
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client    *etherman.Client
-	stop      chan struct{}
-	timeout   time.Duration
-	retry     time.Duration
-	self      common.Address
-	db        *db.DB
-	committee map[common.Address]etherman.DataCommitteeMember
-	lock      sync.Mutex
-	reorgs    <-chan BlockReorg
+	client         *etherman.Client
+	stop           chan struct{}
+	retry          time.Duration
+	blockBatchSize uint
+	self           common.Address
+	db             *db.DB
+	committee      map[common.Address]etherman.DataCommitteeMember
+	lock           sync.Mutex
+	reorgs         <-chan BlockReorg
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -39,13 +37,13 @@ func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, r
 		return nil, err
 	}
 	synchronizer := &BatchSynchronizer{
-		client:  ethClient,
-		stop:    make(chan struct{}),
-		timeout: cfg.Timeout.Duration,
-		retry:   cfg.RetryPeriod.Duration,
-		self:    self,
-		db:      db,
-		reorgs:  reorgs,
+		client:         ethClient,
+		stop:           make(chan struct{}),
+		retry:          cfg.RetryPeriod.Duration,
+		blockBatchSize: cfg.BlockBatchSize,
+		self:           self,
+		db:             db,
+		reorgs:         reorgs,
 	}
 	err = synchronizer.resolveCommittee()
 	if err != nil {
@@ -139,7 +137,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	}
 
 	// block iteration end
-	end := start + blockIterationBatchSize
+	end := start + uint64(bs.blockBatchSize)
 
 	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
 		&bind.FilterOpts{
@@ -158,7 +156,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	}
 
 	// advance to the last block filtered
-	err = setStartBlock(bs.db, end+1)
+	err = setStartBlock(bs.db, end)
 	if err != nil {
 		return err
 	}

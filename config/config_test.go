@@ -36,6 +36,10 @@ func Test_Defaults(t *testing.T) {
 			path:          "L1.RetryPeriod",
 			expectedValue: types.NewDuration(5 * time.Second),
 		},
+		{
+			path:          "L1.BlockBatchSize",
+			expectedValue: uint(64),
+		},
 		// TODO: more default checks
 	}
 
