@@ -106,3 +106,18 @@ run-approve-matic: ## Runs approve in node container
 .PHONY: stop-approve-matic
 stop-approve-matic: ## Stops approve in node container
 	docker compose stop cdk-validium-approve && docker compose rm -f cdk-validium-approve
+
+.PHONY: stop-test-dac-nodes
+stop-test-dac-nodes:
+	for i in 0 1 2 3 4 ; do \
+  		docker kill cdk-data-availability-$$i && docker rm cdk-data-availability-$$i ; \
+  	done
+
+.PHONY: stop-test-dac-dbs
+stop-test-dac-dbs:
+	for i in 0 1 2 3 4 ; do \
+  		docker kill cdk-validium-data-node-db-$$i && docker rm cdk-validium-data-node-db-$$i ; \
+  	done
+
+.PHONY: stop-test-dacs
+stop-test-dacs: stop-test-dac-nodes stop-test-dac-dbs

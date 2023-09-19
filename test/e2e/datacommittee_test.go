@@ -165,7 +165,8 @@ func TestDataCommittee(t *testing.T) {
 }
 
 func checkCorrectData(t *testing.T, m member, tx common.Hash) {
-	mc := newTestClient(m.url, m.addr)
+	testUrl := fmt.Sprintf("http:127.0.0.1:420%d", m.i)
+	mc := newTestClient(testUrl, m.addr)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	data, err := mc.client.GetOffChainData(ctx, tx)

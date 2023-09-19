@@ -1,7 +1,7 @@
 version: "3.5"
 networks:
   default:
-    name: cdk-data-availability
+    name: custom
 services:
 
   cdk-data-availability:
