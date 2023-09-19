@@ -94,7 +94,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ./config/prover/init_prover_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./config/sql/init_prover_db.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       - POSTGRES_USER=state_user
       - POSTGRES_PASSWORD=state_password
@@ -118,6 +118,28 @@ services:
       - POSTGRES_DB=pool_db
     command: ["postgres", "-N", "500"]
 
+  cdk-validium-event-db:
+    container_name: cdk-validium-event-db
+    image: postgres:15
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    ports:
+      - 5435:5432
+    volumes:
+      - ./config/sql/init_event_db.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=event_user
+      - POSTGRES_PASSWORD=event_password
+      - POSTGRES_DB=event_db
+    command:
+      - "postgres"
+      - "-N"
+      - "500"
+
   cdk-validium-prover:
     container_name: cdk-validium-prover
     image: hermeznetwork/zkevm-prover:v2.2.0
@@ -127,7 +149,7 @@ services:
       - 50061:50061 # MT
       - 50071:50071 # Executor
     volumes:
-      - ./config/prover/test.prover.config.json:/usr/src/app/config.json
+      - ./config/test.prover.config.json:/usr/src/app/config.json
     command: >
       zkProver -c /usr/src/app/config.json
 
@@ -141,8 +163,8 @@ services:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
     volumes:
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -155,8 +177,8 @@ services:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
     volumes:
       - ./config/sequencer.keystore:/pk/keystore
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -171,8 +193,8 @@ services:
       - CDK_VALIDIUM_NODE_SEQUENCER_SENDER_ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
     volumes:
       - ./config/sequencer.keystore:/pk/sequencer.keystore
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -189,8 +211,8 @@ services:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
     volumes:
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -206,8 +228,8 @@ services:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
       - CDK_VALIDIUM_NODE_AGGREGATOR_SENDER_ADDRESS=0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266
     volumes:
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -219,8 +241,8 @@ services:
     environment:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
     volumes:
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -236,8 +258,8 @@ services:
     volumes:
       - ./config/sequencer.keystore:/pk/sequencer.keystore
       - ./config/aggregator.keystore:/pk/aggregator.keystore
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"
@@ -250,8 +272,8 @@ services:
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
     volumes:
       - ./test.keystore:/pk/keystore
-      - ./config/node/test.node.config.toml:/app/config.toml
-      - ./config/node/test.genesis.config.json:/app/genesis.json
+      - ./config/test.node.config.toml:/app/config.toml
+      - ./config/test.genesis.config.json:/app/genesis.json
     command:
       - "/bin/sh"
       - "-c"

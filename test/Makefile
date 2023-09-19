@@ -54,6 +54,7 @@ help: ## Prints this help
 run-node: ## Runs a full node
 	docker compose up -d cdk-validium-state-db
 	docker compose up -d cdk-validium-pool-db
+	docker compose up -d cdk-validium-event-db
 	docker compose up -d cdk-validium-mock-l1-network
 	sleep 1
 	docker compose up -d cdk-validium-prover
