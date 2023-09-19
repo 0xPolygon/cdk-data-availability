@@ -80,7 +80,7 @@ services:
       - "full"
       - "--rpc.allow-unprotected-txs"
 
-## for running validium node
+##### cdk-validium-node components #####
 
   cdk-validium-state-db:
     container_name: cdk-validium-state-db
@@ -250,7 +250,7 @@ services:
 
   cdk-validium-eth-tx-manager:
     container_name: cdk-validium-eth-tx-manager
-    image: cdk-validium-node
+    image: hermeznetwork/cdk-validium-node:v0.0.1
     ports:
       - 9094:9091 # needed if metrics enabled
     environment:
@@ -267,7 +267,7 @@ services:
 
   cdk-validium-l2gaspricer:
     container_name: cdk-validium-l2gaspricer
-    image: cdk-validium-node
+    image: hermeznetwork/cdk-validium-node:v0.0.1
     environment:
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
     volumes:
