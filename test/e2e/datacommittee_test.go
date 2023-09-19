@@ -115,9 +115,11 @@ func TestDataCommittee(t *testing.T) {
 			exec.Command("rm", ksFile).Run(),
 		)
 		// Stop the members
-		for _, m := range membs {
-			stopDACMember(t, m)
-		}
+		/*
+			for _, m := range membs {
+				stopDACMember(t, m)
+			}
+		*/
 	}()
 
 	// Start DAC nodes & DBs
@@ -267,6 +269,7 @@ func startDACMember(t *testing.T, m member) {
 	// Run DAC node
 	cmd := exec.Command(
 		"docker", "run", "-d",
+		"-p", fmt.Sprintf("%d:%d", port, port),
 		"--name", "cdk-data-availability-"+strconv.Itoa(m.i),
 		"-v", cfgFile+":/app/config.json",
 		"-v", ksFile+":"+ksFile,
