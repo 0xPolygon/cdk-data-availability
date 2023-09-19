@@ -18,7 +18,7 @@ User = "committee_user"
 Password = "committee_password"
 Name = "committee_db"
 Host = "cdk-data-availability-db"
-Port = "5434"
+Port = "5432"
 EnableLog = false
 MaxConns = 200
 
