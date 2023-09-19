@@ -49,3 +49,22 @@ help: ## Prints this help
 		@grep -h -E '^[a-zA-Z0-9_-]*:.*?## .*$$' $(MAKEFILE_LIST) \
 		| sort \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+.PHONY: run-node
+run-node: ## Runs a full node
+	docker compose up -d cdk-validium-state-db
+	docker compose up -d cdk-validium-pool-db
+	docker compose up -d cdk-validium-mock-l1-network
+	sleep 1
+	docker compose up -d cdk-validium-prover
+	docker compose up -d cdk-validium-approve
+	sleep 3
+	docker compose up -d cdk-validium-sync
+	sleep 2
+	docker compose up -d cdk-validium-eth-tx-manager
+	docker compose up -d cdk-validium-sequencer
+	docker compose up -d cdk-validium-sequence-sender
+	docker compose up -d cdk-validium-aggregator
+	docker compose up -d cdk-validium-json-rpc
+
+
