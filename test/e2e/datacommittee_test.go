@@ -15,13 +15,16 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	cTypes "github.com/0xPolygon/cdk-validium-node/config/types"
 	"github.com/0xPolygon/cdk-validium-node/db"
 	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
+	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
 	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/0xPolygon/cdk-validium-node/test/operations"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	eTypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -157,12 +160,32 @@ func TestDataCommittee(t *testing.T) {
 	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
 	require.NoError(t, err)
 
-	// All the txs should be present in DBs
-	for _, m := range membs {
-		for _, tx := range txs {
-			checkCorrectData(t, m, tx.Hash())
+	// Get the expected data keys of the batches from what was submitted to L1
+	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
+	require.NoError(t, err)
+
+	// iterate over all events that were generated
+	iter, err := cdkValidium.FilterSequenceBatches(&bind.FilterOpts{Start: 0, Context: context.Background()}, nil)
+	require.NoError(t, err)
+	defer func() { _ = iter.Close() }()
+
+	// All the events should be present in DACs
+	for iter.Next() {
+		event := iter.Event
+
+		tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
+		require.NoError(t, err)
+		txData := tx.Data()
+		_, keys, err := synchronizer.ParseEvent(event, txData)
+
+		for _, m := range membs {
+			for _, tx := range keys {
+				log.Infof(">>>> member: %d key: %s", m.i, tx.Hex())
+				checkCorrectData(t, m, tx)
+			}
 		}
 	}
+
 }
 
 func checkCorrectData(t *testing.T, m member, tx common.Hash) {
