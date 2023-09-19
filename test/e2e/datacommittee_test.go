@@ -244,7 +244,7 @@ func startDACMember(t *testing.T, m member) {
 		"-e", "POSTGRES_PASSWORD=committee_password",
 		"-e", "POSTGRES_USER=committee_user",
 		"-p", fmt.Sprintf("553%d:5432", m.i),
-		"--network", "cdk-validium",
+		"--network", "custom",
 		"postgres", "-N", "500",
 	)
 	out, err := dbCmd.CombinedOutput()
@@ -270,7 +270,7 @@ func startDACMember(t *testing.T, m member) {
 		"--name", "cdk-data-availability-"+strconv.Itoa(m.i),
 		"-v", cfgFile+":/app/config.json",
 		"-v", ksFile+":"+ksFile,
-		"--network", "cdk-validium",
+		"--network", "custom",
 		dacNodeContainer,
 		"/bin/sh", "-c",
 		"/app/cdk-data-availability run --cfg /app/config.json",
