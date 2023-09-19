@@ -65,6 +65,7 @@ run-node: ## Runs a full node
 	docker compose up -d cdk-validium-eth-tx-manager
 	docker compose up -d cdk-validium-sequencer
 	docker compose up -d cdk-validium-sequence-sender
+	docker compose up -d cdk-validium-l2gaspricer
 	docker compose up -d cdk-validium-aggregator
 	docker compose up -d cdk-validium-json-rpc
 
