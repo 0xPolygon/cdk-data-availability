@@ -160,43 +160,60 @@ func TestDataCommittee(t *testing.T) {
 	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
 	require.NoError(t, err)
 
-	// Get the expected data keys of the batches from what was submitted to L1
-	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
-	require.NoError(t, err)
-
-	// iterate over all events that were generated
-	iter, err := cdkValidium.FilterSequenceBatches(&bind.FilterOpts{Start: 0, Context: context.Background()}, nil)
+	iter, err := getSequenceBatchesIterator(clientL1)
 	require.NoError(t, err)
 	defer func() { _ = iter.Close() }()
 
 	// All the events should be present in DACs
 	for iter.Next() {
-		event := iter.Event
-
-		tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
+		expectedKeys, err := getSequenceBatchesKeys(clientL1, iter.Event)
 		require.NoError(t, err)
-		txData := tx.Data()
-		_, keys, err := synchronizer.ParseEvent(event, txData)
-
 		for _, m := range membs {
-			for _, tx := range keys {
-				log.Infof(">>>> member: %d key: %s", m.i, tx.Hex())
-				checkCorrectData(t, m, tx)
+			// Each member should have all the keys
+			for _, expected := range expectedKeys {
+				actual, err := getOffchainDataKeys(m, expected)
+				require.NoError(t, err)
+				require.Equal(t, expected, actual)
 			}
 		}
 	}
-
 }
 
-func checkCorrectData(t *testing.T, m member, tx common.Hash) {
+func getSequenceBatchesIterator(clientL1 *ethclient.Client) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+	// Get the expected data keys of the batches from what was submitted to L1
+	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
+	if err != nil {
+		return nil, err
+	}
+	// iterate over all events that were generated
+	iter, err := cdkValidium.FilterSequenceBatches(&bind.FilterOpts{Start: 0, Context: context.Background()}, nil)
+	if err != nil {
+		return nil, err
+	}
+	return iter, nil
+}
+
+func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.CdkvalidiumSequenceBatches) ([]common.Hash, error) {
+	ctx := context.Background()
+	tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
+	if err != nil {
+		return nil, err
+	}
+	txData := tx.Data()
+	_, keys, err := synchronizer.ParseEvent(event, txData)
+	return keys, err
+}
+
+func getOffchainDataKeys(m member, tx common.Hash) (common.Hash, error) {
 	testUrl := fmt.Sprintf("http://127.0.0.1:420%d", m.i)
 	mc := newTestClient(testUrl, m.addr)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	data, err := mc.client.GetOffChainData(ctx, tx)
-	require.NoError(t, err)
-	hash := common.BytesToHash(data)
-	require.Equal(t, tx, hash)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(data), nil
 }
 
 type member struct {
