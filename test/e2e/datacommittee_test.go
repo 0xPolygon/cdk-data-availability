@@ -38,7 +38,8 @@ const (
 	ksFile           = "/tmp/pkey"
 	cfgFile          = "/tmp/dacnodeconfigfile.json"
 	ksPass           = "pass"
-	dacNodeContainer = "hermeznetwork/cdk-data-availability:v0.0.1"
+	dacNodeContainer = "cdk-data-availability"
+	stopDacs         = false
 )
 
 func TestDataCommittee(t *testing.T) {
@@ -114,12 +115,12 @@ func TestDataCommittee(t *testing.T) {
 		assert.NoError(t,
 			exec.Command("rm", ksFile).Run(),
 		)
-		// Stop the members
-		/*
-			for _, m := range membs {
-				stopDACMember(t, m)
-			}
-		*/
+		if !stopDacs {
+			return
+		}
+		for _, m := range membs {
+			stopDACMember(t, m)
+		}
 	}()
 
 	// Start DAC nodes & DBs
@@ -165,7 +166,7 @@ func TestDataCommittee(t *testing.T) {
 }
 
 func checkCorrectData(t *testing.T, m member, tx common.Hash) {
-	testUrl := fmt.Sprintf("http//:127.0.0.1:420%d", m.i)
+	testUrl := fmt.Sprintf("http://127.0.0.1:420%d", m.i)
 	mc := newTestClient(testUrl, m.addr)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()

@@ -51,7 +51,7 @@ help: ## Prints this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: run-all
-run-all: ## Runs a full node
+run-all: ## Runs a full node for e2e
 	docker compose up -d cdk-validium-state-db
 	docker compose up -d cdk-validium-pool-db
 	docker compose up -d cdk-validium-event-db
@@ -107,17 +107,17 @@ run-approve-matic: ## Runs approve in node container
 stop-approve-matic: ## Stops approve in node container
 	docker compose stop cdk-validium-approve && docker compose rm -f cdk-validium-approve
 
-.PHONY: stop-test-dac-nodes
-stop-test-dac-nodes:
+.PHONY: stop-dac-nodes
+stop-dac-nodes:
 	for i in 0 1 2 3 4 ; do \
-  		docker kill cdk-data-availability-$$i && docker rm cdk-data-availability-$$i ; \
+  		(docker kill cdk-data-availability-$$i || true) && (docker rm cdk-data-availability-$$i || true) ; \
   	done
 
-.PHONY: stop-test-dac-dbs
-stop-test-dac-dbs:
+.PHONY: stop-dac-dbs
+stop-dac-dbs:
 	for i in 0 1 2 3 4 ; do \
-  		docker kill cdk-validium-data-node-db-$$i && docker rm cdk-validium-data-node-db-$$i ; \
+  		(docker kill cdk-validium-data-node-db-$$i || true) && (docker rm cdk-validium-data-node-db-$$i || true); \
   	done
 
-.PHONY: stop-test-dacs
-stop-test-dacs: stop-test-dac-nodes stop-test-dac-dbs
+.PHONY: stop-dacs
+stop-dacs: stop-dac-nodes stop-dac-dbs
