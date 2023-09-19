@@ -50,7 +50,7 @@ help: ## Prints this help
 		| sort \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: run-node
+.PHONY: run-all
 run-node: ## Runs a full node
 	docker compose up -d cdk-validium-state-db
 	docker compose up -d cdk-validium-pool-db
@@ -70,3 +70,31 @@ run-node: ## Runs a full node
 	docker compose up -d cdk-validium-json-rpc
 
 
+.PHONY: run-node
+run-node: ## Runs the node
+	docker compose up -d cdk-validium-eth-tx-manager
+	docker compose up -d cdk-validium-sync
+	sleep 2
+	docker compose up -d cdk-validium-sequencer
+	docker compose up -d cdk-validium-sequence-sender
+	docker compose up -d cdk-validium-l2gaspricer
+	docker compose up -d cdk-validium-aggregator
+	docker compose up -d cdk-validium-json-rpc
+
+.PHONY: stop-node
+stop-node: ## Stops the node
+	docker compose stop cdk-validium-sequencer && docker compose rm -f cdk-validium-sequencer
+	docker compose stop cdk-validium-sequence-sender && docker compose rm -f cdk-validium-sequence-sender
+	docker compose stop cdk-validium-json-rpc && docker compose rm -f cdk-validium-json-rpc
+	docker compose stop cdk-validium-l2gaspricer && docker compose rm -f cdk-validium-l2gaspricer
+	docker compose stop cdk-validium-aggregator && docker compose rm -f cdk-validium-aggregator
+	docker compose stop cdk-validium-sync && docker compose rm -f cdk-validium-sync
+	docker compose stop cdk-validium-eth-tx-manager && docker compose rm -f cdk-validium-eth-tx-manager
+
+.PHONY: run-network
+run-network: ## Runs the l1 network
+	docker compose up -d cdk-validium-mock-l1-network
+
+.PHONY: stop-network
+stop-network: ## Stops the l1 network
+	docker compose stop cdk-validium-mock-l1-network && docker compose rm -f cdk-validium-mock-l1-network
