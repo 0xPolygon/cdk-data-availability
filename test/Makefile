@@ -105,4 +105,4 @@ run-approve-matic: ## Runs approve in node container
 
 .PHONY: stop-approve-matic
 stop-approve-matic: ## Stops approve in node container
-	docker compose stop stop-approve-matic && docker compose rm -f stop-approve-matic
+	docker compose stop cdk-validium-approve && docker compose rm -f cdk-validium-approve
