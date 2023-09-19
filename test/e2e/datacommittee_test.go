@@ -42,7 +42,7 @@ const (
 	cfgFile          = "/tmp/dacnodeconfigfile.json"
 	ksPass           = "pass"
 	dacNodeContainer = "cdk-data-availability"
-	stopDacs         = false
+	stopDacs         = true
 )
 
 func TestDataCommittee(t *testing.T) {
