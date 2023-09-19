@@ -36,8 +36,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports: ## <-- MAPPED PORT ON LOCAL SIDE WILL HAVE TO CHANGE, CONFLICTS WITH node's dbs
-      - 5432:5432
+    ports:
+      - 5434:5432
     environment:
       - POSTGRES_USER=committee_user
       - POSTGRES_PASSWORD=committee_password
@@ -92,7 +92,7 @@ services:
         reservations:
           memory: 1G
     ports:
-      - 5434:5432
+      - 5432:5432
     volumes:
       - ./config/sql/init_prover_db.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
