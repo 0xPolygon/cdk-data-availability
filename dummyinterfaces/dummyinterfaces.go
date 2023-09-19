@@ -303,3 +303,18 @@ func (d *DummyState) GetVerifiedBatch(ctx context.Context, batchNumber uint64, d
 func (d *DummyState) GetExitRootByGlobalExitRoot(ctx context.Context, ger common.Hash, dbTx pgx.Tx) (*state.GlobalExitRoot, error) {
 	return nil, errors.New(notImplemented)
 }
+
+// GetFinalizedL2BlockNumber foo
+func (d *DummyState) GetFinalizedL2BlockNumber(ctx context.Context, l1FinalizedBlockNumber uint64, dbTx pgx.Tx) (uint64, error) {
+	return 0, errors.New(notImplemented)
+}
+
+// GetSafeL2BlockNumber foo
+func (d *DummyState) GetSafeL2BlockNumber(ctx context.Context, l1SafeBlockNumber uint64, dbTx pgx.Tx) (uint64, error) {
+	return 0, errors.New(notImplemented)
+}
+
+// GetL2BlocksByBatchNumber foo
+func (d *DummyState) GetL2BlocksByBatchNumber(ctx context.Context, batchNumber uint64, dbTx pgx.Tx) ([]types.Block, error) {
+	return nil, errors.New(notImplemented)
+}
