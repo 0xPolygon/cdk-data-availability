@@ -51,7 +51,7 @@ help: ## Prints this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: run-all
-run-node: ## Runs a full node
+run-all: ## Runs a full node
 	docker compose up -d cdk-validium-state-db
 	docker compose up -d cdk-validium-pool-db
 	docker compose up -d cdk-validium-event-db
