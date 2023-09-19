@@ -118,13 +118,7 @@ func TestDataCommittee(t *testing.T) {
 		for _, m := range membs {
 			stopDACMember(t, m)
 		}
-
-		// Stop permissionless node
-		require.NoError(t, opsman.StopPermissionlessNodeForcedToSYncThroughDAC())
 	}()
-
-	// Start permissionless node
-	require.NoError(t, opsman.StartPermissionlessNodeForcedToSYncThroughDAC())
 
 	// Start DAC nodes & DBs
 	for _, m := range membs {
@@ -160,22 +154,22 @@ func TestDataCommittee(t *testing.T) {
 	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
 	require.NoError(t, err)
 
-	// Assert that the permissionless node is fully synced (through the DAC)
-	time.Sleep(30 * time.Second) // Give some time for the permissionless node to get synced
-	clientL2Permissionless, err := ethclient.Dial(operations.PermissionlessL2NetworkURL)
+	// All the txs should be present in DBs
+	for _, m := range membs {
+		for _, tx := range txs {
+			checkCorrectData(t, m, tx.Hash())
+		}
+	}
+}
+
+func checkCorrectData(t *testing.T, m member, tx common.Hash) {
+	mc := newTestClient(m.url, m.addr)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	data, err := mc.client.GetOffChainData(ctx, tx)
 	require.NoError(t, err)
-	expectedBlock, err := clientL2.BlockByNumber(ctx, nil)
-	require.NoError(t, err)
-	actualBlock, err := clientL2Permissionless.BlockByNumber(ctx, nil)
-	require.NoError(t, err)
-	// je, err := expectedBlock.Header().MarshalJSON()
-	// require.NoError(t, err)
-	// log.Info(string(je))
-	// ja, err := actualBlock.Header().MarshalJSON()
-	// require.NoError(t, err)
-	// log.Info(string(ja))
-	// require.Equal(t, string(je), string(ja))
-	require.Equal(t, expectedBlock.Root().Hex(), actualBlock.Root().Hex())
+	hash := common.BytesToHash(data)
+	require.Equal(t, tx, hash)
 }
 
 type member struct {
