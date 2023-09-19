@@ -98,3 +98,11 @@ run-network: ## Runs the l1 network
 .PHONY: stop-network
 stop-network: ## Stops the l1 network
 	docker compose stop cdk-validium-mock-l1-network && docker compose rm -f cdk-validium-mock-l1-network
+
+.PHONY: run-approve-matic
+run-approve-matic: ## Runs approve in node container
+	docker compose up -d cdk-validium-approve
+
+.PHONY: stop-approve-matic
+stop-approve-matic: ## Stops approve in node container
+	docker compose stop stop-approve-matic && docker compose rm -f stop-approve-matic
