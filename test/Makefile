@@ -1,38 +1,34 @@
 STOP := docker compose down
-RUN-DB := docker compose up -d cdk-data-availability-db
 
 .PHONY: run
-run: ## Runs a full data node
-	docker compose up -d
-
-.PHONY: run-local
-run-local: ## Runs a full data node
+run: ## Runs a full node for e2e
+	docker compose up -d cdk-validium-state-db
+	docker compose up -d cdk-validium-pool-db
+	docker compose up -d cdk-validium-event-db
+	docker compose up -d cdk-validium-mock-l1-network
+	sleep 1
+	docker compose up -d cdk-validium-prover
+	docker compose up -d cdk-validium-approve
+	sleep 3
+	docker compose up -d cdk-validium-sync
+	sleep 2
+	docker compose up -d cdk-validium-eth-tx-manager
+	docker compose up -d cdk-validium-sequencer
+	docker compose up -d cdk-validium-sequence-sender
+	docker compose up -d cdk-validium-l2gaspricer
+	docker compose up -d cdk-validium-aggregator
+	docker compose up -d cdk-validium-json-rpc
+	sleep 2
 	docker compose up -d cdk-data-availability-db
-	docker compose up -d cdk-validium-mock-l1-network
-	go run ../cmd run --cfg config/test.local.toml
-
-.PHONY: run-dev
-run-dev: run-db
-	go run ../cmd run --cfg config/test.dev.toml
-
-.PHONY: run-db
-run-db: ## Runs the data store
-	$(RUN-DB)
-
-.PHONY: cdk-validium-mock-l1-network
-cdk-validium-mock-l1-network: ## Run the zklidium contracts
-	docker compose up -d cdk-validium-mock-l1-network
-
-.PHONY: run-deps
-run-deps: cdk-validium-mock-l1-network run-db ## Runs the service dependencies
+	docker compose up -d cdk-data-availability
 
 .PHONY: stop
 stop: ## Stop a full data node
 	$(STOP)
 
 .PHONY: test-e2e
-test-e2e: stop ## Runs the E2E tests
-	docker compose up -d
+test-e2e: run ## Runs the E2E tests
+	go test -v ./e2e/...
 	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -race -v -p 1 -timeout 600s ./e2e/...
 
 .PHONY: test-unit
@@ -50,25 +46,7 @@ help: ## Prints this help
 		| sort \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: run-all
-run-all: ## Runs a full node for e2e
-	docker compose up -d cdk-validium-state-db
-	docker compose up -d cdk-validium-pool-db
-	docker compose up -d cdk-validium-event-db
-	docker compose up -d cdk-validium-mock-l1-network
-	sleep 1
-	docker compose up -d cdk-validium-prover
-	docker compose up -d cdk-validium-approve
-	sleep 3
-	docker compose up -d cdk-validium-sync
-	sleep 2
-	docker compose up -d cdk-validium-eth-tx-manager
-	docker compose up -d cdk-validium-sequencer
-	docker compose up -d cdk-validium-sequence-sender
-	docker compose up -d cdk-validium-l2gaspricer
-	docker compose up -d cdk-validium-aggregator
-	docker compose up -d cdk-validium-json-rpc
-
+### node commands called by testing operations ###
 
 .PHONY: run-node
 run-node: ## Runs the node
@@ -107,6 +85,7 @@ run-approve-matic: ## Runs approve in node container
 stop-approve-matic: ## Stops approve in node container
 	docker compose stop cdk-validium-approve && docker compose rm -f cdk-validium-approve
 
+### manual utility to stop dac nodes that were started by e2e, but not stopped by e2e ###
 .PHONY: stop-dac-nodes
 stop-dac-nodes:
 	for i in 0 1 2 3 4 ; do \
