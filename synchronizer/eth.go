@@ -48,6 +48,7 @@ func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 	}, nil
 }
 
+// ParseEvent unpacks the keys in a SequenceBatches event
 func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
 	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
 	if err != nil {
