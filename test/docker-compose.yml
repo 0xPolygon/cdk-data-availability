@@ -10,7 +10,14 @@ services:
     depends_on:
       cdk-data-availability-db:
         condition: service_healthy
+      cdk-validium-mock-l1-network:
+        condition: service_healthy
     image: cdk-data-availability
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8444/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -29,6 +36,9 @@ services:
 
   cdk-data-availability-db:
     container_name: cdk-data-availability-db
+    depends_on:
+      cdk-validium-json-rpc:
+        condition: service_healthy
     restart: unless-stopped
     image: postgres
     healthcheck:
@@ -85,6 +95,11 @@ services:
   cdk-validium-state-db:
     container_name: cdk-validium-state-db
     image: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -104,6 +119,11 @@ services:
   cdk-validium-pool-db:
     container_name: cdk-validium-pool-db
     image: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -121,6 +141,11 @@ services:
   cdk-validium-event-db:
     container_name: cdk-validium-event-db
     image: postgres:15
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -142,7 +167,15 @@ services:
 
   cdk-validium-prover:
     container_name: cdk-validium-prover
+    depends_on:
+      cdk-validium-approve:
+        condition: service_completed_successfully
     image: hermeznetwork/zkevm-prover:v2.2.0
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       # - 50051:50051 # Prover
       - 50052:50052 # Mock prover
@@ -155,7 +188,15 @@ services:
 
   cdk-validium-sequencer:
     container_name: cdk-validium-sequencer
+    depends_on:
+      cdk-validium-eth-tx-manager:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 9092:9091 # needed if metrics enabled
       - 6060:6060
@@ -172,7 +213,15 @@ services:
 
   cdk-validium-approve:
     container_name: cdk-validium-approve
+    depends_on:
+      cdk-validium-state-db:
+        condition: service_healthy
+      cdk-validium-pool-db:
+        condition: service_healthy
+      cdk-validium-event-db:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    ## runs to completion
     environment:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
     volumes:
@@ -186,7 +235,15 @@ services:
 
   cdk-validium-sequence-sender:
     container_name: cdk-validium-sequence-sender
+    depends_on:
+      cdk-validium-sequencer:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
@@ -202,7 +259,15 @@ services:
 
   cdk-validium-json-rpc:
     container_name: cdk-validium-json-rpc
+    depends_on:
+      cdk-validium-aggregator:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 8123:8123
       - 8133:8133 # needed if WebSockets enabled
@@ -220,7 +285,15 @@ services:
 
   cdk-validium-aggregator:
     container_name: cdk-validium-aggregator
+    depends_on:
+      cdk-validium-l2gaspricer:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 50081:50081
       - 9093:9091 # needed if metrics enabled
@@ -238,6 +311,14 @@ services:
   cdk-validium-sync:
     container_name: cdk-validium-sync
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    depends_on:
+      cdk-validium-prover:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       - CDK_VALIDIUM_NODE_STATEDB_HOST=cdk-validium-state-db
     volumes:
@@ -251,6 +332,14 @@ services:
   cdk-validium-eth-tx-manager:
     container_name: cdk-validium-eth-tx-manager
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    depends_on:
+      cdk-validium-sync:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - 9094:9091 # needed if metrics enabled
     environment:
@@ -267,7 +356,15 @@ services:
 
   cdk-validium-l2gaspricer:
     container_name: cdk-validium-l2gaspricer
+    depends_on:
+      cdk-validium-sequence-sender:
+        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
+    healthcheck:
+      test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       - CDK_VALIDIUM_NODE_POOL_DB_HOST=cdk-validium-pool-db
     volumes:

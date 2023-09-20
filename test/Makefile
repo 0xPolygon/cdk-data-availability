@@ -2,25 +2,7 @@ STOP := docker compose down
 
 .PHONY: run
 run: ## Runs a full node for e2e
-	docker compose up -d cdk-validium-state-db
-	docker compose up -d cdk-validium-pool-db
-	docker compose up -d cdk-validium-event-db
-	docker compose up -d cdk-validium-mock-l1-network
-	sleep 1
-	docker compose up -d cdk-validium-prover
-	docker compose up -d cdk-validium-approve
-	sleep 3
-	docker compose up -d cdk-validium-sync
-	sleep 2
-	docker compose up -d cdk-validium-eth-tx-manager
-	docker compose up -d cdk-validium-sequencer
-	docker compose up -d cdk-validium-sequence-sender
-	docker compose up -d cdk-validium-l2gaspricer
-	docker compose up -d cdk-validium-aggregator
-	docker compose up -d cdk-validium-json-rpc
-	sleep 2
-	docker compose up -d cdk-data-availability-db
-	docker compose up -d cdk-data-availability
+	docker compose up -d
 
 .PHONY: stop
 stop: ## Stop a full data node
