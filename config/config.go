@@ -38,6 +38,7 @@ type L1Config struct {
 	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
 	Timeout              types.Duration `mapstructure:"Timeout"`
 	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
+	BlockBatchSize       uint           `mapstructure:"BlockBatchSize"`
 }
 
 // Load loads the configuration baseed on the cli context

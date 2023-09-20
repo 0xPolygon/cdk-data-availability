@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-validium-node/etherman"
 	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,25 +16,31 @@ import (
 
 // SequencerTracker watches the contract for relevant changes to the sequencer
 type SequencerTracker struct {
-	watcher
-	addr common.Address
-	lock sync.Mutex
+	client  *etherman.Client
+	stop    chan struct{}
+	timeout time.Duration
+	retry   time.Duration
+	addr    common.Address
+	lock    sync.Mutex
 }
 
 // NewSequencerTracker creates a new SequencerTracker
 func NewSequencerTracker(cfg config.L1Config) (*SequencerTracker, error) {
-	log.Info("starting sequencer tracker")
-	watcher, err := newWatcher(cfg)
+	log.Info("starting sequencer address tracker")
+	ethClient, err := newWSEtherman(cfg)
 	if err != nil {
 		return nil, err
 	}
 	// current address of the sequencer
-	addr, err := watcher.client.TrustedSequencer()
+	addr, err := ethClient.TrustedSequencer()
 	if err != nil {
 		return nil, err
 	}
 	w := &SequencerTracker{
-		watcher: *watcher,
+		client:  ethClient,
+		stop:    make(chan struct{}),
+		timeout: cfg.Timeout.Duration,
+		retry:   cfg.RetryPeriod.Duration,
 		addr:    addr,
 	}
 	return w, nil
@@ -83,7 +90,10 @@ func (st *SequencerTracker) Start() {
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 		case <-ctx.Done():
-			handleSubscriptionContextDone(ctx)
+			// Deadline exceeded is expected since we use finite context timeout
+			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
+				log.Warnf("re-establishing subscription: %v", ctx.Err())
+			}
 		case <-st.stop:
 			if sub != nil {
 				sub.Unsubscribe()

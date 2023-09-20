@@ -7,6 +7,7 @@ CDKValidiumAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
 DataCommitteeAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
 Timeout = "3m"
 RetryPeriod = "5s"
+BlockBatchSize = 8
 
 [Log]
 Environment = "development" # "production" or "development"
@@ -18,7 +19,7 @@ User = "committee_user"
 Password = "committee_password"
 Name = "committee_db"
 Host = "localhost"
-Port = "5432"
+Port = "5434"
 EnableLog = false
 MaxConns = 200
 
