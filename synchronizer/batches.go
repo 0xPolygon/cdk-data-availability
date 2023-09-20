@@ -185,7 +185,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 	txData := tx.Data()
-	block, keys, err := parseEvent(event, txData)
+	block, keys, err := ParseEvent(event, txData)
 	if err != nil {
 		return err
 	}

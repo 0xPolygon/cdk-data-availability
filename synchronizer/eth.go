@@ -27,9 +27,9 @@ func newWSEtherman(cfg config.L1Config) (*etherman.Client, error) {
 func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
 	defer cancel()
-	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
+	ethClient, err := ethclient.DialContext(ctx, url)
 	if err != nil {
-		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
+		log.Errorf("error connecting to %s: %+v", url, err)
 		return nil, err
 	}
 	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
@@ -48,7 +48,8 @@ func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 	}, nil
 }
 
-func parseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
+// ParseEvent unpacks the keys in a SequenceBatches event
+func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
 	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
 	if err != nil {
 		return 0, nil, err

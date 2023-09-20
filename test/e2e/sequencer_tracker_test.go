@@ -6,12 +6,19 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-validium-node/test/operations"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
 
-func TestTracker(t *testing.T) {
+func TestSequencerAddrExists(t *testing.T) {
+
+	err := operations.StartComponent("network")
+	require.NoError(t, err)
+	defer operations.StopComponent("network")
+	<-time.After(3 * time.Second) // wait for component to start
+
 	ctx := cli.NewContext(cli.NewApp(), nil, nil)
 	cfg, err := config.Load(ctx)
 	require.NoError(t, err)
