@@ -12,6 +12,8 @@ services:
         condition: service_healthy
       cdk-validium-mock-l1-network:
         condition: service_healthy
+      cdk-validium-approve:
+        condition: service_completed_successfully
     image: cdk-data-availability
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8444/ || exit 1"]
@@ -191,6 +193,12 @@ services:
     depends_on:
       cdk-validium-eth-tx-manager:
         condition: service_healthy
+      cdk-validium-state-db:
+        condition: service_healthy
+      cdk-validium-pool-db:
+        condition: service_healthy
+      cdk-validium-approve:
+        condition: service_completed_successfully
     image: hermeznetwork/cdk-validium-node:v0.0.1
     healthcheck:
       test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
@@ -216,10 +224,6 @@ services:
     depends_on:
       cdk-validium-state-db:
         condition: service_healthy
-      cdk-validium-pool-db:
-        condition: service_healthy
-      cdk-validium-event-db:
-        condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
     ## runs to completion
     environment:
@@ -236,8 +240,12 @@ services:
   cdk-validium-sequence-sender:
     container_name: cdk-validium-sequence-sender
     depends_on:
-      cdk-validium-sequencer:
+      cdk-validium-state-db:
         condition: service_healthy
+      cdk-validium-pool-db:
+        condition: service_healthy
+      cdk-validium-approve:
+        condition: service_completed_successfully
     image: hermeznetwork/cdk-validium-node:v0.0.1
     healthcheck:
       test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
@@ -260,7 +268,9 @@ services:
   cdk-validium-json-rpc:
     container_name: cdk-validium-json-rpc
     depends_on:
-      cdk-validium-aggregator:
+      cdk-validium-state-db:
+        condition: service_healthy
+      cdk-validium-pool-db:
         condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
     healthcheck:
@@ -286,7 +296,7 @@ services:
   cdk-validium-aggregator:
     container_name: cdk-validium-aggregator
     depends_on:
-      cdk-validium-l2gaspricer:
+      cdk-validium-state-db:
         condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
     healthcheck:
@@ -312,7 +322,7 @@ services:
     container_name: cdk-validium-sync
     image: hermeznetwork/cdk-validium-node:v0.0.1
     depends_on:
-      cdk-validium-prover:
+      cdk-validium-state-db:
         condition: service_healthy
     healthcheck:
       test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
@@ -333,8 +343,10 @@ services:
     container_name: cdk-validium-eth-tx-manager
     image: hermeznetwork/cdk-validium-node:v0.0.1
     depends_on:
-      cdk-validium-sync:
+      cdk-validium-state-db:
         condition: service_healthy
+      cdk-validium-approve:
+        condition: service_completed_successfully
     healthcheck:
       test: [ "CMD-SHELL", "echo {'health': 'healthy'} | tee /proc/1/fd/1" ]
       interval: 10s
@@ -357,7 +369,7 @@ services:
   cdk-validium-l2gaspricer:
     container_name: cdk-validium-l2gaspricer
     depends_on:
-      cdk-validium-sequence-sender:
+      cdk-validium-pool-db:
         condition: service_healthy
     image: hermeznetwork/cdk-validium-node:v0.0.1
     healthcheck:
