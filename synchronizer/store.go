@@ -67,7 +67,7 @@ func exists(db *db.DB, key common.Hash) bool {
 	return db.Exists(ctx, key)
 }
 
-func store(db *db.DB, block uint64, data []offchaindata.OffChainData) error {
+func store(db *db.DB, data []offchaindata.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	var (
@@ -78,10 +78,6 @@ func store(db *db.DB, block uint64, data []offchaindata.OffChainData) error {
 		return err
 	}
 	if err = db.StoreOffChainData(ctx, data, dbTx); err != nil {
-		rollback(ctx, err, dbTx)
-		return err
-	}
-	if err = db.StoreLastProcessedBlock(ctx, block, dbTx); err != nil {
 		rollback(ctx, err, dbTx)
 		return err
 	}

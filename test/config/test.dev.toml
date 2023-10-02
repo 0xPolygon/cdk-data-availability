@@ -8,6 +8,7 @@ DataCommitteeAddress = "0xE660928f13F51bEbb553063A1317EDC0e7038949"
 Timeout = "1m"
 RetryPeriod = "5s"
 
+
 [Log]
 Environment = "development" # "production" or "development"
 Level = "debug"
