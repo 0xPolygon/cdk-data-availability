@@ -252,7 +252,7 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 			delete(bs.committee, member.Addr)
 			continue // malformed committee, skip what is known to be wrong
 		}
-		log.Infof("trying dac %s: %s (self: %s)", member.Addr.Hex(), member.URL, bs.self.Hex())
+		log.Infof("trying DAC %s: %s", member.Addr.Hex(), member.URL)
 		value, err := resolveWithMember(key, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
