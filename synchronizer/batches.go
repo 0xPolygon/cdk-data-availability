@@ -215,9 +215,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 
 	var data []offchaindata.OffChainData
 	for _, key := range missing {
-
 		log.Infof("resolving missing key %v", key.Hex())
-
 		var value offchaindata.OffChainData
 		value, err = bs.resolve(key)
 		if err != nil {
