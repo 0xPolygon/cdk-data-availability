@@ -9,10 +9,10 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygonHermez/zkevm-node/etherman"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmvalidium"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -74,7 +74,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 func (bs *BatchSynchronizer) Start() {
 	log.Info("starting batch synchronizer")
 
-	events := make(chan *cdkvalidium.CdkvalidiumSequenceBatches)
+	events := make(chan *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches)
 	defer close(events)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -115,7 +115,7 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 	}
 }
 
-func (bs *BatchSynchronizer) produceEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) {
+func (bs *BatchSynchronizer) produceEvents(ctx context.Context, events chan *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches) {
 	for {
 		delay := time.NewTimer(bs.retry)
 		select {
@@ -130,7 +130,7 @@ func (bs *BatchSynchronizer) produceEvents(ctx context.Context, events chan *cdk
 }
 
 // Start an iterator from last block processed, picking off SequenceBatches events
-func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) error {
+func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches) error {
 	start, err := getStartBlock(bs.db)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	// block iteration end
 	end := start + uint64(bs.blockBatchSize)
 
-	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
+	iter, err := bs.client.ZkEVMValidium.FilterSequenceBatches(
 		&bind.FilterOpts{
 			Start:   start,
 			End:     &end,
@@ -163,7 +163,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context, events chan *cdkv
 	return nil
 }
 
-func (bs *BatchSynchronizer) consumeEvents(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSequenceBatches) {
+func (bs *BatchSynchronizer) consumeEvents(ctx context.Context, events chan *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches) {
 	for {
 		select {
 		case sb := <-events:
@@ -176,7 +176,7 @@ func (bs *BatchSynchronizer) consumeEvents(ctx context.Context, events chan *cdk
 	}
 }
 
-func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
+func (bs *BatchSynchronizer) handleEvent(event *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
 	defer cancel()
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/batch"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"

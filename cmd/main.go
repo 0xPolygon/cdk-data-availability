@@ -14,9 +14,9 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	dbConf "github.com/0xPolygon/cdk-validium-node/db"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	dbConf "github.com/0xPolygonHermez/zkevm-node/db"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )

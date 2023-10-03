@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygonHermez/zkevm-node/etherman"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmvalidium"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"
@@ -61,7 +61,7 @@ func (st *SequencerTracker) setAddr(addr common.Address) {
 
 // Start starts the SequencerTracker
 func (st *SequencerTracker) Start() {
-	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencer)
+	events := make(chan *polygonzkevmvalidium.PolygonzkevmvalidiumSetTrustedSequencer)
 	defer close(events)
 	for {
 		var (
@@ -71,12 +71,12 @@ func (st *SequencerTracker) Start() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
 		opts := &bind.WatchOpts{Context: ctx}
-		sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events)
+		sub, err = st.client.ZkEVMValidium.WatchSetTrustedSequencer(opts, events)
 
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
-			sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events)
+			sub, err = st.client.ZkEVMValidium.WatchSetTrustedSequencer(opts, events)
 			if err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}

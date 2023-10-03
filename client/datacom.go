@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/sequence"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/client"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/client"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 )
 
 // SignSequence sends a request to sign the given sequence by the data committee member

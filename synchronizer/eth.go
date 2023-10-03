@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygonHermez/zkevm-node/etherman"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/cdkdatacommittee"
+	"github.com/0xPolygonHermez/zkevm-node/etherman/smartcontracts/polygonzkevmvalidium"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -32,7 +32,7 @@ func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 		log.Errorf("error connecting to %s: %+v", url, err)
 		return nil, err
 	}
-	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
+	cdkValidium, err := polygonzkevmvalidium.NewPolygonzkevmvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -43,14 +43,14 @@ func newEtherman(cfg config.L1Config, url string) (*etherman.Client, error) {
 	}
 	return &etherman.Client{
 		EthClient:     ethClient,
-		CDKValidium:   cdkValidium,
+		ZkEVMValidium: cdkValidium,
 		DataCommittee: dataCommittee,
 	}, nil
 }
 
 // ParseEvent unpacks the keys in a SequenceBatches event
-func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
+func ParseEvent(event *polygonzkevmvalidium.PolygonzkevmvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
+	a, err := abi.JSON(strings.NewReader(polygonzkevmvalidium.PolygonzkevmvalidiumABI))
 	if err != nil {
 		return 0, nil, err
 	}
@@ -62,7 +62,7 @@ func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (u
 	if err != nil {
 		return 0, nil, err
 	}
-	var batches []cdkvalidium.CDKValidiumBatchData
+	var batches []polygonzkevmvalidium.CDKValidiumBatchData
 	bytes, err := json.Marshal(data[0])
 	if err != nil {
 		return 0, nil, err

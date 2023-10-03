@@ -6,8 +6,8 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/sequence"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc"
+	"github.com/0xPolygonHermez/zkevm-node/jsonrpc/types"
 	"github.com/jackc/pgx/v4"
 )
 

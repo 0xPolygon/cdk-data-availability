@@ -7,11 +7,11 @@ The cdk-data-availability project is a specialized Data Availability Node (DA No
 
 For a full overview of the Polygon CDK Validium, please reference the [CDK documentation](https://wiki.polygon.technology/docs/cdk/).
 
-The CDK Validium solution is made up of several components; start with the [CDK Validium Node](https://github.com/0xPolygon/cdk-validium-node). For quick reference, the complete list of components are outlined below:
+The CDK Validium solution is made up of several components; start with the [CDK Validium Node](https://github.com/0xPolygonHermez/zkevm-node). For quick reference, the complete list of components are outlined below:
 
 | Component                                                                     | Description                                                          |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| [CDK Validium Node](https://github.com/0xPolygon/cdk-validium-node)           | Node implementation for the CDK networks in Validium mode            |
+| [CDK Validium Node](https://github.com/0xPolygonHermez/zkevm-node)           | Node implementation for the CDK networks in Validium mode            |
 | [CDK Validium Contracts](https://github.com/0xPolygon/cdk-validium-contracts) | Smart contract implementation for the CDK networks in Validium mode |
 | [CDK Data Availability](https://github.com/0xPolygon/cdk-data-availability)   | Data availability implementation for the CDK networks          |
 | [Prover / Executor](https://github.com/0xPolygonHermez/zkevm-prover)          | zkEVM engine and prover implementation                               |

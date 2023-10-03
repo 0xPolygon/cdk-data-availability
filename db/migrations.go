@@ -1,7 +1,7 @@
 package db
 
 import (
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygonHermez/zkevm-node/log"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/jackc/pgx/v4/stdlib"
