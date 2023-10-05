@@ -53,7 +53,9 @@ func TestDataCommittee(t *testing.T) {
 	}
 	ctx := context.Background()
 	defer func() {
-		require.NoError(t, operations.Teardown())
+		if stopDacs {
+			require.NoError(t, operations.Teardown())
+		}
 	}()
 	err = operations.Teardown()
 	require.NoError(t, err)
@@ -108,26 +110,28 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 
 	defer func() {
-		// Remove tmp files
-		assert.NoError(t,
-			exec.Command("rm", cfgFile).Run(),
-		)
-		assert.NoError(t,
-			exec.Command("rmdir", ksFile+"_").Run(),
-		)
-		assert.NoError(t,
-			exec.Command("rm", ksFile).Run(),
-		)
 		if !stopDacs {
 			return
 		}
 		for _, m := range membs {
 			stopDACMember(t, m)
 		}
+		// Remove tmp files
+		assert.NoError(t,
+			exec.Command("rm", cfgFile).Run(),
+		)
+		assert.NoError(t,
+			exec.Command("rm", ksFile).Run(),
+		)
+		// FIXME: for some reason rmdir is failing
+		_ = exec.Command("rmdir", "-rf", ksFile+"_").Run()
 	}()
 
+	// pick one to start later
+	m0 := membs[0]
+
 	// Start DAC nodes & DBs
-	for _, m := range membs {
+	for _, m := range membs[1:] { // note starting all but first
 		startDACMember(t, m)
 	}
 
@@ -160,7 +164,12 @@ func TestDataCommittee(t *testing.T) {
 	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
 	require.NoError(t, err)
 
-	iter, err := getSequenceBatchesIterator(clientL1)
+	startDACMember(t, m0) // start the skipped one, it should catch up through synchronization
+
+	// allow the member to startup and synchronize
+	<-time.After(20 * time.Second)
+
+	iter, err := getSequenceBatchesEventIterator(clientL1)
 	require.NoError(t, err)
 	defer func() { _ = iter.Close() }()
 
@@ -169,7 +178,7 @@ func TestDataCommittee(t *testing.T) {
 		expectedKeys, err := getSequenceBatchesKeys(clientL1, iter.Event)
 		require.NoError(t, err)
 		for _, m := range membs {
-			// Each member should have all the keys
+			// Each member (including m0) should have all the keys
 			for _, expected := range expectedKeys {
 				actual, err := getOffchainDataKeys(m, expected)
 				require.NoError(t, err)
@@ -179,7 +188,7 @@ func TestDataCommittee(t *testing.T) {
 	}
 }
 
-func getSequenceBatchesIterator(clientL1 *ethclient.Client) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
 	// Get the expected data keys of the batches from what was submitted to L1
 	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
 	if err != nil {

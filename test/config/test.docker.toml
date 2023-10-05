@@ -7,6 +7,7 @@ CDKValidiumAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
 DataCommitteeAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
 Timeout = "3m"
 RetryPeriod = "5s"
+BlockBatchSize = 32
 
 [Log]
 Environment = "development" # "production" or "development"
