@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/client"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,7 +23,7 @@ func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (of
 
 	bytes, err := cm.GetOffChainData(ctx, key)
 	if len(bytes) == 0 {
-		err = types.NewRPCError(types.NotFoundErrorCode, "data not found")
+		err = rpc.NewRPCError(rpc.NotFoundErrorCode, "data not found")
 	}
 	var data offchaindata.OffChainData
 	if len(bytes) > 0 {

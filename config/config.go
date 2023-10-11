@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/0xPolygon/cdk-validium-node/config/types"
-	"github.com/0xPolygon/cdk-validium-node/db"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygon/cdk-data-availability/config/types"
+	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/viper"
@@ -26,7 +26,7 @@ type Config struct {
 	PrivateKey types.KeystoreFileConfig
 	DB         db.Config
 	Log        log.Config
-	RPC        jsonrpc.Config
+	RPC        rpc.Config
 	L1         L1Config
 }
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/batch"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
@@ -101,8 +101,8 @@ func (s *Sequence) OffChainData() []offchaindata.OffChainData {
 
 // SignedSequence is a sequence but signed
 type SignedSequence struct {
-	Sequence  Sequence       `json:"sequence"`
-	Signature types.ArgBytes `json:"signature"`
+	Sequence  Sequence     `json:"sequence"`
+	Signature rpc.ArgBytes `json:"signature"`
 }
 
 // Signer returns the address of the signer

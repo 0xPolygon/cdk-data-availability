@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
+	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
+	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	cTypes "github.com/0xPolygon/cdk-validium-node/config/types"
-	"github.com/0xPolygon/cdk-validium-node/db"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/log"
-	"github.com/0xPolygon/cdk-validium-node/test/operations"
+	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	eTypes "github.com/ethereum/go-ethereum/core/types"
@@ -59,11 +59,8 @@ func TestDataCommittee(t *testing.T) {
 	}()
 	err = operations.Teardown()
 	require.NoError(t, err)
-	opsCfg := operations.GetDefaultOperationsConfig()
-	opsCfg.State.MaxCumulativeGasUsed = 80000000000
-	opsman, err := operations.NewManager(ctx, opsCfg)
 	require.NoError(t, err)
-	err = opsman.Setup()
+	err = operations.Setup()
 	require.NoError(t, err)
 	time.Sleep(5 * time.Second)
 	authL2, err := operations.GetAuth(operations.DefaultSequencerPrivateKey, operations.DefaultL2ChainID)
@@ -282,10 +279,9 @@ func startDACMember(t *testing.T, m member) {
 			EnableLog: false,
 			MaxConns:  10,
 		},
-		RPC: jsonrpc.Config{
-			Host:                             "0.0.0.0",
-			EnableL2SuggestedGasPricePolling: false,
-			MaxRequestsPerIPAndSecond:        100,
+		RPC: rpc.Config{
+			Host:                      "0.0.0.0",
+			MaxRequestsPerIPAndSecond: 100,
 		},
 	}
 

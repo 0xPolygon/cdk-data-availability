@@ -10,13 +10,11 @@ import (
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/dummyinterfaces"
+	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	dbConf "github.com/0xPolygon/cdk-validium-node/db"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )
@@ -62,7 +60,7 @@ func start(cliCtx *cli.Context) error {
 	setupLog(c.Log)
 
 	// Prepare DB
-	pg, err := dbConf.NewSQLDB(c.DB)
+	pg, err := db.NewSQLDB(c.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,13 +106,9 @@ func start(cliCtx *cli.Context) error {
 	cancelFuncs = append(cancelFuncs, batchSynchronizer.Stop)
 
 	// Register services
-	server := jsonrpc.NewServer(
+	server := rpc.NewServer(
 		c.RPC,
-		0,
-		&dummyinterfaces.DummyPool{},
-		&dummyinterfaces.DummyState{},
-		&dummyinterfaces.DummyStorage{},
-		[]jsonrpc.Service{
+		[]rpc.Service{
 			{
 				Name:    sync.APISYNC,
 				Service: sync.NewSyncEndpoints(storage),
