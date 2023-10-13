@@ -359,19 +359,16 @@ func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.Transa
 			// tmp
 			cmd := exec.Command(
 				"docker", "logs", "zkevm-node",
-				"cdk-data-availability-",
 			)
 			out, _ := cmd.CombinedOutput()
 			log.Debug(string(out))
 			cmd = exec.Command(
-				"docker", "logs", "zkevm-node",
-				"cdk-data-availability-0",
+				"docker", "logs", "cdk-data-availability-0",
 			)
 			out, _ = cmd.CombinedOutput()
 			log.Debug(string(out))
 			cmd = exec.Command(
-				"docker", "logs", "zkevm-node",
-				"cdk-data-availability-1",
+				"docker", "logs", "cdk-data-availability-1",
 			)
 			out, _ = cmd.CombinedOutput()
 			log.Debug(string(out))
