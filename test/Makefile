@@ -1,29 +1,20 @@
 STOP := docker compose down
 
 .PHONY: run
-run: ## Runs a full node for e2e
-	docker compose up -d cdk-validium-state-db
-	docker compose up -d cdk-validium-pool-db
-	docker compose up -d cdk-validium-event-db
-	docker compose up -d cdk-validium-mock-l1-network
-	sleep 1
-	docker compose up -d cdk-validium-prover
-	docker compose up -d cdk-validium-approve
-	sleep 3
-	docker compose up -d cdk-validium-sync
-	sleep 2
-	docker compose up -d cdk-validium-eth-tx-manager
-	docker compose up -d cdk-validium-sequencer
-	docker compose up -d cdk-validium-sequence-sender
-	docker compose up -d cdk-validium-l2gaspricer
-	docker compose up -d cdk-validium-aggregator
-	docker compose up -d cdk-validium-json-rpc
-	sleep 2
+run: stop ## Runs a full node for e2e
+	docker compose up -d zkevm-state-db
+	docker compose up -d zkevm-pool-db
 	docker compose up -d cdk-data-availability-db
+	docker compose up -d l1
+	sleep 1
 	docker compose up -d cdk-data-availability
+	docker compose up -d zkevm-prover
+	docker compose up -d zkevm-node
 
 .PHONY: stop
 stop: ## Stop a full data node
+	make stop-dacs
+	make stop-dac-dbs
 	$(STOP)
 
 .PHONY: test-e2e
@@ -50,40 +41,20 @@ help: ## Prints this help
 
 .PHONY: run-node
 run-node: ## Runs the node
-	docker compose up -d cdk-validium-eth-tx-manager
-	docker compose up -d cdk-validium-sync
-	sleep 2
-	docker compose up -d cdk-validium-sequencer
-	docker compose up -d cdk-validium-sequence-sender
-	docker compose up -d cdk-validium-l2gaspricer
-	docker compose up -d cdk-validium-aggregator
-	docker compose up -d cdk-validium-json-rpc
+	docker compose up -d zkevm-node
 
 .PHONY: stop-node
 stop-node: ## Stops the node
-	docker compose stop cdk-validium-sequencer && docker compose rm -f cdk-validium-sequencer
-	docker compose stop cdk-validium-sequence-sender && docker compose rm -f cdk-validium-sequence-sender
-	docker compose stop cdk-validium-json-rpc && docker compose rm -f cdk-validium-json-rpc
-	docker compose stop cdk-validium-l2gaspricer && docker compose rm -f cdk-validium-l2gaspricer
-	docker compose stop cdk-validium-aggregator && docker compose rm -f cdk-validium-aggregator
-	docker compose stop cdk-validium-sync && docker compose rm -f cdk-validium-sync
-	docker compose stop cdk-validium-eth-tx-manager && docker compose rm -f cdk-validium-eth-tx-manager
+	docker compose stop zkevm-node && docker compose rm -f zkevm-node
 
 .PHONY: run-network
 run-network: ## Runs the l1 network
-	docker compose up -d cdk-validium-mock-l1-network
+	docker compose up -d l1
 
 .PHONY: stop-network
 stop-network: ## Stops the l1 network
-	docker compose stop cdk-validium-mock-l1-network && docker compose rm -f cdk-validium-mock-l1-network
+	docker compose stop l1 && docker compose rm -f l1
 
-.PHONY: run-approve-matic
-run-approve-matic: ## Runs approve in node container
-	docker compose up -d cdk-validium-approve
-
-.PHONY: stop-approve-matic
-stop-approve-matic: ## Stops approve in node container
-	docker compose stop cdk-validium-approve && docker compose rm -f cdk-validium-approve
 
 ### manual utility to stop dac nodes that were started by e2e, but not stopped by e2e ###
 .PHONY: stop-dac-nodes

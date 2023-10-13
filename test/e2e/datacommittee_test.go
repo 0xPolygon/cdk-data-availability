@@ -259,8 +259,8 @@ func createKeyStore(pk *ecdsa.PrivateKey, outputDir, password string) error {
 func startDACMember(t *testing.T, m member) {
 	dacNodeConfig := config.Config{
 		L1: config.L1Config{
-			RpcURL:               "http://cdk-validium-mock-l1-network:8545",
-			WsURL:                "ws://cdk-validium-mock-l1-network:8546",
+			RpcURL:               "http://l1:8545",
+			WsURL:                "ws://l1:8546",
 			CDKValidiumAddress:   operations.DefaultL1CDKValidiumSmartContract,
 			DataCommitteeAddress: operations.DefaultL1DataCommitteeContract,
 			Timeout:              cTypes.Duration{Duration: time.Second},
@@ -283,6 +283,9 @@ func startDACMember(t *testing.T, m member) {
 			Host:                      "0.0.0.0",
 			MaxRequestsPerIPAndSecond: 100,
 		},
+		Log: log.Config{
+			Level: "debug",
+		},
 	}
 
 	// Run the DB
@@ -293,7 +296,7 @@ func startDACMember(t *testing.T, m member) {
 		"-e", "POSTGRES_PASSWORD=committee_password",
 		"-e", "POSTGRES_USER=committee_user",
 		"-p", fmt.Sprintf("553%d:5432", m.i),
-		"--network", "custom",
+		"--network", "cdk-data-availability",
 		"postgres", "-N", "500",
 	)
 	out, err := dbCmd.CombinedOutput()
@@ -320,7 +323,7 @@ func startDACMember(t *testing.T, m member) {
 		"--name", "cdk-data-availability-"+strconv.Itoa(m.i),
 		"-v", cfgFile+":/app/config.json",
 		"-v", ksFile+":"+ksFile,
-		"--network", "custom",
+		"--network", "cdk-data-availability",
 		dacNodeContainer,
 		"/bin/sh", "-c",
 		"/app/cdk-data-availability run --cfg /app/config.json",

@@ -28,7 +28,7 @@ import (
 const (
 	cmdFolder = "test"
 	// DefaultInterval is a time interval
-	DefaultInterval = 2 * time.Millisecond
+	DefaultInterval = 2 * time.Second
 	// DefaultDeadline is a time interval
 	DefaultDeadline                          = 2 * time.Minute
 	DefaultL1NetworkURL                      = "http://localhost:8545"
@@ -213,12 +213,6 @@ func Setup() error {
 		return err
 	}
 
-	// Approve matic
-	err = ApproveMatic()
-	if err != nil {
-		return err
-	}
-
 	// Run node container
 	err = StartNode()
 	if err != nil {
@@ -231,11 +225,6 @@ func Setup() error {
 // StartNetwork starts the L1 network container
 func StartNetwork() error {
 	return StartComponent("network", networkUpCondition)
-}
-
-// ApproveMatic runs the approving matic command
-func ApproveMatic() error {
-	return StartComponent("approve-matic")
 }
 
 // StartNode starts the node container
