@@ -335,16 +335,20 @@ func startDACMember(t *testing.T, m member) {
 }
 
 func stopDACMember(t *testing.T, m member) {
-	assert.NoError(t, exec.Command(
+	out, err := exec.Command(
 		"docker", "kill", "cdk-data-availability-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "rm", "cdk-data-availability-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "kill", "cdk-validium-data-node-db-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "rm", "cdk-validium-data-node-db-"+strconv.Itoa(m.i),
-	).Run())
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
 }
