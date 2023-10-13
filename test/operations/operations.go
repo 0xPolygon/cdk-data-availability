@@ -356,6 +356,25 @@ func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.Transa
 		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
 		err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, 4*time.Minute) //nolint:gomnd
 		if err != nil {
+			// tmp
+			cmd := exec.Command(
+				"docker", "logs", "zkevm-node",
+				"cdk-data-availability-",
+			)
+			out, _ := cmd.CombinedOutput()
+			log.Debug(string(out))
+			cmd = exec.Command(
+				"docker", "logs", "zkevm-node",
+				"cdk-data-availability-0",
+			)
+			out, _ = cmd.CombinedOutput()
+			log.Debug(string(out))
+			cmd = exec.Command(
+				"docker", "logs", "zkevm-node",
+				"cdk-data-availability-1",
+			)
+			out, _ = cmd.CombinedOutput()
+			log.Debug(string(out))
 			return nil, err
 		}
 		if confirmationLevel == VirtualConfirmationLevel {

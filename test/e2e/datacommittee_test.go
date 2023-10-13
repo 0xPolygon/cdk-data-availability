@@ -332,14 +332,6 @@ func startDACMember(t *testing.T, m member) {
 	require.NoError(t, err, string(out))
 	log.Infof("DAC node %d started", m.i)
 	time.Sleep(time.Second * 5)
-	// tmp
-	cmd = exec.Command(
-		"docker", "logs",
-		"cdk-data-availability-"+strconv.Itoa(m.i),
-	)
-	out, err = cmd.CombinedOutput()
-	require.NoError(t, err, string(out))
-	log.Debug(string(out))
 }
 
 func stopDACMember(t *testing.T, m member) {
