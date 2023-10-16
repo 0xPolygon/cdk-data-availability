@@ -131,31 +131,6 @@ func TestDataCommittee(t *testing.T) {
 	for _, m := range membs[1:] { // note starting all but first
 		startDACMember(t, m)
 	}
-	cmd := exec.Command(
-		"docker", "logs", "--tail", "1000", "cdk-data-availability-0",
-	)
-	out, _ := cmd.CombinedOutput()
-	log.Debug("DA0: ", string(out))
-	cmd = exec.Command(
-		"docker", "logs", "--tail", "1000", "cdk-data-availability-1",
-	)
-	out, _ = cmd.CombinedOutput()
-	log.Debug("DA1: ", string(out))
-	cmd = exec.Command(
-		"docker", "logs", "--tail", "1000", "cdk-data-availability-2",
-	)
-	out, _ = cmd.CombinedOutput()
-	log.Debug("DA2: ", string(out))
-	cmd = exec.Command(
-		"docker", "logs", "--tail", "1000", "cdk-data-availability-3",
-	)
-	out, _ = cmd.CombinedOutput()
-	log.Debug("DA3: ", string(out))
-	cmd = exec.Command(
-		"docker", "logs", "--tail", "1000", "cdk-data-availability-4",
-	)
-	out, _ = cmd.CombinedOutput()
-	log.Debug("DA4: ", string(out))
 
 	// Send txs
 	nTxs := 10

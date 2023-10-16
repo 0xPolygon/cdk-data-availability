@@ -354,7 +354,7 @@ func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.Transa
 
 		// wait for l2 block to be virtualized
 		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
-		err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, 4*time.Minute) //nolint:gomnd
+		err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, 1*time.Minute) //nolint:gomnd
 		if err != nil {
 			// tmp
 			cmd := exec.Command(
