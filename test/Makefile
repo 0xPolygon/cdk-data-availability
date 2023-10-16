@@ -19,7 +19,6 @@ stop: ## Stop a full data node
 
 .PHONY: test-e2e
 test-e2e: run ## Runs the E2E tests
-	go test -v ./e2e/...
 	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -race -v -p 1 -timeout 600s ./e2e/...
 
 .PHONY: test-unit
