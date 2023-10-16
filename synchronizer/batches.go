@@ -8,11 +8,11 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -21,7 +21,7 @@ const defaultBlockBatchSize = 32
 
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client         *etherman.Client
+	client         *etherman.Etherman
 	stop           chan struct{}
 	retry          time.Duration
 	blockBatchSize uint
@@ -34,11 +34,13 @@ type BatchSynchronizer struct {
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan BlockReorg) (*BatchSynchronizer, error) {
-	ethClient, err := newRPCEtherman(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewBatchSynchronizer(
+	cfg config.L1Config,
+	self common.Address,
+	db *db.DB,
+	reorgs <-chan BlockReorg,
+	ethClient *etherman.Etherman,
+) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block batch size is not set, setting to default %d", defaultBlockBatchSize)
 		cfg.BlockBatchSize = defaultBlockBatchSize
@@ -53,11 +55,7 @@ func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, r
 		reorgs:         reorgs,
 		events:         make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
 	}
-	err = synchronizer.resolveCommittee()
-	if err != nil {
-		return nil, err
-	}
-	return synchronizer, nil
+	return synchronizer, synchronizer.resolveCommittee()
 }
 
 func (bs *BatchSynchronizer) resolveCommittee() error {
@@ -197,7 +195,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 	txData := tx.Data()
-	_, keys, err := ParseEvent(event, txData)
+	_, keys, err := etherman.ParseEvent(event, txData)
 	if err != nil {
 		return err
 	}
@@ -259,5 +257,5 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 		}
 		return value, nil
 	}
-	return offchaindata.OffChainData{}, types.NewRPCError(types.NotFoundErrorCode, "no data found for key %v", key)
+	return offchaindata.OffChainData{}, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
 }

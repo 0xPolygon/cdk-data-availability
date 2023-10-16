@@ -15,14 +15,14 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
-	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	cTypes "github.com/0xPolygon/cdk-validium-node/config/types"
-	"github.com/0xPolygon/cdk-validium-node/db"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkdatacommittee"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/log"
-	"github.com/0xPolygon/cdk-validium-node/test/operations"
+	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
+	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	eTypes "github.com/ethereum/go-ethereum/core/types"
@@ -59,11 +59,8 @@ func TestDataCommittee(t *testing.T) {
 	}()
 	err = operations.Teardown()
 	require.NoError(t, err)
-	opsCfg := operations.GetDefaultOperationsConfig()
-	opsCfg.State.MaxCumulativeGasUsed = 80000000000
-	opsman, err := operations.NewManager(ctx, opsCfg)
 	require.NoError(t, err)
-	err = opsman.Setup()
+	err = operations.Setup()
 	require.NoError(t, err)
 	time.Sleep(5 * time.Second)
 	authL2, err := operations.GetAuth(operations.DefaultSequencerPrivateKey, operations.DefaultL2ChainID)
@@ -209,7 +206,7 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.Cdkva
 		return nil, err
 	}
 	txData := tx.Data()
-	_, keys, err := synchronizer.ParseEvent(event, txData)
+	_, keys, err := etherman.ParseEvent(event, txData)
 	return keys, err
 }
 
@@ -262,8 +259,7 @@ func createKeyStore(pk *ecdsa.PrivateKey, outputDir, password string) error {
 func startDACMember(t *testing.T, m member) {
 	dacNodeConfig := config.Config{
 		L1: config.L1Config{
-			RpcURL:               "http://cdk-validium-mock-l1-network:8545",
-			WsURL:                "ws://cdk-validium-mock-l1-network:8546",
+			WsURL:                "ws://l1:8546",
 			CDKValidiumAddress:   operations.DefaultL1CDKValidiumSmartContract,
 			DataCommitteeAddress: operations.DefaultL1DataCommitteeContract,
 			Timeout:              cTypes.Duration{Duration: time.Second},
@@ -282,10 +278,12 @@ func startDACMember(t *testing.T, m member) {
 			EnableLog: false,
 			MaxConns:  10,
 		},
-		RPC: jsonrpc.Config{
-			Host:                             "0.0.0.0",
-			EnableL2SuggestedGasPricePolling: false,
-			MaxRequestsPerIPAndSecond:        100,
+		RPC: rpc.Config{
+			Host:                      "0.0.0.0",
+			MaxRequestsPerIPAndSecond: 100,
+		},
+		Log: log.Config{
+			Level: "debug",
 		},
 	}
 
@@ -297,7 +295,7 @@ func startDACMember(t *testing.T, m member) {
 		"-e", "POSTGRES_PASSWORD=committee_password",
 		"-e", "POSTGRES_USER=committee_user",
 		"-p", fmt.Sprintf("553%d:5432", m.i),
-		"--network", "custom",
+		"--network", "cdk-data-availability",
 		"postgres", "-N", "500",
 	)
 	out, err := dbCmd.CombinedOutput()
@@ -324,7 +322,7 @@ func startDACMember(t *testing.T, m member) {
 		"--name", "cdk-data-availability-"+strconv.Itoa(m.i),
 		"-v", cfgFile+":/app/config.json",
 		"-v", ksFile+":"+ksFile,
-		"--network", "custom",
+		"--network", "cdk-data-availability",
 		dacNodeContainer,
 		"/bin/sh", "-c",
 		"/app/cdk-data-availability run --cfg /app/config.json",
@@ -336,16 +334,20 @@ func startDACMember(t *testing.T, m member) {
 }
 
 func stopDACMember(t *testing.T, m member) {
-	assert.NoError(t, exec.Command(
+	out, err := exec.Command(
 		"docker", "kill", "cdk-data-availability-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "rm", "cdk-data-availability-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "kill", "cdk-validium-data-node-db-"+strconv.Itoa(m.i),
-	).Run())
-	assert.NoError(t, exec.Command(
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
+	out, err = exec.Command(
 		"docker", "rm", "cdk-validium-data-node-db-"+strconv.Itoa(m.i),
-	).Run())
+	).CombinedOutput()
+	assert.NoError(t, err, string(out))
 }

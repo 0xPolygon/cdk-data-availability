@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v4"
 )

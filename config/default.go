@@ -40,10 +40,6 @@ Port = 8444
 ReadTimeout = "60s"
 WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
-SequencerNodeURI = ""
-EnableL2SuggestedGasPricePolling = false
-	[RPC.WebSockets]
-		Enabled = false
 `
 
 // Default parses the default configuration values.
