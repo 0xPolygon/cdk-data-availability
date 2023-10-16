@@ -359,10 +359,6 @@ func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.Transa
 			// tmp
 			cmd := exec.Command(
 				"docker", "logs", "zkevm-node",
-				"|", "grep", "-v", "jsonrpc",
-				"|", "grep", "-v", "aggregator",
-				"|", "grep", "-v", "sequencer",
-				"|", "grep", "-v", "synchronizer",
 			)
 			out, _ := cmd.CombinedOutput()
 			log.Debug("zkevm node: ", string(out))
