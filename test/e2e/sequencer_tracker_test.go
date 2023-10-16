@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,8 +23,10 @@ func TestSequencerAddrExists(t *testing.T) {
 	ctx := cli.NewContext(cli.NewApp(), nil, nil)
 	cfg, err := config.Load(ctx)
 	require.NoError(t, err)
+	etherman, err := etherman.New(cfg.L1)
+	require.NoError(t, err)
 
-	tracker, err := synchronizer.NewSequencerTracker(cfg.L1)
+	tracker, err := synchronizer.NewSequencerTracker(cfg.L1, etherman)
 	require.NoError(t, err)
 
 	addr := tracker.GetAddr()

@@ -10,6 +10,7 @@ import (
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
@@ -74,12 +75,18 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Load EtherMan
+	etherman, err := etherman.New(c.L1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// derive address
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1)
+	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1, etherman)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +105,7 @@ func start(cliCtx *cli.Context) error {
 
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
-	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe())
+	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe(), etherman)
 	if err != nil {
 		log.Fatal(err)
 	}

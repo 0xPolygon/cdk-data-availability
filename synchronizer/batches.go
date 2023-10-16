@@ -21,7 +21,7 @@ const defaultBlockBatchSize = 32
 
 // BatchSynchronizer watches for batch events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client         *etherman.Client
+	client         *etherman.Etherman
 	stop           chan struct{}
 	retry          time.Duration
 	blockBatchSize uint
@@ -34,11 +34,13 @@ type BatchSynchronizer struct {
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
-func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, reorgs <-chan BlockReorg) (*BatchSynchronizer, error) {
-	ethClient, err := newRPCEtherman(cfg)
-	if err != nil {
-		return nil, err
-	}
+func NewBatchSynchronizer(
+	cfg config.L1Config,
+	self common.Address,
+	db *db.DB,
+	reorgs <-chan BlockReorg,
+	ethClient *etherman.Etherman,
+) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block batch size is not set, setting to default %d", defaultBlockBatchSize)
 		cfg.BlockBatchSize = defaultBlockBatchSize
@@ -53,11 +55,7 @@ func NewBatchSynchronizer(cfg config.L1Config, self common.Address, db *db.DB, r
 		reorgs:         reorgs,
 		events:         make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
 	}
-	err = synchronizer.resolveCommittee()
-	if err != nil {
-		return nil, err
-	}
-	return synchronizer, nil
+	return synchronizer, synchronizer.resolveCommittee()
 }
 
 func (bs *BatchSynchronizer) resolveCommittee() error {
@@ -197,7 +195,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 	txData := tx.Data()
-	_, keys, err := ParseEvent(event, txData)
+	_, keys, err := etherman.ParseEvent(event, txData)
 	if err != nil {
 		return err
 	}

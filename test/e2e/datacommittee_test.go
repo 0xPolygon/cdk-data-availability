@@ -17,11 +17,11 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -206,7 +206,7 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.Cdkva
 		return nil, err
 	}
 	txData := tx.Data()
-	_, keys, err := synchronizer.ParseEvent(event, txData)
+	_, keys, err := etherman.ParseEvent(event, txData)
 	return keys, err
 }
 
@@ -259,7 +259,6 @@ func createKeyStore(pk *ecdsa.PrivateKey, outputDir, password string) error {
 func startDACMember(t *testing.T, m member) {
 	dacNodeConfig := config.Config{
 		L1: config.L1Config{
-			RpcURL:               "http://l1:8545",
 			WsURL:                "ws://l1:8546",
 			CDKValidiumAddress:   operations.DefaultL1CDKValidiumSmartContract,
 			DataCommitteeAddress: operations.DefaultL1DataCommitteeContract,

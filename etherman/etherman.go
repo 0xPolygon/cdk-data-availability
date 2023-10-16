@@ -2,15 +2,21 @@ package etherman
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
+	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type ethereumClient interface {
@@ -26,21 +32,45 @@ type ethereumClient interface {
 	bind.DeployBackend
 }
 
-// Client is a simple implementation of EtherMan.
-type Client struct {
+// Etherman is the implementation of EtherMan.
+type Etherman struct {
 	EthClient     ethereumClient
 	CDKValidium   *cdkvalidium.Cdkvalidium
 	DataCommittee *cdkdatacommittee.Cdkdatacommittee
 }
 
+func New(cfg config.L1Config) (*Etherman, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
+	defer cancel()
+	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
+	if err != nil {
+		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
+		return nil, err
+	}
+	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
+	if err != nil {
+		return nil, err
+	}
+	dataCommittee, err :=
+		cdkdatacommittee.NewCdkdatacommittee(common.HexToAddress(cfg.DataCommitteeAddress), ethClient)
+	if err != nil {
+		return nil, err
+	}
+	return &Etherman{
+		EthClient:     ethClient,
+		CDKValidium:   cdkValidium,
+		DataCommittee: dataCommittee,
+	}, nil
+}
+
 // GetTx function get ethereum tx
-func (etherMan *Client) GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
-	return etherMan.EthClient.TransactionByHash(ctx, txHash)
+func (e *Etherman) GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
+	return e.EthClient.TransactionByHash(ctx, txHash)
 }
 
 // TrustedSequencer gets trusted sequencer address
-func (etherMan *Client) TrustedSequencer() (common.Address, error) {
-	return etherMan.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
+func (e *Etherman) TrustedSequencer() (common.Address, error) {
+	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
 // DataCommitteeMember represents a member of the Data Committee
@@ -57,16 +87,16 @@ type DataCommittee struct {
 }
 
 // GetCurrentDataCommittee return the currently registered data committee
-func (etherMan *Client) GetCurrentDataCommittee() (*DataCommittee, error) {
-	addrsHash, err := etherMan.DataCommittee.CommitteeHash(&bind.CallOpts{Pending: false})
+func (e *Etherman) GetCurrentDataCommittee() (*DataCommittee, error) {
+	addrsHash, err := e.DataCommittee.CommitteeHash(&bind.CallOpts{Pending: false})
 	if err != nil {
 		return nil, fmt.Errorf("error getting CommitteeHash from L1 SC: %w", err)
 	}
-	reqSign, err := etherMan.DataCommittee.RequiredAmountOfSignatures(&bind.CallOpts{Pending: false})
+	reqSign, err := e.DataCommittee.RequiredAmountOfSignatures(&bind.CallOpts{Pending: false})
 	if err != nil {
 		return nil, fmt.Errorf("error getting RequiredAmountOfSignatures from L1 SC: %w", err)
 	}
-	members, err := etherMan.GetCurrentDataCommitteeMembers()
+	members, err := e.GetCurrentDataCommitteeMembers()
 	if err != nil {
 		return nil, err
 	}
@@ -79,14 +109,14 @@ func (etherMan *Client) GetCurrentDataCommittee() (*DataCommittee, error) {
 }
 
 // GetCurrentDataCommitteeMembers return the currently registered data committee members
-func (etherMan *Client) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error) {
+func (e *Etherman) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error) {
 	members := []DataCommitteeMember{}
-	nMembers, err := etherMan.DataCommittee.GetAmountOfMembers(&bind.CallOpts{Pending: false})
+	nMembers, err := e.DataCommittee.GetAmountOfMembers(&bind.CallOpts{Pending: false})
 	if err != nil {
 		return nil, fmt.Errorf("error getting GetAmountOfMembers from L1 SC: %w", err)
 	}
 	for i := int64(0); i < nMembers.Int64(); i++ {
-		member, err := etherMan.DataCommittee.Members(&bind.CallOpts{Pending: false}, big.NewInt(i))
+		member, err := e.DataCommittee.Members(&bind.CallOpts{Pending: false}, big.NewInt(i))
 		if err != nil {
 			return nil, fmt.Errorf("error getting Members %d from L1 SC: %w", i, err)
 		}
@@ -96,4 +126,35 @@ func (etherMan *Client) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember,
 		})
 	}
 	return members, nil
+}
+
+// ParseEvent unpacks the keys in a SequenceBatches event
+func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
+	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
+	if err != nil {
+		return 0, nil, err
+	}
+	method, err := a.MethodById(txData[:4])
+	if err != nil {
+		return 0, nil, err
+	}
+	data, err := method.Inputs.Unpack(txData[4:])
+	if err != nil {
+		return 0, nil, err
+	}
+	var batches []cdkvalidium.CDKValidiumBatchData
+	bytes, err := json.Marshal(data[0])
+	if err != nil {
+		return 0, nil, err
+	}
+	err = json.Unmarshal(bytes, &batches)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var keys []common.Hash
+	for _, batch := range batches {
+		keys = append(keys, batch.TransactionsHash)
+	}
+	return event.Raw.BlockNumber, keys, nil
 }
