@@ -39,6 +39,7 @@ type Etherman struct {
 	DataCommittee *cdkdatacommittee.Cdkdatacommittee
 }
 
+// New creaters a enw etherman
 func New(cfg config.L1Config) (*Etherman, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
 	defer cancel()
