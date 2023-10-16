@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
-	"github.com/0xPolygon/cdk-validium-node/etherman"
-	"github.com/0xPolygon/cdk-validium-node/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-validium-node/log"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"
@@ -16,7 +16,7 @@ import (
 
 // SequencerTracker watches the contract for relevant changes to the sequencer
 type SequencerTracker struct {
-	client  *etherman.Client
+	client  *etherman.Etherman
 	stop    chan struct{}
 	timeout time.Duration
 	retry   time.Duration
@@ -25,12 +25,8 @@ type SequencerTracker struct {
 }
 
 // NewSequencerTracker creates a new SequencerTracker
-func NewSequencerTracker(cfg config.L1Config) (*SequencerTracker, error) {
+func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*SequencerTracker, error) {
 	log.Info("starting sequencer address tracker")
-	ethClient, err := newWSEtherman(cfg)
-	if err != nil {
-		return nil, err
-	}
 	// current address of the sequencer
 	addr, err := ethClient.TrustedSequencer()
 	if err != nil {

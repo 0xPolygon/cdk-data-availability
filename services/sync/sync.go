@@ -3,8 +3,7 @@ package sync
 import (
 	"context"
 
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -14,7 +13,7 @@ const APISYNC = "sync"
 // SyncEndpoints contains implementations for the "zkevm" RPC endpoints
 type SyncEndpoints struct {
 	db    DBInterface
-	txMan jsonrpc.DBTxManager
+	txMan rpc.DBTxManager
 }
 
 // NewSyncEndpoints returns ZKEVMEndpoints
@@ -25,11 +24,11 @@ func NewSyncEndpoints(db DBInterface) *SyncEndpoints {
 }
 
 // GetOffChainData returns the image of the given hash
-func (z *SyncEndpoints) GetOffChainData(hash types.ArgHash) (interface{}, types.Error) {
-	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx pgx.Tx) (interface{}, types.Error) {
+func (z *SyncEndpoints) GetOffChainData(hash rpc.ArgHash) (interface{}, rpc.Error) {
+	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx pgx.Tx) (interface{}, rpc.Error) {
 		data, err := z.db.GetOffChainData(ctx, hash.Hash(), dbTx)
 		if err != nil {
-			return "0x0", types.NewRPCError(types.DefaultErrorCode, "failed to get the requested data")
+			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
 		}
 
 		return data, nil

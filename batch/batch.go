@@ -3,18 +3,18 @@ package batch
 import (
 	"crypto/ecdsa"
 
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // Batch represents a batch used for synchronization
 type Batch struct {
-	Number         types.ArgUint64 `json:"number"`
-	GlobalExitRoot common.Hash     `json:"globalExitRoot"`
-	Timestamp      types.ArgUint64 `json:"timestamp"`
-	Coinbase       common.Address  `json:"coinbase"`
-	L2Data         types.ArgBytes  `json:"batchL2Data"`
+	Number         rpc.ArgUint64  `json:"number"`
+	GlobalExitRoot common.Hash    `json:"globalExitRoot"`
+	Timestamp      rpc.ArgUint64  `json:"timestamp"`
+	Coinbase       common.Address `json:"coinbase"`
+	L2Data         rpc.ArgBytes   `json:"batchL2Data"`
 }
 
 // HashToSign returns a hash that uniquely identifies the batch
@@ -43,8 +43,8 @@ func (b *Batch) Sign(privateKey *ecdsa.PrivateKey) (*SignedBatch, error) {
 
 // SignedBatch is a batch but signed
 type SignedBatch struct {
-	Batch     Batch          `json:"batch"`
-	Signature types.ArgBytes `json:"signature"`
+	Batch     Batch        `json:"batch"`
+	Signature rpc.ArgBytes `json:"signature"`
 }
 
 // Signer returns the address of the signer

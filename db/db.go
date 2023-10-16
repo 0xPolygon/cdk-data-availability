@@ -5,12 +5,16 @@ import (
 	"errors"
 
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
-	"github.com/0xPolygon/cdk-validium-node/jsonrpc/types"
-	"github.com/0xPolygon/cdk-validium-node/state"
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+)
+
+var (
+	// ErrStateNotSynchronized indicates the state database may be empty
+	ErrStateNotSynchronized = errors.New("state not synchronized")
 )
 
 // DB is the database layer of the data node
@@ -51,7 +55,7 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []offchaindata.OffChainD
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (types.ArgBytes, error) {
+func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (rpc.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 
@@ -63,7 +67,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx)
 
 	if err := dbTx.QueryRow(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, state.ErrStateNotSynchronized
+			return nil, ErrStateNotSynchronized
 		}
 		return nil, err
 	}
