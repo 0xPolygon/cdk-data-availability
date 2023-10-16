@@ -19,7 +19,7 @@ func resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (of
 	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
 	defer cancel()
 
-	log.Debugf("trying member %v for key %v", member.URL, key.Hex())
+	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, key.Hex())
 
 	bytes, err := cm.GetOffChainData(ctx, key)
 	if len(bytes) == 0 {
