@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/0xPolygon/cdk-data-availability/offchaindata"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
@@ -35,7 +35,7 @@ func (db *DB) BeginStateTransaction(ctx context.Context) (pgx.Tx, error) {
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *DB) StoreOffChainData(ctx context.Context, od []offchaindata.OffChainData, dbTx pgx.Tx) error {
+func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx pgx.Tx) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)

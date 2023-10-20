@@ -1,4 +1,4 @@
-package sequence
+package types
 
 import (
 	"crypto/ecdsa"
@@ -6,8 +6,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/0xPolygon/cdk-data-availability/batch"
-	"github.com/0xPolygon/cdk-data-availability/offchaindata"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -21,8 +19,8 @@ const (
 // Sequence represents the data that the sequencer will send to L1
 // and other metadata needed to build the accumulated input hash aka accInputHash
 type Sequence struct {
-	Batches         []batch.Batch `json:"batches"`
-	OldAccInputHash common.Hash   `json:"oldAccInputhash"`
+	Batches         []Batch     `json:"batches"`
+	OldAccInputHash common.Hash `json:"oldAccInputhash"`
 }
 
 // HashToSign returns the accumulated input hash of the sequence.
@@ -88,10 +86,10 @@ func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
 }
 
 // OffChainData returns the data that needs to be stored off chain from a given sequence
-func (s *Sequence) OffChainData() []offchaindata.OffChainData {
-	od := []offchaindata.OffChainData{}
+func (s *Sequence) OffChainData() []OffChainData {
+	od := []OffChainData{}
 	for _, b := range s.Batches {
-		od = append(od, offchaindata.OffChainData{
+		od = append(od, OffChainData{
 			Key:   crypto.Keccak256Hash(b.L2Data),
 			Value: b.L2Data,
 		})

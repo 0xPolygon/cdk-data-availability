@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 
-	"github.com/0xPolygon/cdk-data-availability/sequence"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -15,7 +15,7 @@ type ClientFactoryInterface interface {
 // ClientInterface is the interface that defines the implementation of all the endpoints
 type ClientInterface interface {
 	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
-	SignSequence(signedSequence sequence.SignedSequence) ([]byte, error)
+	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
 // ClientFactory is the implementation of the data committee client factory

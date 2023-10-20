@@ -6,11 +6,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/0xPolygon/cdk-data-availability/batch"
 	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cfgTypes "github.com/0xPolygon/cdk-data-availability/config/types"
-	"github.com/0xPolygon/cdk-data-availability/sequence"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
@@ -40,11 +39,11 @@ func TestSignSequence(t *testing.T) {
 	tc, pk := initTest(t)
 	type testSequences struct {
 		name        string
-		sequence    sequence.SignedSequence
+		sequence    types.SignedSequence
 		expectedErr error
 	}
-	expectedSequence := sequence.Sequence{
-		Batches: []batch.Batch{
+	expectedSequence := types.Sequence{
+		Batches: []types.Batch{
 			{
 				Number:         3,
 				GlobalExitRoot: common.HexToHash("0x678343456734678"),
@@ -69,15 +68,15 @@ func TestSignSequence(t *testing.T) {
 	tSequences := []testSequences{
 		{
 			name: "invalid_signature",
-			sequence: sequence.SignedSequence{
-				Sequence:  sequence.Sequence{},
+			sequence: types.SignedSequence{
+				Sequence:  types.Sequence{},
 				Signature: common.Hex2Bytes("f00"),
 			},
 			expectedErr: errors.New("-32000 failed to verify sender"),
 		},
 		{
 			name: "signature_not_from_sender",
-			sequence: sequence.SignedSequence{
+			sequence: types.SignedSequence{
 				Sequence:  expectedSequence,
 				Signature: unexpectedSenderSignedSequence.Signature,
 			},
@@ -85,12 +84,12 @@ func TestSignSequence(t *testing.T) {
 		},
 		{
 			name:        "empty_batch",
-			sequence:    sequence.SignedSequence{},
+			sequence:    types.SignedSequence{},
 			expectedErr: nil,
 		},
 		{
 			name: "success",
-			sequence: sequence.SignedSequence{
+			sequence: types.SignedSequence{
 				Sequence:  expectedSequence,
 				Signature: nil,
 			},
@@ -121,7 +120,7 @@ func newTestClient(url string, addr common.Address) *testClient {
 	}
 }
 
-func (tc *testClient) signSequence(t *testing.T, expected *sequence.SignedSequence, expectedErr error) {
+func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence, expectedErr error) {
 	if signature, err := tc.client.SignSequence(*expected); err != nil {
 		assert.Equal(t, expectedErr.Error(), err.Error())
 	} else {

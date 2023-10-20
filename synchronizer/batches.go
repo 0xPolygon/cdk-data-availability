@@ -11,8 +11,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/0xPolygon/cdk-data-availability/offchaindata"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -211,10 +211,10 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return nil
 	}
 
-	var data []offchaindata.OffChainData
+	var data []types.OffChainData
 	for _, key := range missing {
 		log.Infof("resolving missing key %v", key.Hex())
-		var value offchaindata.OffChainData
+		var value types.OffChainData
 		value, err = bs.resolve(key)
 		if err != nil {
 			return err
@@ -226,14 +226,14 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 	return store(bs.db, data)
 }
 
-func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData, error) {
+func (bs *BatchSynchronizer) resolve(key common.Hash) (types.OffChainData, error) {
 	log.Debugf("resolving missing data for key %v", key.Hex())
 	if len(bs.committee) == 0 {
 		// committee is resolved again once all members are evicted. They can be evicted
 		// for not having data, or their config being malformed
 		err := bs.resolveCommittee()
 		if err != nil {
-			return offchaindata.OffChainData{}, err
+			return types.OffChainData{}, err
 		}
 	}
 	// pull out the members, iterating will change the map on error
@@ -257,5 +257,5 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (offchaindata.OffChainData
 		}
 		return value, nil
 	}
-	return offchaindata.OffChainData{}, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
+	return types.OffChainData{}, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
 }
