@@ -13,13 +13,13 @@ import (
 
 const dbTimeout = 2 * time.Second
 
-const L1SyncTask = "L1"
+const l1SyncTask = "L1"
 
 func getStartBlock(db *db.DB) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	start, err := db.GetLastProcessedBlock(ctx, L1SyncTask)
+	start, err := db.GetLastProcessedBlock(ctx, l1SyncTask)
 	if err != nil {
 		log.Errorf("error retrieving last processed block, starting from 0: %v", err)
 	}
@@ -39,7 +39,7 @@ func setStartBlock(db *db.DB, block uint64) error {
 	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
 		return err
 	}
-	err = db.StoreLastProcessedBlock(ctx, L1SyncTask, block, dbTx)
+	err = db.StoreLastProcessedBlock(ctx, l1SyncTask, block, dbTx)
 	if err != nil {
 		return err
 	}
