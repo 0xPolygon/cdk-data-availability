@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testCases = []Batch{
+var testBatchCases = []Batch{
 	{
 		L2Data:         common.Hex2Bytes(""),
 		GlobalExitRoot: common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
@@ -44,14 +44,14 @@ var testCases = []Batch{
 	},
 }
 
-func TestSigning(t *testing.T) {
+func TestBatchSigning(t *testing.T) {
 	privKeys := []*ecdsa.PrivateKey{}
 	for i := 0; i < 5; i++ {
 		pk, err := crypto.GenerateKey()
 		require.NoError(t, err)
 		privKeys = append(privKeys, pk)
 	}
-	for _, c := range testCases {
+	for _, c := range testBatchCases {
 		for _, pk := range privKeys {
 			signedBatch, err := c.Sign(pk)
 			require.NoError(t, err)

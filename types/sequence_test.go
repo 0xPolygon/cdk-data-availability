@@ -11,12 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type testCase struct {
+type testSequenceCase struct {
 	s            Sequence
 	expectedHash common.Hash
 }
 
-var testCases = []testCase{
+var testSequenceCases = []testSequenceCase{
 	{
 		s: Sequence{
 			OldAccInputHash: common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
@@ -66,7 +66,7 @@ var testCases = []testCase{
 }
 
 func TestHashToSign(t *testing.T) {
-	for _, c := range testCases {
+	for _, c := range testSequenceCases {
 		assert.Equal(
 			t, c.expectedHash.Hex(),
 			"0x"+common.Bytes2Hex(c.s.HashToSign()),
@@ -81,7 +81,7 @@ func TestSigning(t *testing.T) {
 		require.NoError(t, err)
 		privKeys = append(privKeys, pk)
 	}
-	for _, c := range testCases {
+	for _, c := range testSequenceCases {
 		for _, pk := range privKeys {
 			signedSequence, err := c.s.Sign(pk)
 			require.NoError(t, err)
