@@ -7,7 +7,6 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/offchaindata"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -76,7 +75,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx)
 
 // Exists checks if a key exists in offchain data table
 func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
-	var keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1"
+	var keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1;"
 	var (
 		count uint
 	)
@@ -87,42 +86,28 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 	return count > 0
 }
 
-// GetLastProcessedBlock returns the latest block successfully processed by the synchronizer
-func (db *DB) GetLastProcessedBlock(ctx context.Context) (uint64, error) {
-	const getLastProcessedBlockSQL = "SELECT max(block) FROM data_node.sync_info;"
+// GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
+func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
+	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
 	var (
 		lastBlock uint64
 	)
-
-	if err := db.pg.QueryRow(ctx, getLastProcessedBlockSQL).Scan(&lastBlock); err != nil {
+	if err := db.pg.QueryRow(ctx, getLastProcessedBlockSQL, task).Scan(&lastBlock); err != nil {
 		return 0, err
 	}
 	return lastBlock, nil
 }
 
-// ResetLastProcessedBlock removes all sync_info for blocks greater than `block`
-func (db *DB) ResetLastProcessedBlock(ctx context.Context, block uint64) (uint64, error) {
-	const resetLastProcessedBlock = "DELETE FROM data_node.sync_info WHERE block > $1"
-	var (
-		ct  pgconn.CommandTag
-		err error
-	)
-	if ct, err = db.pg.Exec(ctx, resetLastProcessedBlock, block); err != nil {
-		return 0, err
-	}
-	return uint64(ct.RowsAffected()), nil
-}
-
-// StoreLastProcessedBlock stores a record of a block processed by the synchronizer
-func (db *DB) StoreLastProcessedBlock(ctx context.Context, block uint64, dbTx pgx.Tx) error {
+// StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
+func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx pgx.Tx) error {
 	const storeLastProcessedBlockSQL = `
-		INSERT INTO data_node.sync_info (block) 
-		VALUES ($1) 
-		ON CONFLICT (block) DO UPDATE 
-		SET processed = NOW();
+		INSERT INTO data_node.sync_tasks (task, block) 
+		VALUES ($1, $2)
+		ON CONFLICT (task) DO UPDATE 
+		SET block = EXCLUDED.block, processed = NOW();
 	`
 
-	if _, err := dbTx.Exec(ctx, storeLastProcessedBlockSQL, block); err != nil {
+	if _, err := dbTx.Exec(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
 		return err
 	}
 	return nil

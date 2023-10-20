@@ -13,11 +13,13 @@ import (
 
 const dbTimeout = 2 * time.Second
 
+const L1SyncTask = "L1"
+
 func getStartBlock(db *db.DB) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	start, err := db.GetLastProcessedBlock(ctx)
+	start, err := db.GetLastProcessedBlock(ctx, L1SyncTask)
 	if err != nil {
 		log.Errorf("error retrieving last processed block, starting from 0: %v", err)
 	}
@@ -37,26 +39,12 @@ func setStartBlock(db *db.DB, block uint64) error {
 	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
 		return err
 	}
-	err = db.StoreLastProcessedBlock(ctx, block, dbTx)
+	err = db.StoreLastProcessedBlock(ctx, L1SyncTask, block, dbTx)
 	if err != nil {
 		return err
 	}
 	if err = dbTx.Commit(ctx); err != nil {
 		return err
-	}
-	return nil
-}
-
-func rewindStartBlock(db *db.DB, lca uint64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	rewind, err := db.ResetLastProcessedBlock(ctx, lca)
-	if err != nil {
-		return err
-	}
-	if rewind > 0 {
-		log.Infof("rewound %d blocks", rewind)
 	}
 	return nil
 }
