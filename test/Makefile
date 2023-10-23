@@ -57,3 +57,12 @@ run-network: ## Runs the l1 network
 stop-network: ## Stops the l1 network
 	docker compose stop l1 && docker compose rm -f l1
 
+.PHONY: run-local
+run-local: run-network ## Run network and db for local instance
+	docker compose up -d cdk-data-availability-db
+
+.PHONY: stop-local
+stop-local: stop-network ## Run network and db for local instance
+	docker compose stop cdk-data-availability-db && docker compose rm -f cdk-data-availability-db
+
+

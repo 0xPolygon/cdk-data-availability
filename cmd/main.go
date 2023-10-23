@@ -84,6 +84,12 @@ func start(cliCtx *cli.Context) error {
 	// derive address
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
+	// ensure synchro/reorg start block is set
+	err = synchronizer.InitStartBlock(storage, c.L1)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var cancelFuncs []context.CancelFunc
 
 	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1, etherman)
