@@ -12,9 +12,14 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+const (
+	initBlockTimeout = 15 * time.Second
+	minCodeLen       = 2
+)
+
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
 func InitStartBlock(db *db.DB, l1 config.L1Config) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), initBlockTimeout)
 	defer cancel()
 
 	current, err := getStartBlock(db)
@@ -58,8 +63,8 @@ func findCode(ctx context.Context, eth *ethclient.Client, address common.Address
 	if startBlock == endBlock {
 		return startBlock, nil
 	}
-	midBlock := (startBlock + endBlock) / 2
-	if codeLen := codeLen(ctx, eth, address, midBlock); codeLen > 2 {
+	midBlock := (startBlock + endBlock) / 2 //nolint:gomnd
+	if codeLen := codeLen(ctx, eth, address, midBlock); codeLen > minCodeLen {
 		return findCode(ctx, eth, address, startBlock, midBlock)
 	} else {
 		return findCode(ctx, eth, address, midBlock+1, endBlock)
