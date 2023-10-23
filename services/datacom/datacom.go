@@ -5,8 +5,8 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/0xPolygon/cdk-data-availability/sequence"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -35,7 +35,7 @@ func NewDataComEndpoints(
 // SignSequence generates the accumulated input hash aka accInputHash of the sequence and sign it.
 // After storing the data that will be sent hashed to the contract, it returns the signature.
 // This endpoint is only accessible to the sequencer
-func (d *DataComEndpoints) SignSequence(signedSequence sequence.SignedSequence) (interface{}, rpc.Error) {
+func (d *DataComEndpoints) SignSequence(signedSequence types.SignedSequence) (interface{}, rpc.Error) {
 	// Verify that the request comes from the sequencer
 	sender, err := signedSequence.Signer()
 	if err != nil {

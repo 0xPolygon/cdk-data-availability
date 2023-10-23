@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/0xPolygon/cdk-data-availability/offchaindata"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jackc/pgx/v4"
 )
@@ -55,7 +55,7 @@ func exists(db *db.DB, key common.Hash) bool {
 	return db.Exists(ctx, key)
 }
 
-func store(db *db.DB, data []offchaindata.OffChainData) error {
+func store(db *db.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	var (

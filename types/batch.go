@@ -1,4 +1,4 @@
-package batch
+package types
 
 import (
 	"crypto/ecdsa"
