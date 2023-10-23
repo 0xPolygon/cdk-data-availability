@@ -14,8 +14,11 @@ run: stop ## Runs a full node for e2e
 .PHONY: stop
 stop: ## Stop a full data node
 	make stop-dacs
-	make stop-dac-dbs
 	$(STOP)
+
+.PHONY: stop-dacs
+stop-dacs:
+	@./stop-dacs > /dev/null 2>&1
 
 .PHONY: test-e2e
 test-e2e: run ## Runs the E2E tests
@@ -54,19 +57,3 @@ run-network: ## Runs the l1 network
 stop-network: ## Stops the l1 network
 	docker compose stop l1 && docker compose rm -f l1
 
-
-### manual utility to stop dac nodes that were started by e2e, but not stopped by e2e ###
-.PHONY: stop-dac-nodes
-stop-dac-nodes:
-	for i in 0 1 2 3 4 ; do \
-  		(docker kill cdk-data-availability-$$i || true) && (docker rm cdk-data-availability-$$i || true) ; \
-  	done
-
-.PHONY: stop-dac-dbs
-stop-dac-dbs:
-	for i in 0 1 2 3 4 ; do \
-  		(docker kill cdk-validium-data-node-db-$$i || true) && (docker rm cdk-validium-data-node-db-$$i || true); \
-  	done
-
-.PHONY: stop-dacs
-stop-dacs: stop-dac-nodes stop-dac-dbs

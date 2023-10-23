@@ -103,7 +103,7 @@ func (bs *BatchSynchronizer) handleReorgs() {
 				// only reset start block if necessary
 				continue
 			}
-			err = rewindStartBlock(bs.db, r.Number)
+			err = setStartBlock(bs.db, r.Number)
 			if err != nil {
 				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
 			}
