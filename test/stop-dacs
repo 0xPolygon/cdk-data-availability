@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for x in cdk-data-availability cdk-validium-data-node-db; do
+  echo $x
+  for i in 0 1 2 3 4; do
+    docker kill $x-$i || true
+    docker rm $x-$i || true
+  done
+done
