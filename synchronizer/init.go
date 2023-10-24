@@ -51,17 +51,14 @@ func findContractDeploymentBlock(ctx context.Context, url string, contract commo
 	if err != nil {
 		return nil, err
 	}
-	b, err := findCode(ctx, eth, contract, 0, latestBlock.Number().Int64())
-	if err != nil {
-		return nil, err
-	}
-	return big.NewInt(b), nil
+	firstBlock := findCode(ctx, eth, contract, 0, latestBlock.Number().Int64())
+	return big.NewInt(firstBlock), nil
 }
 
 // findCode is an O(log(n)) search for the inception block of a contract at the given address
-func findCode(ctx context.Context, eth *ethclient.Client, address common.Address, startBlock, endBlock int64) (int64, error) {
+func findCode(ctx context.Context, eth *ethclient.Client, address common.Address, startBlock, endBlock int64) int64 {
 	if startBlock == endBlock {
-		return startBlock, nil
+		return startBlock
 	}
 	midBlock := (startBlock + endBlock) / 2 //nolint:gomnd
 	if codeLen := codeLen(ctx, eth, address, midBlock); codeLen > minCodeLen {
