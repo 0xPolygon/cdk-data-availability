@@ -85,12 +85,10 @@ func start(cliCtx *cli.Context) error {
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
 	// ensure synchro/reorg start block is set
-	/* TEMPORARY DISABLE TO FIX TEST
 	err = synchronizer.InitStartBlock(storage, c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
-	*/
 
 	var cancelFuncs []context.CancelFunc
 
