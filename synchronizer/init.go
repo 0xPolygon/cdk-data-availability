@@ -30,7 +30,7 @@ func InitStartBlock(db *db.DB, l1 config.L1Config) error {
 		// no need to resolve start block, it's already been set
 		return nil
 	}
-	log.Info("starting search for start block of contract", l1.CDKValidiumAddress)
+	log.Info("starting search for start block of contract ", l1.CDKValidiumAddress)
 	startBlock, err := findContractDeploymentBlock(ctx, l1.RpcURL, common.HexToAddress(l1.CDKValidiumAddress))
 	if err != nil {
 		return err
