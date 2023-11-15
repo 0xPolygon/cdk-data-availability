@@ -71,6 +71,16 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 	clientL1, err := ethclient.Dial(operations.DefaultL1NetworkURL)
 	require.NoError(t, err)
+
+	// The default sequencer URL is incorrect, set it to match the docker container
+	validiumContract, err := cdkvalidium.NewCdkvalidium(
+		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
+		clientL1,
+	)
+	require.NoError(t, err)
+	_, err = validiumContract.SetTrustedSequencerURL(authL1, "http://zkevm-node:8123")
+	require.NoError(t, err)
+
 	dacSC, err := cdkdatacommittee.NewCdkdatacommittee(
 		common.HexToAddress(operations.DefaultL1DataCommitteeContract),
 		clientL1,
