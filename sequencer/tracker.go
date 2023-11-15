@@ -32,10 +32,12 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("current sequencer addr: %s", addr.Hex())
 	url, err := ethClient.TrustedSequencerURL()
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("current sequencer url: %s", url)
 	w := &SequencerTracker{
 		client:  ethClient,
 		stop:    make(chan struct{}),

@@ -45,6 +45,7 @@ func NewBatchSynchronizer(
 	db *db.DB,
 	reorgs <-chan BlockReorg,
 	ethClient *etherman.Etherman,
+	sequencer *sequencer.SequencerTracker,
 ) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block batch size is not set, setting to default %d", defaultBlockBatchSize)
@@ -60,6 +61,7 @@ func NewBatchSynchronizer(
 		db:             db,
 		reorgs:         reorgs,
 		events:         make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
+		sequencer:      sequencer,
 	}
 	return synchronizer, synchronizer.resolveCommittee()
 }
@@ -277,6 +279,7 @@ func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.O
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
 func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *types.OffChainData {
+	log.Debugf("resolving batch %d, key %s, with sequencer at %s", batchNum, key.Hex(), bs.sequencer.GetUrl())
 	data, err := sequencer.GetData(bs.sequencer.GetUrl(), batchNum)
 	if err != nil {
 		log.Warnf("failed to get data from sequencer: %v", err)
