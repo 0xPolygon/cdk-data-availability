@@ -1,4 +1,4 @@
-package synchronizer
+package sequencer
 
 import (
 	"context"
@@ -21,14 +21,18 @@ type SequencerTracker struct {
 	timeout time.Duration
 	retry   time.Duration
 	addr    common.Address
+	url     string
 	lock    sync.Mutex
 }
 
 // NewSequencerTracker creates a new SequencerTracker
 func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*SequencerTracker, error) {
 	log.Info("starting sequencer address tracker")
-	// current address of the sequencer
 	addr, err := ethClient.TrustedSequencer()
+	if err != nil {
+		return nil, err
+	}
+	url, err := ethClient.TrustedSequencerURL()
 	if err != nil {
 		return nil, err
 	}
@@ -38,6 +42,7 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 		timeout: cfg.Timeout.Duration,
 		retry:   cfg.RetryPeriod.Duration,
 		addr:    addr,
+		url:     url,
 	}
 	return w, nil
 }
@@ -55,8 +60,26 @@ func (st *SequencerTracker) setAddr(addr common.Address) {
 	st.addr = addr
 }
 
+// GetUrl returns the last known URL of the Sequencer
+func (st *SequencerTracker) GetUrl() string {
+	st.lock.Lock()
+	defer st.lock.Unlock()
+	return st.url
+}
+
+func (st *SequencerTracker) setUrl(url string) {
+	st.lock.Lock()
+	defer st.lock.Unlock()
+	st.url = url
+}
+
 // Start starts the SequencerTracker
 func (st *SequencerTracker) Start() {
+	go st.trackAddrChanges()
+	go st.trackUrlChanges()
+}
+
+func (st *SequencerTracker) trackAddrChanges() {
 	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencer)
 	defer close(events)
 	for {
@@ -83,6 +106,50 @@ func (st *SequencerTracker) Start() {
 		case e := <-events:
 			log.Infof("new trusted sequencer address: %v", e.NewTrustedSequencer)
 			st.setAddr(e.NewTrustedSequencer)
+		case err := <-sub.Err():
+			log.Warnf("subscription error, resubscribing: %v", err)
+		case <-ctx.Done():
+			// Deadline exceeded is expected since we use finite context timeout
+			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
+				log.Warnf("re-establishing subscription: %v", ctx.Err())
+			}
+		case <-st.stop:
+			if sub != nil {
+				sub.Unsubscribe()
+			}
+			cancel()
+			return
+		}
+	}
+}
+
+func (st *SequencerTracker) trackUrlChanges() {
+	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL)
+	defer close(events)
+	for {
+		var (
+			sub event.Subscription
+			err error
+		)
+
+		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
+		opts := &bind.WatchOpts{Context: ctx}
+		sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events)
+
+		// if no subscription, retry until established
+		for err != nil {
+			<-time.After(st.retry)
+			sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events)
+			if err != nil {
+				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
+			}
+		}
+
+		// wait on events, timeouts, and signals to stop
+		select {
+		case e := <-events:
+			log.Infof("new trusted sequencer url: %v", e.NewTrustedSequencerURL)
+			st.setUrl(e.NewTrustedSequencerURL)
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 		case <-ctx.Done():

@@ -5,7 +5,7 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/jackc/pgx/v4"
 )
@@ -18,12 +18,12 @@ type DataComEndpoints struct {
 	db               DBInterface
 	txMan            rpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
-	sequencerTracker *synchronizer.SequencerTracker
+	sequencerTracker *sequencer.SequencerTracker
 }
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *synchronizer.SequencerTracker,
+	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,

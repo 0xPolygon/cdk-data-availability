@@ -6,15 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const defaultBlockBatchSize = 32
@@ -24,6 +27,7 @@ type BatchSynchronizer struct {
 	client         *etherman.Etherman
 	stop           chan struct{}
 	retry          time.Duration
+	rpcTimeout     time.Duration
 	blockBatchSize uint
 	self           common.Address
 	db             *db.DB
@@ -31,6 +35,7 @@ type BatchSynchronizer struct {
 	lock           sync.Mutex
 	reorgs         <-chan BlockReorg
 	events         chan *cdkvalidium.CdkvalidiumSequenceBatches
+	sequencer      *sequencer.SequencerTracker
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -49,6 +54,7 @@ func NewBatchSynchronizer(
 		client:         ethClient,
 		stop:           make(chan struct{}),
 		retry:          cfg.RetryPeriod.Duration,
+		rpcTimeout:     cfg.Timeout.Duration,
 		blockBatchSize: cfg.BlockBatchSize,
 		self:           self,
 		db:             db,
@@ -187,7 +193,7 @@ func (bs *BatchSynchronizer) consumeEvents() {
 }
 
 func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
-	ctx, cancel := context.WithTimeout(context.Background(), rpcTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
 	defer cancel()
 
 	tx, _, err := bs.client.GetTx(ctx, event.Raw.TxHash)
@@ -214,28 +220,36 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 	var data []types.OffChainData
 	for _, key := range missing {
 		log.Infof("resolving missing key %v", key.Hex())
-		var value types.OffChainData
-		value, err = bs.resolve(key)
+		var value *types.OffChainData
+		value, err = bs.resolve(event.NumBatch, key)
 		if err != nil {
 			return err
 		}
-		data = append(data, value)
+		data = append(data, *value)
 	}
 
 	// Finally, store the data
 	return store(bs.db, data)
 }
 
-func (bs *BatchSynchronizer) resolve(key common.Hash) (types.OffChainData, error) {
+func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.OffChainData, error) {
 	log.Debugf("resolving missing data for key %v", key.Hex())
+
+	data := bs.trySequencer(batchNum, key)
+	if data != nil {
+		return data, nil
+	}
+
+	// sequencer failed to produce data, try the other nodes
 	if len(bs.committee) == 0 {
 		// committee is resolved again once all members are evicted. They can be evicted
 		// for not having data, or their config being malformed
 		err := bs.resolveCommittee()
 		if err != nil {
-			return types.OffChainData{}, err
+			return nil, err
 		}
 	}
+
 	// pull out the members, iterating will change the map on error
 	members := make([]etherman.DataCommitteeMember, len(bs.committee))
 	for _, member := range bs.committee {
@@ -249,13 +263,53 @@ func (bs *BatchSynchronizer) resolve(key common.Hash) (types.OffChainData, error
 			continue // malformed committee, skip what is known to be wrong
 		}
 		log.Infof("trying DAC %s: %s", member.Addr.Hex(), member.URL)
-		value, err := resolveWithMember(key, member)
+		value, err := bs.resolveWithMember(key, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
 			delete(bs.committee, member.Addr)
 			continue // did not have data or errored out
 		}
+
 		return value, nil
 	}
-	return types.OffChainData{}, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
+	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
+}
+
+// trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
+func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *types.OffChainData {
+	data, err := sequencer.GetData(bs.sequencer.GetUrl(), batchNum)
+	if err != nil {
+		log.Warnf("failed to get data from sequencer: %v", err)
+		return nil
+	}
+	expectKey := crypto.Keccak256Hash(data.L2Data)
+	if key != expectKey {
+		log.Warnf("sequencer gave wrong data for key: %s", key.Hex())
+		return nil
+	}
+	return &types.OffChainData{
+		Key:   key,
+		Value: data.L2Data,
+	}
+}
+
+func (bs *BatchSynchronizer) resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (*types.OffChainData, error) {
+	cm := client.New(member.URL)
+	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
+	defer cancel()
+
+	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, key.Hex())
+
+	bytes, err := cm.GetOffChainData(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+	expectKey := crypto.Keccak256Hash(bytes)
+	if key != expectKey {
+		return nil, err
+	}
+	return &types.OffChainData{
+		Key:   key,
+		Value: bytes,
+	}, nil
 }

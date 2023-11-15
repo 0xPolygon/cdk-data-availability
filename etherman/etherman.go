@@ -74,6 +74,11 @@ func (e *Etherman) TrustedSequencer() (common.Address, error) {
 	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
+// TrustedSequencerURL gets trusted sequencer's RPC url
+func (e *Etherman) TrustedSequencerURL() (string, error) {
+	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+}
+
 // DataCommitteeMember represents a member of the Data Committee
 type DataCommitteeMember struct {
 	Addr common.Address

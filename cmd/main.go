@@ -13,6 +13,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
@@ -92,7 +93,7 @@ func start(cliCtx *cli.Context) error {
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := synchronizer.NewSequencerTracker(c.L1, etherman)
+	sequencerTracker, err := sequencer.NewSequencerTracker(c.L1, etherman)
 	if err != nil {
 		log.Fatal(err)
 	}

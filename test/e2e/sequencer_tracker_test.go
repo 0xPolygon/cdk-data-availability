@@ -6,7 +6,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	etherman, err := etherman.New(cfg.L1)
 	require.NoError(t, err)
 
-	tracker, err := synchronizer.NewSequencerTracker(cfg.L1, etherman)
+	tracker, err := sequencer.NewSequencerTracker(cfg.L1, etherman)
 	require.NoError(t, err)
 
 	addr := tracker.GetAddr()
