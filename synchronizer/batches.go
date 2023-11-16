@@ -3,6 +3,7 @@ package synchronizer
 import (
 	"context"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -203,25 +204,28 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 	txData := tx.Data()
-	_, keys, err := etherman.ParseEvent(event, txData)
+	bn, keys, err := etherman.ParseEvent(event, txData)
 	if err != nil {
 		return err
 	}
 
 	// collect keys that need to be resolved
 	var missing []common.Hash
+	var missingHex []string
 	for _, key := range keys {
 		if !exists(bs.db, key) { // this could be a single query that takes the whole list and returns missing ones
 			missing = append(missing, key)
+			missingHex = append(missingHex, key.Hex())
 		}
 	}
 	if len(missing) == 0 {
 		return nil
 	}
 
+	log.Debugf("missing: NumBatch: %d, Txs: %s", event.NumBatch, bn, strings.Join(missingHex, ","))
+
 	var data []types.OffChainData
 	for _, key := range missing {
-		log.Infof("resolving missing key %v", key.Hex())
 		var value *types.OffChainData
 		value, err = bs.resolve(event.NumBatch, key)
 		if err != nil {
@@ -235,8 +239,6 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 }
 
 func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.OffChainData, error) {
-	log.Debugf("resolving missing data for key %v", key.Hex())
-
 	data := bs.trySequencer(batchNum, key)
 	if data != nil {
 		return data, nil
@@ -264,7 +266,6 @@ func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.O
 			delete(bs.committee, member.Addr)
 			continue // malformed committee, skip what is known to be wrong
 		}
-		log.Infof("trying DAC %s: %s", member.Addr.Hex(), member.URL)
 		value, err := bs.resolveWithMember(key, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)

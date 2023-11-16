@@ -162,5 +162,5 @@ func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (u
 	for _, batch := range batches {
 		keys = append(keys, batch.TransactionsHash)
 	}
-	return event.Raw.BlockNumber, keys, nil
+	return event.NumBatch, keys, nil
 }
