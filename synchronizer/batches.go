@@ -286,14 +286,17 @@ func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *typ
 		log.Warnf("failed to get data from sequencer: %v", err)
 		return nil
 	}
-	expectKey := crypto.Keccak256Hash(data.L2Data)
+
+	log.Infof(">>>> seq batch has %d txs", len(data.Transactions))
+
+	expectKey := crypto.Keccak256Hash(data.BatchL2Data)
 	if key != expectKey {
 		log.Warnf("sequencer gave wrong data for key: %s", key.Hex())
 		return nil
 	}
 	return &types.OffChainData{
 		Key:   key,
-		Value: data.L2Data,
+		Value: data.BatchL2Data,
 	}
 }
 

@@ -191,3 +191,33 @@ func HexEncodeBig(bigint *big.Int) string {
 
 	return fmt.Sprintf("%#x", bigint)
 }
+
+// ArgBig helps to marshal big number values provided in the RPC requests
+type ArgBig big.Int
+
+// UnmarshalText unmarshals an instance of ArgBig into an array of bytes
+func (a *ArgBig) UnmarshalText(input []byte) error {
+	buf, err := decodeToHex(input)
+	if err != nil {
+		return err
+	}
+
+	b := new(big.Int)
+	b.SetBytes(buf)
+	*a = ArgBig(*b)
+
+	return nil
+}
+
+// MarshalText marshals an array of bytes into an instance of ArgBig
+func (a ArgBig) MarshalText() ([]byte, error) {
+	b := (*big.Int)(&a)
+
+	return []byte("0x" + b.Text(hexBase)), nil
+}
+
+// Hex returns a hexadecimal representation
+func (b ArgBig) Hex() string {
+	bb, _ := b.MarshalText()
+	return string(bb)
+}
