@@ -17,11 +17,11 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -216,7 +216,7 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.Cdkva
 		return nil, err
 	}
 	txData := tx.Data()
-	_, keys, err := etherman.ParseEvent(event, txData)
+	keys, err := synchronizer.UnpackTxData(txData)
 	return keys, err
 }
 

@@ -204,7 +204,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 	txData := tx.Data()
-	bn, keys, err := etherman.ParseEvent(event, txData)
+	keys, err := UnpackTxData(txData)
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return nil
 	}
 
-	log.Debugf("missing: NumBatch: %d, Txs: %s", event.NumBatch, bn, strings.Join(missingHex, ","))
+	log.Debugf("missing: NumBatch: %d, Txs: %s", event.NumBatch, strings.Join(missingHex, ","))
 
 	var data []types.OffChainData
 	for _, key := range missing {
@@ -287,16 +287,14 @@ func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *typ
 		return nil
 	}
 
-	log.Infof(">>>> seq batch has %d txs", len(data.Transactions))
-
-	expectKey := crypto.Keccak256Hash(data.L2Data)
+	expectKey := crypto.Keccak256Hash(data.BatchL2Data)
 	if key != expectKey {
 		log.Warnf("sequencer gave wrong data for key: %s", key.Hex())
 		return nil
 	}
 	return &types.OffChainData{
 		Key:   key,
-		Value: data.L2Data,
+		Value: data.BatchL2Data,
 	}
 }
 

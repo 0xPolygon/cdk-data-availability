@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // GetData returns batch data from the trusted sequencer
-func GetData(url string, batchNum uint64) (*types.Batch, error) {
+func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 	response, err := rpc.JSONRPCCall(url, "zkevm_getBatchByNumber", batchNum, true)
 	if err != nil {
 		return nil, err
@@ -17,10 +17,20 @@ func GetData(url string, batchNum uint64) (*types.Batch, error) {
 	if response.Error != nil {
 		return nil, fmt.Errorf("%d - %s", response.Error.Code, response.Error.Message)
 	}
-	var result types.Batch
+	var result SeqBatch
 	err = json.Unmarshal(response.Result, &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
+}
+
+// SeqBatch structure
+type SeqBatch struct {
+	Number              rpc.ArgUint64 `json:"number"`
+	AccInputHash        common.Hash   `json:"accInputHash"`
+	SendSequencesTxHash *common.Hash  `json:"sendSequencesTxHash"`
+	VerifyBatchTxHash   *common.Hash  `json:"verifyBatchTxHash"`
+	Closed              bool          `json:"closed"`
+	BatchL2Data         rpc.ArgBytes  `json:"batchL2Data"`
 }
