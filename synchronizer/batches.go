@@ -214,11 +214,10 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 	}
 
 	var batchKeys []batchKey
-	offset := event.NumBatch - uint64(len(keys)) + uint64(1)
-	for i := 0; i < len(keys); i++ {
+	for i, j := 0, len(keys)-1; i < len(keys); i, j = i+1, j-1 {
 		batchKeys = append(batchKeys, batchKey{
-			batch: offset + uint64(i),
-			hash:  keys[i],
+			batch: event.NumBatch - uint64(i),
+			hash:  keys[j],
 		})
 	}
 
