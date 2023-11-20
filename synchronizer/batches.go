@@ -291,6 +291,7 @@ func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.O
 	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
 }
 
+/*
 func testBatch1(url string, key common.Hash) {
 	log.Infof("trying batch 1 for testings")
 	test, err := sequencer.GetData(url, 1)
@@ -308,6 +309,7 @@ func testBatch1(url string, key common.Hash) {
 		log.Warnf("testing did not retrieve batch 1")
 	}
 }
+*/
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
 func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *types.OffChainData {
@@ -318,9 +320,9 @@ func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *typ
 		return nil
 	}
 
-	if batchNum == 2 && key.Hex() == "0x5931a88630bc594b49cc3ecb6782714cdba77e1f2033343a79411f7baa818eb5" {
-		testBatch1(bs.sequencer.GetUrl(), key)
-	}
+	//if batchNum == 2 && key.Hex() == "0x5931a88630bc594b49cc3ecb6782714cdba77e1f2033343a79411f7baa818eb5" {
+	//	testBatch1(bs.sequencer.GetUrl(), key)
+	//}
 
 	expectKey := crypto.Keccak256Hash(seqBatch.BatchL2Data)
 	if key != expectKey {
