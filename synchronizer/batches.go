@@ -3,7 +3,6 @@ package synchronizer
 import (
 	"context"
 	"math/rand"
-	"strings"
 	"sync"
 	"time"
 
@@ -195,6 +194,11 @@ func (bs *BatchSynchronizer) consumeEvents() {
 	}
 }
 
+type batchKey struct {
+	batch uint64
+	hash  common.Hash
+}
+
 func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
 	defer cancel()
@@ -209,25 +213,34 @@ func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceB
 		return err
 	}
 
+	var batchKeys []batchKey
+	for i := event.NumBatch - uint64(len(keys)); i < event.NumBatch; i++ {
+		bk := batchKey{
+			batch: i + 1,
+			hash:  keys[i],
+		}
+		batchKeys = append(batchKeys, bk)
+	}
+
 	// collect keys that need to be resolved
-	var missing []common.Hash
-	var missingHex []string
-	for _, key := range keys {
-		if !exists(bs.db, key) { // this could be a single query that takes the whole list and returns missing ones
+	var missing []batchKey
+	for _, key := range batchKeys {
+		if !exists(bs.db, key.hash) {
 			missing = append(missing, key)
-			missingHex = append(missingHex, key.Hex())
 		}
 	}
 	if len(missing) == 0 {
 		return nil
 	}
 
-	log.Debugf("missing: NumBatch: %d, Txs: %s", event.NumBatch, strings.Join(missingHex, ","))
+	for _, key := range missing {
+		log.Debugf("missing event batchNum: %d, calc batch: %d, hash: %s", event.NumBatch, key.batch, key.hash.Hex())
+	}
 
 	var data []types.OffChainData
 	for _, key := range missing {
 		var value *types.OffChainData
-		value, err = bs.resolve(event.NumBatch, key)
+		value, err = bs.resolve(key.batch, key.hash)
 		if err != nil {
 			return err
 		}
@@ -278,23 +291,46 @@ func (bs *BatchSynchronizer) resolve(batchNum uint64, key common.Hash) (*types.O
 	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for key %v", key)
 }
 
+func testBatch1(url string, key common.Hash) {
+	log.Infof("trying batch 1 for testings")
+	test, err := sequencer.GetData(url, 1)
+	if err != nil {
+		log.Errorf("testing error: %v", err)
+	}
+	if test != nil {
+		expectKey := crypto.Keccak256Hash(test.BatchL2Data)
+		if key != expectKey {
+			log.Warnf("testing batch %d: sequencer gave wrong data for key: %s", 1, key.Hex())
+		} else {
+			log.Infof("testing batch 1: key that was in batch 2 event found in batch 1: %s", key.Hex())
+		}
+	} else {
+		log.Warnf("testing did not retrieve batch 1")
+	}
+}
+
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
 func (bs *BatchSynchronizer) trySequencer(batchNum uint64, key common.Hash) *types.OffChainData {
 	log.Debugf("resolving batch %d, key %s, with sequencer at %s", batchNum, key.Hex(), bs.sequencer.GetUrl())
-	data, err := sequencer.GetData(bs.sequencer.GetUrl(), batchNum)
+	seqBatch, err := sequencer.GetData(bs.sequencer.GetUrl(), batchNum)
 	if err != nil {
 		log.Warnf("failed to get data from sequencer: %v", err)
 		return nil
 	}
 
-	expectKey := crypto.Keccak256Hash(data.BatchL2Data)
+	if batchNum == 2 && key.Hex() == "0x5931a88630bc594b49cc3ecb6782714cdba77e1f2033343a79411f7baa818eb5" {
+		testBatch1(bs.sequencer.GetUrl(), key)
+	}
+
+	expectKey := crypto.Keccak256Hash(seqBatch.BatchL2Data)
 	if key != expectKey {
-		log.Warnf("sequencer gave wrong data for key: %s", key.Hex())
+		log.Warnf("batch %d: sequencer gave wrong data for key: %s", batchNum, key.Hex())
 		return nil
 	}
+	log.Infof("batch %d: got data from sequencer for key: %s", batchNum, key.Hex())
 	return &types.OffChainData{
 		Key:   key,
-		Value: data.BatchL2Data,
+		Value: seqBatch.BatchL2Data,
 	}
 }
 

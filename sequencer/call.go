@@ -27,10 +27,7 @@ func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 
 // SeqBatch structure
 type SeqBatch struct {
-	Number              rpc.ArgUint64 `json:"number"`
-	AccInputHash        common.Hash   `json:"accInputHash"`
-	SendSequencesTxHash *common.Hash  `json:"sendSequencesTxHash"`
-	VerifyBatchTxHash   *common.Hash  `json:"verifyBatchTxHash"`
-	Closed              bool          `json:"closed"`
-	BatchL2Data         rpc.ArgBytes  `json:"batchL2Data"`
+	Number       rpc.ArgUint64 `json:"number"`
+	AccInputHash common.Hash   `json:"accInputHash"`
+	BatchL2Data  rpc.ArgBytes  `json:"batchL2Data"`
 }
