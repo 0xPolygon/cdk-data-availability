@@ -2,17 +2,14 @@ package etherman
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -74,6 +71,11 @@ func (e *Etherman) TrustedSequencer() (common.Address, error) {
 	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
+// TrustedSequencerURL gets trusted sequencer's RPC url
+func (e *Etherman) TrustedSequencerURL() (string, error) {
+	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+}
+
 // DataCommitteeMember represents a member of the Data Committee
 type DataCommitteeMember struct {
 	Addr common.Address
@@ -127,35 +129,4 @@ func (e *Etherman) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, erro
 		})
 	}
 	return members, nil
-}
-
-// ParseEvent unpacks the keys in a SequenceBatches event
-func ParseEvent(event *cdkvalidium.CdkvalidiumSequenceBatches, txData []byte) (uint64, []common.Hash, error) {
-	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
-	if err != nil {
-		return 0, nil, err
-	}
-	method, err := a.MethodById(txData[:4])
-	if err != nil {
-		return 0, nil, err
-	}
-	data, err := method.Inputs.Unpack(txData[4:])
-	if err != nil {
-		return 0, nil, err
-	}
-	var batches []cdkvalidium.CDKValidiumBatchData
-	bytes, err := json.Marshal(data[0])
-	if err != nil {
-		return 0, nil, err
-	}
-	err = json.Unmarshal(bytes, &batches)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	var keys []common.Hash
-	for _, batch := range batches {
-		keys = append(keys, batch.TransactionsHash)
-	}
-	return event.Raw.BlockNumber, keys, nil
 }

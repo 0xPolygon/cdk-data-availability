@@ -10,11 +10,17 @@ import (
 
 // Batch represents a batch used for synchronization
 type Batch struct {
-	Number         rpc.ArgUint64  `json:"number"`
-	GlobalExitRoot common.Hash    `json:"globalExitRoot"`
-	Timestamp      rpc.ArgUint64  `json:"timestamp"`
-	Coinbase       common.Address `json:"coinbase"`
-	L2Data         rpc.ArgBytes   `json:"batchL2Data"`
+	Number         rpc.ArgUint64       `json:"number"`
+	GlobalExitRoot common.Hash         `json:"globalExitRoot"`
+	Timestamp      rpc.ArgUint64       `json:"timestamp"`
+	Coinbase       common.Address      `json:"coinbase"`
+	L2Data         rpc.ArgBytes        `json:"batchL2Data"`
+	Transactions   []TransactionOrHash `json:"transactions"`
+}
+
+// TransactionOrHash for union type of transaction and types.Hash
+type TransactionOrHash struct {
+	Hash *common.Hash
 }
 
 // HashToSign returns a hash that uniquely identifies the batch

@@ -17,11 +17,11 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -71,6 +71,16 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 	clientL1, err := ethclient.Dial(operations.DefaultL1NetworkURL)
 	require.NoError(t, err)
+
+	// The default sequencer URL is incorrect, set it to match the docker container
+	validiumContract, err := cdkvalidium.NewCdkvalidium(
+		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
+		clientL1,
+	)
+	require.NoError(t, err)
+	_, err = validiumContract.SetTrustedSequencerURL(authL1, "http://zkevm-node:8123")
+	require.NoError(t, err)
+
 	dacSC, err := cdkdatacommittee.NewCdkdatacommittee(
 		common.HexToAddress(operations.DefaultL1DataCommitteeContract),
 		clientL1,
@@ -206,7 +216,7 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.Cdkva
 		return nil, err
 	}
 	txData := tx.Data()
-	_, keys, err := etherman.ParseEvent(event, txData)
+	keys, err := synchronizer.UnpackTxData(txData)
 	return keys, err
 }
 
