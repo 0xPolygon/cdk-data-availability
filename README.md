@@ -1,4 +1,5 @@
 # CDK Data Availability
+
 ### Data Availability Layer for CDK Validium
 
 The cdk-data-availability project is a specialized Data Availability Node (DA Node) that is part of Polygon's CDK (Chain Development Kit) Validium.
@@ -31,6 +32,10 @@ To learn more about how the data availability layer works in the validium, pleas
 ### Off-Chain Data
 
 The off-chain data is stored in a distributed manner and managed by a data availability committee, ensuring that it is available for validation. The data availability committee is defined as a core smart contract, available [here](https://github.com/0xPolygon/cdk-validium-contracts/blob/main/contracts/CDKDataCommittee.sol). This is crucial for the Validium model, where data computation happens off-chain but needs to be verifiable on-chain.
+
+### Running
+
+Instructions on how to run this software can be found [here](./docs/running.md)
 
 ## License
 
