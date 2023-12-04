@@ -11,7 +11,7 @@ This three components can be run in many different ways, for reference, this gui
 - L1 node is provided by a 3rd party, and so just the URL of it is needed
 - The Postgres instance and the DAN run in docker containers, configured using `docker-compose`
 
-Note that this is just an opinionated way of running things. It's possible for instance to run the DAN using the binnary, and Postgres in managed instance by a cloud provider (an many more configurations). 
+Note that this is just an opinionated way of running things. It's possible for instance to run the DAN using the binary, and Postgres in managed instance by a cloud provider (an many more configurations). 
 
 ```yml
 version: "3.5"
@@ -103,7 +103,7 @@ MaxRequestsPerIPAndSecond = 500
 ```
 
 3. Next step is to generate a file for the Ethereum private key of the committee member. Note that this private key should be representing one of the address of the committee. To generate the private key, run: `docker run -d -v .:/key hermeznetwork/zkevm-node /app/zkevm-node encryptKey --pk **** --pw **** -o /key`. Replace the **** for your actual private key and a password of your choice. After running the command, a file named `UTC--...` will be generated. Rename it to `private.keystore`
-4. Change all the fields marked with `CHNAGE THIS` on both the `docker-compsoe.yml` and `config.toml`
+4. Change all the fields marked with `CHANGE THIS` on both the `docker-compose.yml` and `config.toml`
 5. Run it: `docker compose up -d`
 6. Check the logs to see if everything is going fine: `docker compose logs`
 
