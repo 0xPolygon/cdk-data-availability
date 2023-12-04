@@ -1,17 +1,21 @@
-# Running a Data Availability node
+# Running a data availability node
 
-In order to run this service, the following components are needed:
+## Prerequisites
 
-1. Postgres DB
+1. PostgreSQL DB
 2. Ethereum node (L1)
 3. The Data Availability node (DAN) itself
 
-This three components can be run in many different ways, for reference, this guide will provide instructions using the following setup:
+## Set up
 
-- L1 node is provided by a 3rd party, and so just the URL of it is needed
-- The Postgres instance and the DAN run in docker containers, configured using `docker-compose`
+These three components can run in many different ways. This guide provides instructions using the following setup:
 
-Note that this is just an opinionated way of running things. It's possible for instance to run the DAN using the binary, and Postgres in managed instance by a cloud provider (an many more configurations). 
+- The L1 node is provided by a 3rd party, so you only need the L1 URL.
+- The PostgreSQL instance, and the DAN, run in Docker containers configured using `docker-compose`.
+
+Note: This is just one way to run the DAN. It's also possible to run the DAN using the binary and PostgreSQL in a managed instance via a cloud provider. There are also many more possible configurations. 
+
+## Instructions
 
 ```yml
 version: "3.5"
@@ -65,8 +69,8 @@ services:
       - "500"
 ```
 
-1. Copy/paste this into a new directory, name the file `docker-compose.yml`
-2. In the same directory, create a file named `config.toml`, in that file, copy/paste the following:
+1. Copy/paste the above into a new directory and name the file `docker-compose.yml`
+2. In the same directory, create a file named `config.toml` and copy/paste the following:
 
 ```toml
 PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"} # CHANGE THIS (the password): according to the private key file password
@@ -102,9 +106,16 @@ WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
 ```
 
-3. Next step is to generate a file for the Ethereum private key of the committee member. Note that this private key should be representing one of the address of the committee. To generate the private key, run: `docker run -d -v .:/key hermeznetwork/zkevm-node /app/zkevm-node encryptKey --pk **** --pw **** -o /key`. Replace the **** for your actual private key and a password of your choice. After running the command, a file named `UTC--...` will be generated. Rename it to `private.keystore`
-4. Change all the fields marked with `CHANGE THIS` on both the `docker-compose.yml` and `config.toml`
-5. Run it: `docker compose up -d`
-6. Check the logs to see if everything is going fine: `docker compose logs`
+3. Now you can generate a file for the Ethereum private key of the committee member. Note that this private key should be representing one of the address of the committee. To generate the private key, run: 
 
-Note that the DAN endpoint (in this example using the port 8444) should be reachable in the URL indicated on the data availability smart contract
+```docker run -d -v .:/key hermeznetwork/zkevm-node /app/zkevm-node encryptKey --pk **** --pw **** -o /key``` 
+
+Replace the **** for your actual private key and a password of your choice. After running the command, a file named `UTC--...` is generated. Rename it to `private.keystore`.
+
+4. Change all the fields marked with `CHANGE THIS` on both the `docker-compose.yml` and `config.toml`.
+
+5. Run it: `docker compose up -d`.
+
+6. Check the logs to see if everything is going fine: `docker compose logs`.
+
+Note: the DAN endpoint (in this example using the port 8444) should be reachable in the URL indicated on the data availability smart contract.
