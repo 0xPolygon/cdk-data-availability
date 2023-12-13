@@ -2,41 +2,89 @@ package db
 
 import (
 	"context"
+	"errors"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
-
-	"github.com/DATA-DOG/go-sqlmock"
-
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ethereum/go-ethereum/common"
-
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_DB_StoreOffChainData(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	require.NoError(t, err)
-	defer db.Close()
+	testTable := []struct {
+		name      string
+		od        []types.OffChainData
+		returnErr error
+	}{
+		{
+			name: "no values inserted",
+		},
+		{
+			name: "one value inserted",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+		},
+		{
+			name: "several values inserted",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}, {
+				Key:   common.HexToHash("key2"),
+				Value: []byte("value2"),
+			}},
+		},
+		{
+			name: "error returned",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			returnErr: errors.New("test error"),
+		},
+	}
 
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO data_node").
-		WithArgs(common.HexToHash("123").Hex(), common.Bytes2Hex([]byte("value"))).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
+	for _, tt := range testTable {
+		tt := tt
 
-	wdb := sqlx.NewDb(db, "postgres")
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	tx, err := wdb.BeginTxx(context.Background(), nil)
-	require.NoError(t, err)
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
 
-	dbPG := New(wdb)
+			defer db.Close()
 
-	err = dbPG.StoreOffChainData(context.Background(), []types.OffChainData{{
-		Key:   common.HexToHash("123"),
-		Value: []byte("value"),
-	}}, tx)
-	require.NoError(t, err)
+			mock.ExpectBegin()
+			for _, o := range tt.od {
+				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
+					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value))
+				if tt.returnErr != nil {
+					expected.WillReturnError(tt.returnErr)
+				} else {
+					expected.WillReturnResult(sqlmock.NewResult(int64(len(tt.od)), int64(len(tt.od))))
+				}
+			}
 
-	require.NoError(t, tx.Commit())
+			wdb := sqlx.NewDb(db, "postgres")
+
+			tx, err := wdb.BeginTxx(context.Background(), nil)
+			require.NoError(t, err)
+
+			dbPG := New(wdb)
+
+			err = dbPG.StoreOffChainData(context.Background(), tt.od, tx)
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
