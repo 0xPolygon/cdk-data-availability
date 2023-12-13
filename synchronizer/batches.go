@@ -24,7 +24,7 @@ const defaultBlockBatchSize = 32
 
 // BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client         *etherman.Etherman
+	client         etherman.IEtherman
 	stop           chan struct{}
 	retry          time.Duration
 	rpcTimeout     time.Duration
@@ -44,7 +44,7 @@ func NewBatchSynchronizer(
 	self common.Address,
 	db *db.DB,
 	reorgs <-chan BlockReorg,
-	ethClient *etherman.Etherman,
+	ethClient etherman.IEtherman,
 	sequencer *sequencer.SequencerTracker,
 ) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
@@ -146,7 +146,7 @@ func (bs *BatchSynchronizer) filterEvents() error {
 	end := start + uint64(bs.blockBatchSize)
 
 	// get the latest block number
-	header, err := bs.client.EthClient.HeaderByNumber(context.TODO(), nil)
+	header, err := bs.client.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		log.Errorf("failed to determine latest block number", err)
 		return err
@@ -156,7 +156,7 @@ func (bs *BatchSynchronizer) filterEvents() error {
 		end = header.Number.Uint64()
 	}
 
-	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
+	iter, err := bs.client.FilterSequenceBatches(
 		&bind.FilterOpts{
 			Start:   start,
 			End:     &end,

@@ -16,6 +16,18 @@ var (
 	ErrStateNotSynchronized = errors.New("state not synchronized")
 )
 
+// DBInterface defines functions that a DB instance should implement
+type DBInterface interface {
+	BeginStateTransaction(ctx context.Context) (pgx.Tx, error)
+	Exists(ctx context.Context, key common.Hash) bool
+	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
+	GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (rpc.ArgBytes, error)
+	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx pgx.Tx) error
+	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx pgx.Tx) error
+}
+
+var _ DBInterface = (*DB)(nil)
+
 // DB is the database layer of the data node
 type DB struct {
 	pg *sqlx.DB

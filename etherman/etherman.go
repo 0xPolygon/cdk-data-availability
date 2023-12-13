@@ -29,6 +29,20 @@ type ethereumClient interface {
 	bind.DeployBackend
 }
 
+// IEtherman defines functions that should be implemented by Etherman
+type IEtherman interface {
+	GetCurrentDataCommittee() (*DataCommittee, error)
+	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
+	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
+	TrustedSequencer() (common.Address, error)
+	TrustedSequencerURL() (string, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	FilterSequenceBatches(opts *bind.FilterOpts,
+		numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
+}
+
+var _ IEtherman = (*Etherman)(nil)
+
 // Etherman is the implementation of EtherMan.
 type Etherman struct {
 	EthClient     ethereumClient
@@ -74,6 +88,17 @@ func (e *Etherman) TrustedSequencer() (common.Address, error) {
 // TrustedSequencerURL gets trusted sequencer's RPC url
 func (e *Etherman) TrustedSequencerURL() (string, error) {
 	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+}
+
+// HeaderByNumber returns header by number from the eth client
+func (e *Etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
+	return e.EthClient.HeaderByNumber(ctx, number)
+}
+
+// FilterSequenceBatches retrieves filtered batches on CDK validium
+func (e *Etherman) FilterSequenceBatches(opts *bind.FilterOpts,
+	numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+	return e.CDKValidium.FilterSequenceBatches(opts, numBatch)
 }
 
 // DataCommitteeMember represents a member of the Data Committee

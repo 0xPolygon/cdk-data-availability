@@ -15,7 +15,7 @@ const dbTimeout = 2 * time.Second
 
 const l1SyncTask = "L1"
 
-func getStartBlock(db *db.DB) (uint64, error) {
+func getStartBlock(db db.DBInterface) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -29,7 +29,7 @@ func getStartBlock(db *db.DB) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(db *db.DB, block uint64) error {
+func setStartBlock(db db.DBInterface, block uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
