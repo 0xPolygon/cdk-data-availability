@@ -4,10 +4,11 @@ import (
 	"context"
 	"crypto/ecdsa"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
-	"github.com/jackc/pgx/v4"
 )
 
 // APIDATACOM is the namespace of the datacom service
@@ -45,7 +46,7 @@ func (d *DataComEndpoints) SignSequence(signedSequence types.SignedSequence) (in
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
 	// Store off-chain data by hash (hash(L2Data): L2Data)
-	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx pgx.Tx) (interface{}, rpc.Error) {
+	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx *sqlx.Tx) (interface{}, rpc.Error) {
 		err := d.db.StoreOffChainData(ctx, signedSequence.Sequence.OffChainData(), dbTx)
 		if err != nil {
 			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to store offchain data")
