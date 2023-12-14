@@ -55,7 +55,7 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx *sqlx.Tx) (rpc.ArgBytes, error) {
+func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (rpc.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 
@@ -66,7 +66,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx *sqlx.T
 		hexValue string
 	)
 
-	if err := dbTx.QueryRowContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
+	if err := dbTx.QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrStateNotSynchronized
 		}
