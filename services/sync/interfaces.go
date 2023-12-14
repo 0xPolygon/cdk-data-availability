@@ -3,10 +3,9 @@ package sync
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/jmoiron/sqlx"
 )
 
 // DBInterface is the interface needed by the sync service

@@ -3,9 +3,8 @@ package sync
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/jmoiron/sqlx"
 )
 
 // APISYNC  is the namespace of the sync service
