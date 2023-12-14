@@ -30,7 +30,6 @@ type Config struct {
 	EnableLog bool `mapstructure:"EnableLog"`
 
 	// MaxConns is the maximum number of connections in the pool.
-	// DEPRECATED
 	MaxConns int `mapstructure:"MaxConns"`
 }
 
@@ -44,6 +43,8 @@ func InitContext(ctx context.Context, cfg Config) (*sqlx.DB, error) {
 		log.Errorf("Unable to connect to database: %v\n", err)
 		return nil, err
 	}
+
+	conn.DB.SetMaxIdleConns(cfg.MaxConns)
 
 	if err = conn.PingContext(ctx); err != nil {
 		log.Errorf("Unable to ping the database: %v\n", err)
