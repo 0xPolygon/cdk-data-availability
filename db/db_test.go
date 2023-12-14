@@ -96,41 +96,37 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		Value: []byte("value1"),
 	}}
 
-	seedOffchainData := func(db *sqlx.DB, mock sqlmock.Sqlmock) {
-		mock.ExpectBegin()
-		mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
-			WithArgs(od[0].Key.Hex(), common.Bytes2Hex(od[0].Value)).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-		mock.ExpectCommit()
-
-		tx, err := db.BeginTxx(context.Background(), nil)
-		require.NoError(t, err)
-
-		err = New(db).StoreOffChainData(context.Background(), od, tx)
-		require.NoError(t, err)
-
-		err = tx.Commit()
-		require.NoError(t, err)
-	}
-
 	testTable := []struct {
 		name      string
+		od        []types.OffChainData
 		key       common.Hash
 		expected  rpc.ArgBytes
 		returnErr error
 	}{
 		{
-			name:     "successfully selected value",
-			key:      od[0].Key,
-			expected: od[0].Value,
+			name: "successfully selected value",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			key:      common.BytesToHash([]byte("key1")),
+			expected: []byte("value1"),
 		},
 		{
-			name:      "error returned",
-			key:       od[0].Key,
+			name: "error returned",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			key:       common.BytesToHash([]byte("key1")),
 			returnErr: errors.New("test error"),
 		},
 		{
-			name:      "no rows",
+			name: "no rows",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
 			key:       common.BytesToHash([]byte("underfined")),
 			returnErr: ErrStateNotSynchronized,
 		},
@@ -150,7 +146,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			wdb := sqlx.NewDb(db, "postgres")
 
 			// Seed data
-			seedOffchainData(wdb, mock)
+			seedOffchainData(t, wdb, mock, od)
 
 			expected := mock.ExpectQuery(`SELECT value FROM data_node\.offchain_data WHERE key = \$1 LIMIT 1`).
 				WithArgs(tt.key.Hex())
@@ -174,4 +170,104 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
+}
+
+func Test_DB_Exist(t *testing.T) {
+	testTable := []struct {
+		name      string
+		od        []types.OffChainData
+		key       common.Hash
+		count     int
+		returnErr error
+	}{
+		{
+			name: "two values found",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}, {
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value2"),
+			}},
+			key:   common.BytesToHash([]byte("key1")),
+			count: 2,
+		},
+		{
+			name: "no values found",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}, {
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value2"),
+			}},
+			key:   common.BytesToHash([]byte("undefined")),
+			count: 0,
+		},
+		{
+			name: "error returned",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			key:       common.BytesToHash([]byte("undefined")),
+			returnErr: errors.New("test error"),
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			// Seed data
+			seedOffchainData(t, wdb, mock, tt.od)
+
+			expected := mock.ExpectQuery(`SELECT COUNT\(\*\) FROM data_node\.offchain_data WHERE key = \$1`).
+				WithArgs(tt.key.Hex())
+
+			if tt.returnErr != nil {
+				expected.WillReturnError(tt.returnErr)
+			} else {
+				expected.WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(tt.count))
+			}
+
+			dbPG := New(wdb)
+
+			actual := dbPG.Exists(context.Background(), tt.key)
+			require.NoError(t, err)
+			require.Equal(t, tt.count > 0, actual)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func seedOffchainData(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
+	t.Helper()
+
+	mock.ExpectBegin()
+	for i, o := range od {
+		mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
+			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value)).
+			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
+	}
+	mock.ExpectCommit()
+
+	tx, err := db.BeginTxx(context.Background(), nil)
+	require.NoError(t, err)
+
+	err = New(db).StoreOffChainData(context.Background(), od, tx)
+	require.NoError(t, err)
+
+	err = tx.Commit()
+	require.NoError(t, err)
 }
