@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-	"github.com/jackc/pgx/v4"
+	"github.com/jmoiron/sqlx"
 )
 
 // APISYNC  is the namespace of the sync service
@@ -25,7 +25,7 @@ func NewSyncEndpoints(db DBInterface) *SyncEndpoints {
 
 // GetOffChainData returns the image of the given hash
 func (z *SyncEndpoints) GetOffChainData(hash rpc.ArgHash) (interface{}, rpc.Error) {
-	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx pgx.Tx) (interface{}, rpc.Error) {
+	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx *sqlx.Tx) (interface{}, rpc.Error) {
 		data, err := z.db.GetOffChainData(ctx, hash.Hash(), dbTx)
 		if err != nil {
 			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/jmoiron/sqlx"
 )
 
 // Config provide fields to configure the pool
@@ -26,26 +26,30 @@ type Config struct {
 	Port string `mapstructure:"Port"`
 
 	// EnableLog
+	// DEPRECATED
 	EnableLog bool `mapstructure:"EnableLog"`
 
 	// MaxConns is the maximum number of connections in the pool.
 	MaxConns int `mapstructure:"MaxConns"`
 }
 
-// NewSQLDB creates a new SQL DB
-func NewSQLDB(cfg Config) (*pgxpool.Pool, error) {
-	config, err := pgxpool.ParseConfig(fmt.Sprintf("postgres://%s:%s@%s:%s/%s?pool_max_conns=%d", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Name, cfg.MaxConns))
-	if err != nil {
-		log.Errorf("Unable to parse DB config: %v\n", err)
-		return nil, err
-	}
-	if cfg.EnableLog {
-		config.ConnConfig.Logger = logger{}
-	}
-	conn, err := pgxpool.ConnectConfig(context.Background(), config)
+// InitContext initializes DB connection by the given config
+func InitContext(ctx context.Context, cfg Config) (*sqlx.DB, error) {
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
+
+	conn, err := sqlx.ConnectContext(ctx, "postgres", psqlInfo)
 	if err != nil {
 		log.Errorf("Unable to connect to database: %v\n", err)
 		return nil, err
 	}
+
+	conn.DB.SetMaxIdleConns(cfg.MaxConns)
+
+	if err = conn.PingContext(ctx); err != nil {
+		log.Errorf("Unable to ping the database: %v\n", err)
+		return nil, err
+	}
+
 	return conn, nil
 }

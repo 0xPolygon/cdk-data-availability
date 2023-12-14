@@ -8,7 +8,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/jackc/pgx/v4"
+	"github.com/jmoiron/sqlx"
 )
 
 const dbTimeout = 2 * time.Second
@@ -32,20 +32,24 @@ func getStartBlock(db *db.DB) (uint64, error) {
 func setStartBlock(db *db.DB, block uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
+
 	var (
-		dbTx pgx.Tx
+		dbTx *sqlx.Tx
 		err  error
 	)
+
 	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
 		return err
 	}
-	err = db.StoreLastProcessedBlock(ctx, l1SyncTask, block, dbTx)
-	if err != nil {
+
+	if err = db.StoreLastProcessedBlock(ctx, l1SyncTask, block, dbTx); err != nil {
 		return err
 	}
-	if err = dbTx.Commit(ctx); err != nil {
+
+	if err = dbTx.Commit(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -58,25 +62,30 @@ func exists(db *db.DB, key common.Hash) bool {
 func store(db *db.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
+
 	var (
-		dbTx pgx.Tx
+		dbTx *sqlx.Tx
 		err  error
 	)
+
 	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
 		return err
 	}
+
 	if err = db.StoreOffChainData(ctx, data, dbTx); err != nil {
-		rollback(ctx, err, dbTx)
+		rollback(err, dbTx)
 		return err
 	}
-	if err = dbTx.Commit(ctx); err != nil {
+
+	if err = dbTx.Commit(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func rollback(ctx context.Context, err error, dbTx pgx.Tx) {
-	if txErr := dbTx.Rollback(ctx); txErr != nil {
+func rollback(err error, dbTx *sqlx.Tx) {
+	if txErr := dbTx.Rollback(); txErr != nil {
 		log.Errorf("failed to roll back transaction after error %v : %v", err, txErr)
 	}
 }

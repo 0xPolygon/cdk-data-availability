@@ -3,13 +3,15 @@ module github.com/0xPolygon/cdk-data-availability
 go 1.19
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/ethereum/go-ethereum v1.12.1
 	github.com/gobuffalo/packr/v2 v2.8.3
 	github.com/gorilla/websocket v1.5.0
 	github.com/hermeznetwork/tracerr v0.3.2
 	github.com/invopop/jsonschema v0.7.0
-	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jmoiron/sqlx v1.2.0
+	github.com/lib/pq v1.10.7
 	github.com/miguelmota/go-solidity-sha3 v0.1.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rubenv/sql-migrate v1.5.2
@@ -41,14 +43,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/iancoleman/orderedmap v0.0.0-20190318233801-ac98e3ecb4b0 // indirect
-	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.14.1 // indirect
-	github.com/jackc/pgio v1.0.0 // indirect
-	github.com/jackc/pgpassfile v1.0.0 // indirect
-	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
-	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgtype v1.14.0 // indirect
-	github.com/jackc/puddle v1.3.0 // indirect
 	github.com/karrick/godirwalk v1.17.0 // indirect
 	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e // indirect

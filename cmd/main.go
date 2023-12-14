@@ -18,6 +18,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/ethereum/go-ethereum/crypto"
+	_ "github.com/lib/pq"
 	"github.com/urfave/cli/v2"
 )
 
@@ -62,13 +63,15 @@ func start(cliCtx *cli.Context) error {
 	setupLog(c.Log)
 
 	// Prepare DB
-	pg, err := db.NewSQLDB(c.DB)
+	pg, err := db.InitContext(cliCtx.Context, c.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := db.RunMigrationsUp(pg); err != nil {
+
+	if err = db.RunMigrationsUp(pg); err != nil {
 		log.Fatal(err)
 	}
+
 	storage := db.New(pg)
 
 	// Load private key
