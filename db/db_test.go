@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
+
+	"github.com/0xPolygon/cdk-data-availability/types"
 )
 
 func Test_DB_StoreOffChainData(t *testing.T) {
