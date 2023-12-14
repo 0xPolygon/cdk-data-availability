@@ -60,7 +60,6 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
 			for _, o := range tt.od {
 				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
 					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value))
@@ -73,12 +72,9 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			tx, err := wdb.BeginTxx(context.Background(), nil)
-			require.NoError(t, err)
-
 			dbPG := New(wdb)
 
-			err = dbPG.StoreOffChainData(context.Background(), tt.od, tx)
+			err = dbPG.StoreOffChainData(context.Background(), tt.od, wdb)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -277,8 +273,6 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
-
 			expected := mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
 				WithArgs(tt.task, tt.block)
 			if tt.returnErr != nil {
@@ -289,12 +283,9 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			tx, err := wdb.BeginTxx(context.Background(), nil)
-			require.NoError(t, err)
-
 			dbPG := New(wdb)
 
-			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, tx)
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, wdb)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -337,7 +328,6 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
 			mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
 				WithArgs(tt.task, tt.block).
 				WillReturnResult(sqlmock.NewResult(1, 1))
@@ -353,12 +343,9 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			tx, err := wdb.BeginTxx(context.Background(), nil)
-			require.NoError(t, err)
-
 			dbPG := New(wdb)
 
-			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, tx)
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, wdb)
 			require.NoError(t, err)
 
 			actual, err := dbPG.GetLastProcessedBlock(context.Background(), tt.task)

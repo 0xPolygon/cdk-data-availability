@@ -34,7 +34,7 @@ func (db *DB) BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error) {
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx *sqlx.Tx) error {
+func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)
@@ -107,7 +107,7 @@ func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, e
 }
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
-func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx *sqlx.Tx) error {
+func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	const storeLastProcessedBlockSQL = `
 		INSERT INTO data_node.sync_tasks (task, block) 
 		VALUES ($1, $2)
