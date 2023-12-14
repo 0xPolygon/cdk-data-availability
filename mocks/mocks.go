@@ -229,11 +229,14 @@ func (e *EthermanMock) GetCurrentDataCommitteeMembers() ([]etherman.DataCommitte
 func (e *EthermanMock) GetTx(ctx context.Context, txHash common.Hash) (*ethTypes.Transaction, bool, error) {
 	args := e.Called(ctx, txHash)
 
+	err := args.Error(2) //nolint:gomnd
+	ok := args.Bool(1)
+
 	if args.Get(0) == nil {
-		return nil, args.Bool(1), args.Error(2)
+		return nil, ok, err
 	}
 
-	return args.Get(0).(*ethTypes.Transaction), args.Bool(1), args.Error(2) //nolint:forcetypeassert
+	return args.Get(0).(*ethTypes.Transaction), ok, err //nolint:forcetypeassert
 }
 
 // TrustedSequencer is a mock function of the IEtherman
