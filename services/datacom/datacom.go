@@ -4,11 +4,10 @@ import (
 	"context"
 	"crypto/ecdsa"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/jmoiron/sqlx"
 )
 
 // APIDATACOM is the namespace of the datacom service

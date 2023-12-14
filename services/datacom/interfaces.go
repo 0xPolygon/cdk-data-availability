@@ -3,9 +3,8 @@ package datacom
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/jmoiron/sqlx"
 )
 
 // DBInterface is the interface needed by the datacom service
