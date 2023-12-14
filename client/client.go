@@ -7,13 +7,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ClientFactoryInterface interface for the client factory
-type ClientFactoryInterface interface {
-	New(url string) ClientInterface
+// IClientFactory interface for the client factory
+type IClientFactory interface {
+	New(url string) IClient
 }
 
-// ClientInterface is the interface that defines the implementation of all the endpoints
-type ClientInterface interface {
+// IClient is the interface that defines the implementation of all the endpoints
+type IClient interface {
 	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
@@ -22,7 +22,7 @@ type ClientInterface interface {
 type ClientFactory struct{}
 
 // New returns an implementation of the data committee node client
-func (f *ClientFactory) New(url string) ClientInterface {
+func (f *ClientFactory) New(url string) IClient {
 	return New(url)
 }
 

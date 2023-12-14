@@ -8,6 +8,7 @@ import (
 	"time"
 
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
+	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
@@ -116,7 +117,8 @@ func start(cliCtx *cli.Context) error {
 
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
-	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr, storage, detector.Subscribe(), etherman, sequencerTracker)
+	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr,
+		storage, detector.Subscribe(), etherman, sequencerTracker, &client.ClientFactory{})
 	if err != nil {
 		log.Fatal(err)
 	}

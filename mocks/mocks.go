@@ -4,10 +4,12 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/0xPolygon/cdk-data-availability/types/interfaces"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -203,12 +205,12 @@ func (tx *TxMock) Conn() *pgx.Conn {
 
 var _ etherman.IEtherman = (*EthermanMock)(nil)
 
-// EthermanMock is a mock implementation of EthermanInterface
+// EthermanMock is a mock implementation of IEtherman
 type EthermanMock struct {
 	mock.Mock
 }
 
-// GetCurrentDataCommittee is a mock function of the EthermanInterface
+// GetCurrentDataCommittee is a mock function of the IEtherman
 func (e *EthermanMock) GetCurrentDataCommittee() (*etherman.DataCommittee, error) {
 	args := e.Called()
 	if args.Get(0) == nil {
@@ -218,33 +220,94 @@ func (e *EthermanMock) GetCurrentDataCommittee() (*etherman.DataCommittee, error
 	return args.Get(0).(*etherman.DataCommittee), args.Error(1) //nolint:forcetypeassert
 }
 
-// GetCurrentDataCommitteeMembers is a mock function of the EthermanInterface
+// GetCurrentDataCommitteeMembers is a mock function of the IEtherman
 func (e *EthermanMock) GetCurrentDataCommitteeMembers() ([]etherman.DataCommitteeMember, error) {
 	panic("not implemented")
 }
 
-// GetTx is a mock function of the EthermanInterface
+// GetTx is a mock function of the IEtherman
 func (e *EthermanMock) GetTx(ctx context.Context, txHash common.Hash) (*ethTypes.Transaction, bool, error) {
 	panic("not implemented")
 }
 
-// TrustedSequencer is a mock function of the EthermanInterface
+// TrustedSequencer is a mock function of the IEtherman
 func (e *EthermanMock) TrustedSequencer() (common.Address, error) {
 	panic("not implemented")
 }
 
-// TrustedSequencerURL is a mock function of the EthermanInterface
+// TrustedSequencerURL is a mock function of the IEtherman
 func (e *EthermanMock) TrustedSequencerURL() (string, error) {
 	panic("not implemented")
 }
 
-// HeaderByNumber is a mock function of the EthermanInterface
+// HeaderByNumber is a mock function of the IEtherman
 func (e *EthermanMock) HeaderByNumber(ctx context.Context, number *big.Int) (*ethTypes.Header, error) {
 	panic("not implemented")
 }
 
-// FilterSequenceBatches is a mock function of the EthermanInterface
+// FilterSequenceBatches is a mock function of the IEtherman
 func (e *EthermanMock) FilterSequenceBatches(opts *bind.FilterOpts,
 	numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
 	panic("not implemented")
+}
+
+var _ sequencer.ISequencerTracker = (*SequencerTrackerMock)(nil)
+
+// SequencerTrackerMock is a mock implementation of ISequencerTracker
+type SequencerTrackerMock struct {
+	mock.Mock
+}
+
+// GetSequenceBatch is a mock function of the ISequencerTracker
+func (s *SequencerTrackerMock) GetSequenceBatch(batchNum uint64) (*sequencer.SeqBatch, error) {
+	args := s.Called(batchNum)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).(*sequencer.SeqBatch), args.Error(1) //nolint:forcetypeassert
+}
+
+var _ client.IClientFactory = (*ClientFactoryMock)(nil)
+
+// ClientFactoryMock is a mock implementation of IClientFactory
+type ClientFactoryMock struct {
+	mock.Mock
+}
+
+// New is a mock function of the IClientFactory
+func (c *ClientFactoryMock) New(url string) client.IClient {
+	args := c.Called(url)
+
+	return args.Get(0).(client.IClient) //nolint:forcetypeassert
+}
+
+var _ client.IClient = (*ClientMock)(nil)
+
+// ClientMock is a mock implementation of IClient
+type ClientMock struct {
+	mock.Mock
+}
+
+// GetOffChainData is a mock function of the IClient
+func (c *ClientMock) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
+	args := c.Called(ctx, hash)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).([]byte), args.Error(1) //nolint:forcetypeassert
+}
+
+// SignSequence is a mock function of the IClient
+func (c *ClientMock) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
+	args := c.Called(signedSequence)
+
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+
+	return args.Get(0).([]byte), args.Error(1) //nolint:forcetypeassert
 }
