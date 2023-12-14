@@ -157,9 +157,9 @@ func Test_DB_GetOffChainData(t *testing.T) {
 				WithArgs(tt.key.Hex())
 
 			if tt.returnErr != nil {
-				expected = expected.WillReturnError(tt.returnErr)
+				expected.WillReturnError(tt.returnErr)
 			} else {
-				expected = expected.WillReturnRows(sqlmock.NewRows([]string{"value"}).AddRow(common.Bytes2Hex(tt.expected)))
+				expected.WillReturnRows(sqlmock.NewRows([]string{"value"}).AddRow(common.Bytes2Hex(tt.expected)))
 			}
 
 			dbPG := New(wdb)
