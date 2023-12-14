@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
-
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ethereum/go-ethereum/common"
