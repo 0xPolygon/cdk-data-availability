@@ -4,12 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/jmoiron/sqlx"
 )
 
 const dbTimeout = 2 * time.Second
