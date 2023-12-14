@@ -18,7 +18,7 @@ const (
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
-func InitStartBlock(db db.DBInterface, ethClientFactory interfaces.EthClientFactory, l1 config.L1Config) error {
+func InitStartBlock(db db.IDB, ethClientFactory interfaces.EthClientFactory, l1 config.L1Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), initBlockTimeout)
 	defer cancel()
 

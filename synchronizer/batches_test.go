@@ -2,16 +2,23 @@ package synchronizer
 
 import (
 	"errors"
+	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/etherman"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
+	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/umbracle/ethgo"
 )
 
 func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
@@ -251,6 +258,274 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 			getSequenceBatchArgs:           []interface{}{batchKey.number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
+		})
+	})
+}
+
+func TestBatchSyncronizer_HandleEvent(t *testing.T) {
+	t.Parallel()
+
+	type testConfig struct {
+		// etherman mock
+		getTxArgs    []interface{}
+		getTxReturns []interface{}
+		// db mock
+		existsArgs                   []interface{}
+		existsReturns                []interface{}
+		beginStateTransactionArgs    []interface{}
+		beginStateTransactionReturns []interface{}
+		storeOffChainDataArgs        []interface{}
+		storeOffChainDataReturns     []interface{}
+		commitReturns                []interface{}
+		rollbackArgs                 []interface{}
+		// sequencer mocks
+		getSequenceBatchArgs    []interface{}
+		getSequenceBatchReturns []interface{}
+
+		isErrorExpected bool
+	}
+
+	to := common.HexToAddress("0xFFFF")
+	sequencBatchesFnID := []byte{67, 138, 83, 153}
+	event := &cdkvalidium.CdkvalidiumSequenceBatches{
+		Raw: ethTypes.Log{
+			TxHash: common.BytesToHash([]byte{0, 1, 2, 3}),
+		},
+		NumBatch: 10,
+	}
+	batchL2Data := []byte{1, 2, 3, 4, 5, 6}
+	txHash := crypto.Keccak256Hash(batchL2Data)
+
+	batchData := []cdkvalidium.CDKValidiumBatchData{
+		{
+			TransactionsHash:   txHash,
+			GlobalExitRoot:     common.BytesToHash([]byte{6, 7, 8, 9, 10, 11}),
+			Timestamp:          101,
+			MinForcedTimestamp: 11,
+		},
+	}
+
+	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
+	require.NoError(t, err)
+
+	data, err := a.Methods["sequenceBatches"].Inputs.Pack(batchData,
+		common.HexToAddress("0xABCD"), []byte{22, 23, 24})
+	require.NoError(t, err)
+
+	tx := ethTypes.NewTx(
+		&ethTypes.LegacyTx{
+			Nonce:    0,
+			GasPrice: big.NewInt(10_000),
+			Gas:      21_000,
+			To:       &to,
+			Value:    ethgo.Ether(1),
+			Data:     append(sequencBatchesFnID, data...),
+		})
+
+	testFn := func(config testConfig) {
+		dbMock := new(mocks.DBMock)
+		txMock := new(mocks.TxMock)
+		ethermanMock := new(mocks.EthermanMock)
+		sequencerMock := new(mocks.SequencerTrackerMock)
+
+		if config.getTxArgs != nil && config.getTxReturns != nil {
+			ethermanMock.On("GetTx", config.getTxArgs...).Return(
+				config.getTxReturns...).Once()
+		}
+
+		if config.existsArgs != nil && config.existsReturns != nil {
+			dbMock.On("Exists", config.existsArgs...).Return(
+				config.existsReturns...).Once()
+		}
+
+		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
+			sequencerMock.On("GetSequenceBatch", config.getSequenceBatchArgs...).Return(
+				config.getSequenceBatchReturns...).Once()
+		}
+
+		if config.beginStateTransactionArgs != nil {
+			var returnArgs []interface{}
+			if config.beginStateTransactionReturns != nil {
+				returnArgs = config.beginStateTransactionReturns
+			} else {
+				returnArgs = append(returnArgs, txMock, nil)
+			}
+
+			dbMock.On("BeginStateTransaction", config.beginStateTransactionArgs...).Return(
+				returnArgs...).Once()
+		}
+
+		if config.storeOffChainDataArgs != nil && config.storeOffChainDataReturns != nil {
+			dbMock.On("StoreOffChainData", config.storeOffChainDataArgs...).Return(
+				config.storeOffChainDataReturns...).Once()
+		}
+
+		if config.commitReturns != nil {
+			txMock.On("Commit", mock.Anything).Return(
+				config.commitReturns...).Once()
+		}
+
+		if config.rollbackArgs != nil {
+			txMock.On("Rollback", config.rollbackArgs...).Return(nil).Once()
+		}
+
+		batchSynronizer := &BatchSynchronizer{
+			db:        dbMock,
+			client:    ethermanMock,
+			sequencer: sequencerMock,
+		}
+
+		err := batchSynronizer.handleEvent(event)
+		if config.isErrorExpected {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+
+		dbMock.AssertExpectations(t)
+		txMock.AssertExpectations(t)
+		ethermanMock.AssertExpectations(t)
+		sequencerMock.AssertExpectations(t)
+	}
+
+	t.Run("Could not get tx data", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getTxArgs:       []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:    []interface{}{nil, false, errors.New("error")},
+			isErrorExpected: true,
+		})
+	})
+
+	t.Run("Invalid tx data", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getTxArgs: []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns: []interface{}{ethTypes.NewTx(
+				&ethTypes.LegacyTx{
+					Nonce:    0,
+					GasPrice: big.NewInt(10_000),
+					Gas:      21_000,
+					To:       &to,
+					Value:    ethgo.Ether(1),
+					Data:     []byte{0, 1, 3, 4, 5, 6, 7}, //some invalid data
+				},
+			), true, nil},
+			isErrorExpected: true,
+		})
+	})
+
+	t.Run("has batch in storage", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getTxArgs:       []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:    []interface{}{tx, true, nil},
+			existsArgs:      []interface{}{mock.Anything, common.Hash(batchData[0].TransactionsHash)},
+			existsReturns:   []interface{}{true},
+			isErrorExpected: false,
+		})
+	})
+
+	t.Run("doesn't have batch in storage - successfully stored", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getTxArgs:            []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:         []interface{}{tx, true, nil},
+			existsArgs:           []interface{}{mock.Anything, txHash},
+			existsReturns:        []interface{}{false},
+			getSequenceBatchArgs: []interface{}{event.NumBatch},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      rpc.ArgUint64(event.NumBatch),
+				BatchL2Data: rpc.ArgBytes(batchL2Data),
+			}, nil},
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+				mock.Anything,
+			},
+			storeOffChainDataReturns: []interface{}{nil},
+			commitReturns:            []interface{}{nil},
+			isErrorExpected:          false,
+		})
+	})
+
+	t.Run("doesn't have batch in storage - begin state transaction fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			isErrorExpected:              true,
+			beginStateTransactionArgs:    []interface{}{mock.Anything},
+			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
+			getTxArgs:                    []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:                 []interface{}{tx, true, nil},
+			existsArgs:                   []interface{}{mock.Anything, txHash},
+			existsReturns:                []interface{}{false},
+			getSequenceBatchArgs:         []interface{}{event.NumBatch},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      rpc.ArgUint64(event.NumBatch),
+				BatchL2Data: rpc.ArgBytes(batchL2Data),
+			}, nil},
+		})
+	})
+
+	t.Run("doesn't have batch in storage - store fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			isErrorExpected: true,
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+				mock.Anything,
+			},
+			storeOffChainDataReturns:  []interface{}{errors.New("error")},
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			rollbackArgs:              []interface{}{mock.Anything},
+			getTxArgs:                 []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:              []interface{}{tx, true, nil},
+			existsArgs:                []interface{}{mock.Anything, txHash},
+			existsReturns:             []interface{}{false},
+			getSequenceBatchArgs:      []interface{}{event.NumBatch},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      rpc.ArgUint64(event.NumBatch),
+				BatchL2Data: rpc.ArgBytes(batchL2Data),
+			}, nil},
+		})
+	})
+
+	t.Run("doesn't have batch in storage - commit fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			isErrorExpected:           true,
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+				mock.Anything,
+			},
+			storeOffChainDataReturns: []interface{}{nil},
+			commitReturns:            []interface{}{errors.New("error")},
+			getSequenceBatchArgs:     []interface{}{event.NumBatch},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      rpc.ArgUint64(event.NumBatch),
+				BatchL2Data: rpc.ArgBytes(batchL2Data),
+			}, nil},
+			getTxArgs:     []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:  []interface{}{tx, true, nil},
+			existsArgs:    []interface{}{mock.Anything, txHash},
+			existsReturns: []interface{}{false},
 		})
 	})
 }

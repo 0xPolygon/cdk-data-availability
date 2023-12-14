@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ db.DBInterface = (*DBMock)(nil)
+var _ db.IDB = (*DBMock)(nil)
 
 // DBMock is a mock of DBInterface implementation
 type DBMock struct {
@@ -227,7 +227,13 @@ func (e *EthermanMock) GetCurrentDataCommitteeMembers() ([]etherman.DataCommitte
 
 // GetTx is a mock function of the IEtherman
 func (e *EthermanMock) GetTx(ctx context.Context, txHash common.Hash) (*ethTypes.Transaction, bool, error) {
-	panic("not implemented")
+	args := e.Called(ctx, txHash)
+
+	if args.Get(0) == nil {
+		return nil, args.Bool(1), args.Error(2)
+	}
+
+	return args.Get(0).(*ethTypes.Transaction), args.Bool(1), args.Error(2) //nolint:forcetypeassert
 }
 
 // TrustedSequencer is a mock function of the IEtherman

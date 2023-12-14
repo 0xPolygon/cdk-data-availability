@@ -15,7 +15,7 @@ const dbTimeout = 2 * time.Second
 
 const l1SyncTask = "L1"
 
-func getStartBlock(db db.DBInterface) (uint64, error) {
+func getStartBlock(db db.IDB) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -29,7 +29,7 @@ func getStartBlock(db db.DBInterface) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(db db.DBInterface, block uint64) error {
+func setStartBlock(db db.IDB, block uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -53,13 +53,13 @@ func setStartBlock(db db.DBInterface, block uint64) error {
 	return nil
 }
 
-func exists(db *db.DB, key common.Hash) bool {
+func exists(db db.IDB, key common.Hash) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	return db.Exists(ctx, key)
 }
 
-func store(db *db.DB, data []types.OffChainData) error {
+func store(db db.IDB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
