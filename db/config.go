@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/jmoiron/sqlx"
 )
 
 // Config provide fields to configure the pool

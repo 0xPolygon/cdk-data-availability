@@ -1,11 +1,10 @@
 package db
 
 import (
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
-
-	"github.com/0xPolygon/cdk-data-availability/log"
 )
 
 var packrMigrations = packr.New("migrations", "./migrations")
