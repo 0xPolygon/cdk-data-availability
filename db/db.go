@@ -91,21 +91,6 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 	return count > 0
 }
 
-// GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
-func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
-	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
-
-	var (
-		lastBlock uint64
-	)
-
-	if err := db.pg.QueryRowContext(ctx, getLastProcessedBlockSQL, task).Scan(&lastBlock); err != nil {
-		return 0, err
-	}
-
-	return lastBlock, nil
-}
-
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
 func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	const storeLastProcessedBlockSQL = `
@@ -120,4 +105,19 @@ func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block ui
 	}
 
 	return nil
+}
+
+// GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
+func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
+	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
+
+	var (
+		lastBlock uint64
+	)
+
+	if err := db.pg.QueryRowContext(ctx, getLastProcessedBlockSQL, task).Scan(&lastBlock); err != nil {
+		return 0, err
+	}
+
+	return lastBlock, nil
 }
