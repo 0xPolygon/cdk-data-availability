@@ -1,5 +1,6 @@
 ---
 name: Test unit
+
 on:
   push:
     branches:
@@ -11,7 +12,8 @@ on:
   pull_request:
 
 jobs:
-  test-unit:
+  unit_tests:
+    name: Run tests
     strategy:
       fail-fast: false
       matrix:
@@ -32,3 +34,37 @@ jobs:
     - name: Test
       run: make test-unit
       working-directory: test
+
+    - name: Run Go Test Failed
+      if: failure()
+      id: run_tests_failure
+      run: echo "test_output=false" >> $GITHUB_OUTPUT
+
+    - name: Archive code coverage results
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-coverage-report
+        path: test/coverage.out
+
+  sonar_cloud:
+    needs: unit_tests
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+
+      - name: Download code coverage results
+        uses: actions/download-artifact@v3
+        with:
+          name: code-coverage-report
+
+      - name: Analyze with SonarCloud
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          HAVE_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN != '' }}
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
