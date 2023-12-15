@@ -46,7 +46,7 @@ type IDB interface {
 	BeginStateTransaction(ctx context.Context) (IDBTx, error)
 	Exists(ctx context.Context, key common.Hash) bool
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
-	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) ([]byte, error)
+	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
 	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
 }
@@ -94,7 +94,7 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) ([]byte, error) {
+func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
 	var (
 		hexValue string
 	)

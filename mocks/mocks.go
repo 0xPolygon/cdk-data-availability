@@ -53,14 +53,14 @@ func (d *DBMock) GetLastProcessedBlock(ctx context.Context, task string) (uint64
 }
 
 // GetOffChainData is a mock function of the DBInterface
-func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) ([]byte, error) {
+func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
 	args := d.Called(ctx, key, dbTx)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).([]byte), args.Error(1) //nolint:forcetypeassertion
+	return args.Get(0).(types.ArgBytes), args.Error(1) //nolint:forcetypeassertion
 }
 
 // StoreLastProcessedBlock is a mock function of the DBInterface

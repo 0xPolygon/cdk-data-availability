@@ -90,7 +90,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		name      string
 		od        []types.OffChainData
 		key       common.Hash
-		expected  []byte
+		expected  types.ArgBytes
 		returnErr error
 	}{
 		{
