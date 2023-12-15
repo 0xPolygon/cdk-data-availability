@@ -15,32 +15,6 @@ var (
 	ErrStateNotSynchronized = errors.New("state not synchronized")
 )
 
-const (
-	// GetOffchainDataSQL is the sql query used to get offchain data
-	GetOffchainDataSQL = `
-		SELECT value
-		FROM data_node.offchain_data 
-		WHERE key = $1 LIMIT 1;
-	`
-	// GetLastProcessedBlockSQL is the sql query used to get last processed block
-	GetLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
-	// KeyExists is the sql query used to check if a given key of the offchain data exists
-	KeyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1;"
-	// StoreLastProcessedBlockSQL is the sql query used to store last processed block
-	StoreLastProcessedBlockSQL = `
-		INSERT INTO data_node.sync_tasks (task, block) 
-		VALUES ($1, $2)
-		ON CONFLICT (task) DO UPDATE 
-		SET block = EXCLUDED.block, processed = NOW();
-	`
-	// StoreOffChainDataSQL is the sql used to store off chain data
-	StoreOffChainDataSQL = `
-		INSERT INTO data_node.offchain_data (key, value)
-		VALUES ($1, $2)
-		ON CONFLICT (key) DO NOTHING;
-	`
-)
-
 // IDB defines functions that a DB instance should implement
 type IDB interface {
 	BeginStateTransaction(ctx context.Context) (IDBTx, error)
@@ -80,9 +54,15 @@ func (db *DB) BeginStateTransaction(ctx context.Context) (IDBTx, error) {
 
 // StoreOffChainData stores and array of key values in the Db
 func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
+	const storeOffChainDataSQL = `
+		INSERT INTO data_node.offchain_data (key, value)
+		VALUES ($1, $2)
+		ON CONFLICT (key) DO NOTHING;
+	`
+
 	for _, d := range od {
 		if _, err := dbTx.ExecContext(
-			ctx, StoreOffChainDataSQL,
+			ctx, storeOffChainDataSQL,
 			d.Key.Hex(),
 			common.Bytes2Hex(d.Value),
 		); err != nil {
@@ -95,11 +75,17 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 
 // GetOffChainData returns the value identified by the key
 func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
+	const getOffchainDataSQL = `
+		SELECT value
+		FROM data_node.offchain_data 
+		WHERE key = $1 LIMIT 1;
+	`
+
 	var (
 		hexValue string
 	)
 
-	if err := dbTx.QueryRowxContext(ctx, GetOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
+	if err := dbTx.QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrStateNotSynchronized
 		}
@@ -111,11 +97,13 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.Qu
 
 // Exists checks if a key exists in offchain data table
 func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
+	const keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1;"
+
 	var (
 		count uint
 	)
 
-	if err := db.pg.QueryRowContext(ctx, KeyExists, key.Hex()).Scan(&count); err != nil {
+	if err := db.pg.QueryRowContext(ctx, keyExists, key.Hex()).Scan(&count); err != nil {
 		return false
 	}
 
@@ -124,7 +112,14 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
 func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
-	if _, err := dbTx.ExecContext(ctx, StoreLastProcessedBlockSQL, task, block); err != nil {
+	const storeLastProcessedBlockSQL = `
+		INSERT INTO data_node.sync_tasks (task, block) 
+		VALUES ($1, $2)
+		ON CONFLICT (task) DO UPDATE 
+		SET block = EXCLUDED.block, processed = NOW();
+	`
+
+	if _, err := dbTx.ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
 		return err
 	}
 
