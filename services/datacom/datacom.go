@@ -4,10 +4,10 @@ import (
 	"context"
 	"crypto/ecdsa"
 
+	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
-	"github.com/jmoiron/sqlx"
 )
 
 // APIDATACOM is the namespace of the datacom service
@@ -15,7 +15,7 @@ const APIDATACOM = "datacom"
 
 // DataComEndpoints contains implementations for the "datacom" RPC endpoints
 type DataComEndpoints struct {
-	db               DBInterface
+	db               db.IDB
 	txMan            rpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
 	sequencerTracker *sequencer.SequencerTracker
@@ -23,7 +23,7 @@ type DataComEndpoints struct {
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db DBInterface, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
+	db db.IDB, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,
@@ -45,7 +45,7 @@ func (d *DataComEndpoints) SignSequence(signedSequence types.SignedSequence) (in
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
 	// Store off-chain data by hash (hash(L2Data): L2Data)
-	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx *sqlx.Tx) (interface{}, rpc.Error) {
+	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx db.IDBTx) (interface{}, rpc.Error) {
 		err := d.db.StoreOffChainData(ctx, signedSequence.Sequence.OffChainData(), dbTx)
 		if err != nil {
 			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to store offchain data")

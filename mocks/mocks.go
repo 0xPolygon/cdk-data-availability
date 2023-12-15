@@ -2,13 +2,13 @@ package mocks
 
 import (
 	"context"
+	"database/sql"
 	"math/big"
 
 	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
-	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/0xPolygon/cdk-data-availability/types/interfaces"
@@ -16,8 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 )
@@ -30,14 +28,14 @@ type DBMock struct {
 }
 
 // BeginStateTransaction is a mock function of the DBInterface
-func (d *DBMock) BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error) {
+func (d *DBMock) BeginStateTransaction(ctx context.Context) (db.IDBTx, error) {
 	args := d.Called(ctx)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(*sqlx.Tx), args.Error(1) //nolint:forcetypeassertion
+	return args.Get(0).(db.IDBTx), args.Error(1) //nolint:forcetypeassertion
 }
 
 // Exists is a mock function of the DBInterface
@@ -55,25 +53,25 @@ func (d *DBMock) GetLastProcessedBlock(ctx context.Context, task string) (uint64
 }
 
 // GetOffChainData is a mock function of the DBInterface
-func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (rpc.ArgBytes, error) {
+func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) ([]byte, error) {
 	args := d.Called(ctx, key, dbTx)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(rpc.ArgBytes), args.Error(1) //nolint:forcetypeassertion
+	return args.Get(0).([]byte), args.Error(1) //nolint:forcetypeassertion
 }
 
 // StoreLastProcessedBlock is a mock function of the DBInterface
-func (d *DBMock) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx *sqlx.Tx) error {
+func (d *DBMock) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	args := d.Called(ctx, task, block, dbTx)
 
 	return args.Error(0)
 }
 
 // StoreOffChainData is a mock function of the DBInterface
-func (d *DBMock) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx *sqlx.Tx) error {
+func (d *DBMock) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
 	args := d.Called(ctx, od, dbTx)
 
 	return args.Error(0)
@@ -126,81 +124,44 @@ func (e *EthClientFactoryMock) CreateEthClient(ctx context.Context, url string) 
 	return args.Get(0).(interfaces.EthClient), args.Error(1) //nolint:forcetypeassertion
 }
 
-var _ pgx.Tx = (*TxMock)(nil)
+var _ db.IDBTx = (*TxMock)(nil)
 
 // TxMock is a mock implementation of pgx.Tx interface
 type TxMock struct {
 	mock.Mock
 }
 
-// Begin is a mock function of the EthClientFactory
-func (tx *TxMock) Begin(ctx context.Context) (pgx.Tx, error) {
+// ExecContext is a mock function of the IDBTx
+func (tx *TxMock) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	panic("not implemented")
 }
 
-// BeginFunc is a mock function of the EthClientFactory
-func (tx *TxMock) BeginFunc(ctx context.Context, f func(pgx.Tx) error) (err error) {
+// QueryContext is a mock function of the IDBTx
+func (tx *TxMock) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	panic("not implemented")
 }
 
-// Commit is a mock function of the EthClientFactory
-func (tx *TxMock) Commit(ctx context.Context) error {
-	args := tx.Called(ctx)
+// Commit is a mock function of the IDBTx
+func (tx *TxMock) Commit() error {
+	args := tx.Called()
 
 	return args.Error(0)
 }
 
-// Rollback is a mock function of the EthClientFactory
-func (tx *TxMock) Rollback(ctx context.Context) error {
-	args := tx.Called(ctx)
+// Rollback is a mock function of the IDBTx
+func (tx *TxMock) Rollback() error {
+	args := tx.Called()
 
 	return args.Error(0)
 }
 
-// CopyFrom is a mock function of the EthClientFactory
-func (tx *TxMock) CopyFrom(ctx context.Context, tableName pgx.Identifier,
-	columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+// QueryxContext is a mock function of the IDBTx
+func (tx *TxMock) QueryxContext(ctx context.Context, query string, args ...interface{}) (*sqlx.Rows, error) {
 	panic("not implemented")
 }
 
-// SendBatch is a mock function of the EthClientFactory
-func (tx *TxMock) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
-	panic("not implemented")
-}
-
-// LargeObjects is a mock function of the EthClientFactory
-func (tx *TxMock) LargeObjects() pgx.LargeObjects {
-	panic("not implemented")
-}
-
-// Prepare is a mock function of the EthClientFactory
-func (tx *TxMock) Prepare(ctx context.Context, name, sql string) (*pgconn.StatementDescription, error) {
-	panic("not implemented")
-}
-
-// Exec is a mock function of the EthClientFactory
-func (tx *TxMock) Exec(ctx context.Context, sql string, arguments ...interface{}) (commandTag pgconn.CommandTag, err error) {
-	panic("not implemented")
-}
-
-// Query is a mock function of the EthClientFactory
-func (tx *TxMock) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
-	panic("not implemented")
-}
-
-// QueryRow is a mock function of the EthClientFactory
-func (tx *TxMock) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-	panic("not implemented")
-}
-
-// QueryFunc is a mock function of the EthClientFactory
-func (tx *TxMock) QueryFunc(ctx context.Context, sql string,
-	args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
-	panic("not implemented")
-}
-
-// Conn is a mock function of the EthClientFactory
-func (tx *TxMock) Conn() *pgx.Conn {
+// QueryRowxContext is a mock function of the IDBTx
+func (tx *TxMock) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
 	panic("not implemented")
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,7 +21,7 @@ func (c *Client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte,
 		return nil, fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
 	}
 
-	var result rpc.ArgBytes
+	var result types.ArgBytes
 	err = json.Unmarshal(response.Result, &result)
 	if err != nil {
 		return nil, err

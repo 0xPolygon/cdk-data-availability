@@ -9,7 +9,6 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
-	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -156,8 +155,8 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 		testFn(testConfig{
 			getSequenceBatchArgs: []interface{}{batchKey.number},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      rpc.ArgUint64(batchKey.number),
-				BatchL2Data: rpc.ArgBytes(data),
+				Number:      types.ArgUint64(batchKey.number),
+				BatchL2Data: types.ArgBytes(data),
 			}, nil},
 		})
 	})
@@ -439,8 +438,8 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			existsReturns:        []interface{}{false},
 			getSequenceBatchArgs: []interface{}{event.NumBatch},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      rpc.ArgUint64(event.NumBatch),
-				BatchL2Data: rpc.ArgBytes(batchL2Data),
+				Number:      types.ArgUint64(event.NumBatch),
+				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 			beginStateTransactionArgs: []interface{}{mock.Anything},
 			storeOffChainDataArgs: []interface{}{mock.Anything,
@@ -469,8 +468,8 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			existsReturns:                []interface{}{false},
 			getSequenceBatchArgs:         []interface{}{event.NumBatch},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      rpc.ArgUint64(event.NumBatch),
-				BatchL2Data: rpc.ArgBytes(batchL2Data),
+				Number:      types.ArgUint64(event.NumBatch),
+				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 		})
 	})
@@ -496,8 +495,8 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			existsReturns:             []interface{}{false},
 			getSequenceBatchArgs:      []interface{}{event.NumBatch},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      rpc.ArgUint64(event.NumBatch),
-				BatchL2Data: rpc.ArgBytes(batchL2Data),
+				Number:      types.ArgUint64(event.NumBatch),
+				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 		})
 	})
@@ -519,8 +518,8 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			commitReturns:            []interface{}{errors.New("error")},
 			getSequenceBatchArgs:     []interface{}{event.NumBatch},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      rpc.ArgUint64(event.NumBatch),
-				BatchL2Data: rpc.ArgBytes(batchL2Data),
+				Number:      types.ArgUint64(event.NumBatch),
+				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 			getTxArgs:     []interface{}{mock.Anything, event.Raw.TxHash},
 			getTxReturns:  []interface{}{tx, true, nil},

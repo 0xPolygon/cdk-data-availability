@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -27,7 +28,7 @@ func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 
 // SeqBatch structure
 type SeqBatch struct {
-	Number       rpc.ArgUint64 `json:"number"`
-	AccInputHash common.Hash   `json:"accInputHash"`
-	BatchL2Data  rpc.ArgBytes  `json:"batchL2Data"`
+	Number       types.ArgUint64 `json:"number"`
+	AccInputHash common.Hash     `json:"accInputHash"`
+	BatchL2Data  types.ArgBytes  `json:"batchL2Data"`
 }

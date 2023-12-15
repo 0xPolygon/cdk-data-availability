@@ -20,7 +20,7 @@ func (c *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, erro
 		return nil, fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
 	}
 
-	var result rpc.ArgBytes
+	var result types.ArgBytes
 	err = json.Unmarshal(response.Result, &result)
 	if err != nil {
 		return nil, err
