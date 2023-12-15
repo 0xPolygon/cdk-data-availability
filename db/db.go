@@ -18,12 +18,12 @@ var (
 
 // IDB defines functions that a DB instance should implement
 type IDB interface {
-	BeginStateTransaction(ctx context.Context) (pgx.Tx, error)
+	BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error)
 	Exists(ctx context.Context, key common.Hash) bool
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
-	GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (rpc.ArgBytes, error)
-	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx pgx.Tx) error
-	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx pgx.Tx) error
+	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (rpc.ArgBytes, error)
+	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx *sqlx.Tx) error
+	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx *sqlx.Tx) error
 }
 
 var _ IDB = (*DB)(nil)

@@ -18,6 +18,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -29,14 +30,14 @@ type DBMock struct {
 }
 
 // BeginStateTransaction is a mock function of the DBInterface
-func (d *DBMock) BeginStateTransaction(ctx context.Context) (pgx.Tx, error) {
+func (d *DBMock) BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error) {
 	args := d.Called(ctx)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(pgx.Tx), args.Error(1) //nolint:forcetypeassertion
+	return args.Get(0).(*sqlx.Tx), args.Error(1) //nolint:forcetypeassertion
 }
 
 // Exists is a mock function of the DBInterface
@@ -54,7 +55,7 @@ func (d *DBMock) GetLastProcessedBlock(ctx context.Context, task string) (uint64
 }
 
 // GetOffChainData is a mock function of the DBInterface
-func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.Tx) (rpc.ArgBytes, error) {
+func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (rpc.ArgBytes, error) {
 	args := d.Called(ctx, key, dbTx)
 
 	if args.Get(0) == nil {
@@ -65,14 +66,14 @@ func (d *DBMock) GetOffChainData(ctx context.Context, key common.Hash, dbTx pgx.
 }
 
 // StoreLastProcessedBlock is a mock function of the DBInterface
-func (d *DBMock) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx pgx.Tx) error {
+func (d *DBMock) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx *sqlx.Tx) error {
 	args := d.Called(ctx, task, block, dbTx)
 
 	return args.Error(0)
 }
 
 // StoreOffChainData is a mock function of the DBInterface
-func (d *DBMock) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx pgx.Tx) error {
+func (d *DBMock) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx *sqlx.Tx) error {
 	args := d.Called(ctx, od, dbTx)
 
 	return args.Error(0)
