@@ -12,7 +12,7 @@ on:
   pull_request:
 
 jobs:
-  unit_tests:
+  test-unit:
     name: Run tests
     strategy:
       fail-fast: false
@@ -41,8 +41,8 @@ jobs:
         name: code-coverage-report
         path: test/coverage.out
 
-  sonar_cloud:
-    needs: unit_tests
+  sonar-cloud:
+    needs: test-unit
     name: SonarCloud
     runs-on: ubuntu-latest
     steps:
