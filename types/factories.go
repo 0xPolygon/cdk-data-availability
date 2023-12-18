@@ -7,12 +7,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-var _ interfaces.EthClientFactory = (*EthClientFactoryImpl)(nil)
+var _ interfaces.IEthClientFactory = (*EthClientFactoryImpl)(nil)
 
 // EthClientFactoryImpl is the implementation of EthClientFactory interface
 type EthClientFactoryImpl struct{}
 
 // CreateEthClient creates a new eth client
-func (e *EthClientFactoryImpl) CreateEthClient(ctx context.Context, url string) (interfaces.EthClient, error) {
+func (e *EthClientFactoryImpl) CreateEthClient(ctx context.Context, url string) (interfaces.IEthClient, error) {
 	return ethclient.DialContext(ctx, url)
 }

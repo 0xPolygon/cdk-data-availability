@@ -18,7 +18,7 @@ const (
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
-func InitStartBlock(db db.IDB, ethClientFactory interfaces.EthClientFactory, l1 config.L1Config) error {
+func InitStartBlock(db db.IDB, ethClientFactory interfaces.IEthClientFactory, l1 config.L1Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), initBlockTimeout)
 	defer cancel()
 
@@ -45,7 +45,7 @@ func InitStartBlock(db db.IDB, ethClientFactory interfaces.EthClientFactory, l1 
 	return setStartBlock(db, startBlock.Uint64())
 }
 
-func findContractDeploymentBlock(ctx context.Context, eth interfaces.EthClient, contract common.Address) (*big.Int, error) {
+func findContractDeploymentBlock(ctx context.Context, eth interfaces.IEthClient, contract common.Address) (*big.Int, error) {
 	latestBlock, err := eth.BlockByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func findContractDeploymentBlock(ctx context.Context, eth interfaces.EthClient, 
 }
 
 // findCode is an O(log(n)) search for the inception block of a contract at the given address
-func findCode(ctx context.Context, eth interfaces.EthClient, address common.Address, startBlock, endBlock int64) int64 {
+func findCode(ctx context.Context, eth interfaces.IEthClient, address common.Address, startBlock, endBlock int64) int64 {
 	if startBlock == endBlock {
 		return startBlock
 	}
@@ -67,7 +67,7 @@ func findCode(ctx context.Context, eth interfaces.EthClient, address common.Addr
 	}
 }
 
-func codeLen(ctx context.Context, eth interfaces.EthClient, address common.Address, blockNumber int64) int64 {
+func codeLen(ctx context.Context, eth interfaces.IEthClient, address common.Address, blockNumber int64) int64 {
 	data, err := eth.CodeAt(ctx, address, big.NewInt(blockNumber))
 	if err != nil {
 		return 0

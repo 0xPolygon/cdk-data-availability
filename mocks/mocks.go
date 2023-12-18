@@ -77,7 +77,7 @@ func (d *DBMock) StoreOffChainData(ctx context.Context, od []types.OffChainData,
 	return args.Error(0)
 }
 
-var _ interfaces.EthClient = (*EthClientMock)(nil)
+var _ interfaces.IEthClient = (*EthClientMock)(nil)
 
 // EthClientMock is a mock implementation of EthClient interface
 type EthClientMock struct {
@@ -106,7 +106,7 @@ func (e *EthClientMock) CodeAt(ctx context.Context, account ethCommon.Address, b
 	return args.Get(0).([]byte), args.Error(1) //nolint:forcetypeassertion
 }
 
-var _ interfaces.EthClientFactory = (*EthClientFactoryMock)(nil)
+var _ interfaces.IEthClientFactory = (*EthClientFactoryMock)(nil)
 
 // EthClientFactoryMock is a mock implementation of EthClientFactory interface
 type EthClientFactoryMock struct {
@@ -114,14 +114,14 @@ type EthClientFactoryMock struct {
 }
 
 // CreateEthClient is a mock function of the EthClientFactory
-func (e *EthClientFactoryMock) CreateEthClient(ctx context.Context, url string) (interfaces.EthClient, error) {
+func (e *EthClientFactoryMock) CreateEthClient(ctx context.Context, url string) (interfaces.IEthClient, error) {
 	args := e.Called(ctx, url)
 
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 
-	return args.Get(0).(interfaces.EthClient), args.Error(1) //nolint:forcetypeassertion
+	return args.Get(0).(interfaces.IEthClient), args.Error(1) //nolint:forcetypeassertion
 }
 
 var _ db.IDBTx = (*TxMock)(nil)
