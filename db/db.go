@@ -34,7 +34,7 @@ func (db *DB) BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error) {
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx *sqlx.Tx) error {
+func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)
@@ -91,6 +91,22 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 	return count > 0
 }
 
+// StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
+func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
+	const storeLastProcessedBlockSQL = `
+		INSERT INTO data_node.sync_tasks (task, block) 
+		VALUES ($1, $2)
+		ON CONFLICT (task) DO UPDATE 
+		SET block = EXCLUDED.block, processed = NOW();
+	`
+
+	if _, err := dbTx.ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
 func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
 	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
@@ -104,20 +120,4 @@ func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, e
 	}
 
 	return lastBlock, nil
-}
-
-// StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
-func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx *sqlx.Tx) error {
-	const storeLastProcessedBlockSQL = `
-		INSERT INTO data_node.sync_tasks (task, block) 
-		VALUES ($1, $2)
-		ON CONFLICT (task) DO UPDATE 
-		SET block = EXCLUDED.block, processed = NOW();
-	`
-
-	if _, err := dbTx.ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
-		return err
-	}
-
-	return nil
 }
