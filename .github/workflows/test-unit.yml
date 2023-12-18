@@ -35,11 +35,6 @@ jobs:
       run: make test-unit
       working-directory: test
 
-    - name: Run Go Test Failed
-      if: failure()
-      id: run_tests_failure
-      run: echo "test_output=false" >> $GITHUB_OUTPUT
-
     - name: Archive code coverage results
       uses: actions/upload-artifact@v3
       with:
