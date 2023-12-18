@@ -1,6 +1,10 @@
 package rpc
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/0xPolygon/cdk-data-availability/types"
+)
 
 const (
 	// DefaultErrorCode rpc default error code
@@ -28,9 +32,9 @@ type Error interface {
 
 // ErrorObject is a jsonrpc error
 type ErrorObject struct {
-	Code    int       `json:"code"`
-	Message string    `json:"message"`
-	Data    *ArgBytes `json:"data,omitempty"`
+	Code    int             `json:"code"`
+	Message string          `json:"message"`
+	Data    *types.ArgBytes `json:"data,omitempty"`
 }
 
 // RPCError represents an error returned by a JSON RPC endpoint.

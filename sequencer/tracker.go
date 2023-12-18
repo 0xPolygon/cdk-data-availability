@@ -14,6 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+// ISequencerTracker is an interface that defines functions that a sequencer tracker must implement
+type ISequencerTracker interface {
+	GetSequenceBatch(batchNum uint64) (*SeqBatch, error)
+}
+
+var _ ISequencerTracker = (*SequencerTracker)(nil)
+
 // SequencerTracker watches the contract for relevant changes to the sequencer
 type SequencerTracker struct {
 	client  *etherman.Etherman
@@ -167,6 +174,11 @@ func (st *SequencerTracker) trackUrlChanges() {
 			return
 		}
 	}
+}
+
+// GetSequenceBatch returns sequence batch for given batch number
+func (st *SequencerTracker) GetSequenceBatch(batchNum uint64) (*SeqBatch, error) {
+	return GetData(st.GetUrl(), batchNum)
 }
 
 // Stop stops the SequencerTracker

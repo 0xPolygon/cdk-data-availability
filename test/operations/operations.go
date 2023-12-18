@@ -17,10 +17,11 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
+	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -243,7 +244,7 @@ func GetAuth(privateKeyStr string, chainID uint64) (*bind.TransactOpts, error) {
 }
 
 // WaitTxToBeMined waits until a tx has been mined or the given timeout expires.
-func WaitTxToBeMined(parentCtx context.Context, client ethClienter, tx *types.Transaction, timeout time.Duration) error {
+func WaitTxToBeMined(parentCtx context.Context, client ethClienter, tx *ethTypes.Transaction, timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 	receipt, err := bind.WaitMined(ctx, client, tx)
@@ -253,7 +254,7 @@ func WaitTxToBeMined(parentCtx context.Context, client ethClienter, tx *types.Tr
 		log.Errorf("error waiting tx %s to be mined: %w", tx.Hash(), err)
 		return err
 	}
-	if receipt.Status == types.ReceiptStatusFailed {
+	if receipt.Status == ethTypes.ReceiptStatusFailed {
 		// Get revert reason
 		reason, reasonErr := RevertReason(ctx, client, tx, receipt.BlockNumber)
 		if reasonErr != nil {
@@ -266,15 +267,15 @@ func WaitTxToBeMined(parentCtx context.Context, client ethClienter, tx *types.Tr
 }
 
 // RevertReason returns the revert reason for a tx that has a receipt with failed status
-func RevertReason(ctx context.Context, c ethClienter, tx *types.Transaction, blockNumber *big.Int) (string, error) {
+func RevertReason(ctx context.Context, c ethClienter, tx *ethTypes.Transaction, blockNumber *big.Int) (string, error) {
 	if tx == nil {
 		return "", nil
 	}
 
-	from, err := types.Sender(types.NewEIP155Signer(tx.ChainId()), tx)
+	from, err := ethTypes.Sender(ethTypes.NewEIP155Signer(tx.ChainId()), tx)
 	if err != nil {
-		signer := types.LatestSignerForChainID(tx.ChainId())
-		from, err = types.Sender(signer, tx)
+		signer := ethTypes.LatestSignerForChainID(tx.ChainId())
+		from, err = ethTypes.Sender(signer, tx)
 		if err != nil {
 			return "", err
 		}
@@ -303,7 +304,8 @@ func RevertReason(ctx context.Context, c ethClienter, tx *types.Transaction, blo
 
 // ApplyL2Txs sends the given L2 txs, waits for them to be consolidated and
 // checks the final state.
-func ApplyL2Txs(ctx context.Context, txs []*types.Transaction, auth *bind.TransactOpts, client *ethclient.Client, confirmationLevel ConfirmationLevel) ([]*big.Int, error) {
+func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.TransactOpts,
+	client *ethclient.Client, confirmationLevel ConfirmationLevel) ([]*big.Int, error) {
 	var err error
 	if auth == nil {
 		auth, err = GetAuth(DefaultSequencerPrivateKey, DefaultL2ChainID)
@@ -415,7 +417,7 @@ func WaitL2BlockToBeVirtualized(l2Block *big.Int, timeout time.Duration) error {
 // l2BlockConsolidationCondition
 func l2BlockConsolidationCondition(l2Block *big.Int) (bool, error) {
 	l2NetworkURL := "http://localhost:8123"
-	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockConsolidated", rpc.HexEncodeBig(l2Block))
+	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockConsolidated", types.HexEncodeBig(l2Block))
 	if err != nil {
 		return false, err
 	}
@@ -454,7 +456,7 @@ const VerifiedConfirmationLevel ConfirmationLevel = 3
 
 // l2BlockVirtualizationCondition
 func l2BlockVirtualizationCondition(l2Block *big.Int, l2NetworkURL string) (bool, error) {
-	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockVirtualized", rpc.HexEncodeBig(l2Block))
+	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockVirtualized", types.HexEncodeBig(l2Block))
 	if err != nil {
 		return false, err
 	}
@@ -469,8 +471,9 @@ func l2BlockVirtualizationCondition(l2Block *big.Int, l2NetworkURL string) (bool
 	return result, nil
 }
 
-func applyTxs(ctx context.Context, txs []*types.Transaction, auth *bind.TransactOpts, client *ethclient.Client, waitToBeMined bool) ([]*types.Transaction, error) {
-	var sentTxs []*types.Transaction
+func applyTxs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.TransactOpts,
+	client *ethclient.Client, waitToBeMined bool) ([]*ethTypes.Transaction, error) {
+	var sentTxs []*ethTypes.Transaction
 
 	for i := 0; i < len(txs); i++ {
 		signedTx, err := auth.Signer(auth.From, txs[i])

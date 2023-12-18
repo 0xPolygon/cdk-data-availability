@@ -3,18 +3,17 @@ package types
 import (
 	"crypto/ecdsa"
 
-	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // Batch represents a batch used for synchronization
 type Batch struct {
-	Number         rpc.ArgUint64       `json:"number"`
+	Number         ArgUint64           `json:"number"`
 	GlobalExitRoot common.Hash         `json:"globalExitRoot"`
-	Timestamp      rpc.ArgUint64       `json:"timestamp"`
+	Timestamp      ArgUint64           `json:"timestamp"`
 	Coinbase       common.Address      `json:"coinbase"`
-	L2Data         rpc.ArgBytes        `json:"batchL2Data"`
+	L2Data         ArgBytes            `json:"batchL2Data"`
 	Transactions   []TransactionOrHash `json:"transactions"`
 }
 
@@ -49,8 +48,8 @@ func (b *Batch) Sign(privateKey *ecdsa.PrivateKey) (*SignedBatch, error) {
 
 // SignedBatch is a batch but signed
 type SignedBatch struct {
-	Batch     Batch        `json:"batch"`
-	Signature rpc.ArgBytes `json:"signature"`
+	Batch     Batch    `json:"batch"`
+	Signature ArgBytes `json:"signature"`
 }
 
 // Signer returns the address of the signer

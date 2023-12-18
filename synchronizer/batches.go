@@ -2,6 +2,7 @@ package synchronizer
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"sync"
 	"time"
@@ -24,44 +25,47 @@ const defaultBlockBatchSize = 32
 
 // BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client         *etherman.Etherman
-	stop           chan struct{}
-	retry          time.Duration
-	rpcTimeout     time.Duration
-	blockBatchSize uint
-	self           common.Address
-	db             *db.DB
-	committee      map[common.Address]etherman.DataCommitteeMember
-	lock           sync.Mutex
-	reorgs         <-chan BlockReorg
-	events         chan *cdkvalidium.CdkvalidiumSequenceBatches
-	sequencer      *sequencer.SequencerTracker
+	client           etherman.IEtherman
+	stop             chan struct{}
+	retry            time.Duration
+	rpcTimeout       time.Duration
+	blockBatchSize   uint
+	self             common.Address
+	db               db.IDB
+	committee        map[common.Address]etherman.DataCommitteeMember
+	lock             sync.Mutex
+	reorgs           <-chan BlockReorg
+	events           chan *cdkvalidium.CdkvalidiumSequenceBatches
+	sequencer        sequencer.ISequencerTracker
+	rpcClientFactory client.IClientFactory
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
 func NewBatchSynchronizer(
 	cfg config.L1Config,
 	self common.Address,
-	db *db.DB,
+	db db.IDB,
 	reorgs <-chan BlockReorg,
-	ethClient *etherman.Etherman,
-	sequencer *sequencer.SequencerTracker,
+	ethClient etherman.IEtherman,
+	sequencer sequencer.ISequencerTracker,
+	rpcClientFactory client.IClientFactory,
 ) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block number size is not set, setting to default %d", defaultBlockBatchSize)
 		cfg.BlockBatchSize = defaultBlockBatchSize
 	}
 	synchronizer := &BatchSynchronizer{
-		client:         ethClient,
-		stop:           make(chan struct{}),
-		retry:          cfg.RetryPeriod.Duration,
-		rpcTimeout:     cfg.Timeout.Duration,
-		blockBatchSize: cfg.BlockBatchSize,
-		self:           self,
-		db:             db,
-		reorgs:         reorgs,
-		events:         make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
-		sequencer:      sequencer,
+		client:           ethClient,
+		stop:             make(chan struct{}),
+		retry:            cfg.RetryPeriod.Duration,
+		rpcTimeout:       cfg.Timeout.Duration,
+		blockBatchSize:   cfg.BlockBatchSize,
+		self:             self,
+		db:               db,
+		reorgs:           reorgs,
+		events:           make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
+		sequencer:        sequencer,
+		rpcClientFactory: rpcClientFactory,
 	}
 	return synchronizer, synchronizer.resolveCommittee()
 }
@@ -146,7 +150,7 @@ func (bs *BatchSynchronizer) filterEvents() error {
 	end := start + uint64(bs.blockBatchSize)
 
 	// get the latest block number
-	header, err := bs.client.EthClient.HeaderByNumber(context.TODO(), nil)
+	header, err := bs.client.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
 		log.Errorf("failed to determine latest block number", err)
 		return err
@@ -156,7 +160,7 @@ func (bs *BatchSynchronizer) filterEvents() error {
 		end = header.Number.Uint64()
 	}
 
-	iter, err := bs.client.CDKValidium.FilterSequenceBatches(
+	iter, err := bs.client.FilterSequenceBatches(
 		&bind.FilterOpts{
 			Start:   start,
 			End:     &end,
@@ -289,7 +293,7 @@ func (bs *BatchSynchronizer) resolve(batch batchKey) (*types.OffChainData, error
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
 func (bs *BatchSynchronizer) trySequencer(batch batchKey) *types.OffChainData {
-	seqBatch, err := sequencer.GetData(bs.sequencer.GetUrl(), batch.number)
+	seqBatch, err := bs.sequencer.GetSequenceBatch(batch.number)
 	if err != nil {
 		log.Warnf("failed to get data from sequencer: %v", err)
 		return nil
@@ -307,7 +311,7 @@ func (bs *BatchSynchronizer) trySequencer(batch batchKey) *types.OffChainData {
 }
 
 func (bs *BatchSynchronizer) resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (*types.OffChainData, error) {
-	cm := client.New(member.URL)
+	cm := bs.rpcClientFactory.New(member.URL)
 	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
 	defer cancel()
 
@@ -319,7 +323,7 @@ func (bs *BatchSynchronizer) resolveWithMember(key common.Hash, member etherman.
 	}
 	expectKey := crypto.Keccak256Hash(bytes)
 	if key != expectKey {
-		return nil, err
+		return nil, fmt.Errorf("unexpected key gotten from member: %v. Key: %v", member.Addr.Hex(), expectKey.Hex())
 	}
 	return &types.OffChainData{
 		Key:   key,

@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/jmoiron/sqlx"
@@ -15,6 +14,26 @@ var (
 	// ErrStateNotSynchronized indicates the state database may be empty
 	ErrStateNotSynchronized = errors.New("state not synchronized")
 )
+
+// IDB defines functions that a DB instance should implement
+type IDB interface {
+	BeginStateTransaction(ctx context.Context) (IDBTx, error)
+	Exists(ctx context.Context, key common.Hash) bool
+	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
+	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
+	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error
+	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+}
+
+// IDBTx is the interface that defines functions a db tx has to implement
+type IDBTx interface {
+	sqlx.ExecerContext
+	sqlx.QueryerContext
+	Rollback() error
+	Commit() error
+}
+
+var _ IDB = (*DB)(nil)
 
 // DB is the database layer of the data node
 type DB struct {
@@ -29,7 +48,7 @@ func New(pg *sqlx.DB) *DB {
 }
 
 // BeginStateTransaction begins a DB transaction. The caller is responsible for committing or rolling back the transaction
-func (db *DB) BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error) {
+func (db *DB) BeginStateTransaction(ctx context.Context) (IDBTx, error) {
 	return db.pg.BeginTxx(ctx, nil)
 }
 
@@ -55,7 +74,7 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (rpc.ArgBytes, error) {
+func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 

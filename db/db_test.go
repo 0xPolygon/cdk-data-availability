@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/ethereum/go-ethereum/common"
@@ -91,7 +90,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		name      string
 		od        []types.OffChainData
 		key       common.Hash
-		expected  rpc.ArgBytes
+		expected  types.ArgBytes
 		returnErr error
 	}{
 		{

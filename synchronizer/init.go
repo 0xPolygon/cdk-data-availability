@@ -8,8 +8,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/log"
+	"github.com/0xPolygon/cdk-data-availability/types/interfaces"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
-func InitStartBlock(db *db.DB, l1 config.L1Config) error {
+func InitStartBlock(db db.IDB, ethClientFactory interfaces.IEthClientFactory, l1 config.L1Config) error {
 	ctx, cancel := context.WithTimeout(context.Background(), initBlockTimeout)
 	defer cancel()
 
@@ -31,22 +31,21 @@ func InitStartBlock(db *db.DB, l1 config.L1Config) error {
 		return nil
 	}
 	log.Info("starting search for start block of contract ", l1.CDKValidiumAddress)
-	startBlock, err := findContractDeploymentBlock(ctx, l1.RpcURL, common.HexToAddress(l1.CDKValidiumAddress))
+
+	ethClient, err := ethClientFactory.CreateEthClient(ctx, l1.RpcURL)
 	if err != nil {
 		return err
 	}
-	err = setStartBlock(db, startBlock.Uint64())
+
+	startBlock, err := findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.CDKValidiumAddress))
 	if err != nil {
 		return err
 	}
-	return nil
+
+	return setStartBlock(db, startBlock.Uint64())
 }
 
-func findContractDeploymentBlock(ctx context.Context, url string, contract common.Address) (*big.Int, error) {
-	eth, err := ethclient.DialContext(ctx, url)
-	if err != nil {
-		return nil, err
-	}
+func findContractDeploymentBlock(ctx context.Context, eth interfaces.IEthClient, contract common.Address) (*big.Int, error) {
 	latestBlock, err := eth.BlockByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -56,7 +55,7 @@ func findContractDeploymentBlock(ctx context.Context, url string, contract commo
 }
 
 // findCode is an O(log(n)) search for the inception block of a contract at the given address
-func findCode(ctx context.Context, eth *ethclient.Client, address common.Address, startBlock, endBlock int64) int64 {
+func findCode(ctx context.Context, eth interfaces.IEthClient, address common.Address, startBlock, endBlock int64) int64 {
 	if startBlock == endBlock {
 		return startBlock
 	}
@@ -68,7 +67,7 @@ func findCode(ctx context.Context, eth *ethclient.Client, address common.Address
 	}
 }
 
-func codeLen(ctx context.Context, eth *ethclient.Client, address common.Address, blockNumber int64) int64 {
+func codeLen(ctx context.Context, eth interfaces.IEthClient, address common.Address, blockNumber int64) int64 {
 	data, err := eth.CodeAt(ctx, address, big.NewInt(blockNumber))
 	if err != nil {
 		return 0

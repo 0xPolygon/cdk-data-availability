@@ -3,22 +3,17 @@ package rpc
 import (
 	"context"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/0xPolygon/cdk-data-availability/db"
 )
 
 // DBTxManager allows to do scopped DB txs
 type DBTxManager struct{}
 
 // DBTxScopedFn function to do scopped DB txs
-type DBTxScopedFn func(ctx context.Context, dbTx *sqlx.Tx) (interface{}, Error)
-
-// DBTxer interface to begin DB txs
-type DBTxer interface {
-	BeginStateTransaction(ctx context.Context) (*sqlx.Tx, error)
-}
+type DBTxScopedFn func(ctx context.Context, dbTx db.IDBTx) (interface{}, Error)
 
 // NewDbTxScope function to initiate DB scopped txs
-func (f *DBTxManager) NewDbTxScope(db DBTxer, scopedFn DBTxScopedFn) (interface{}, Error) {
+func (f *DBTxManager) NewDbTxScope(db db.IDB, scopedFn DBTxScopedFn) (interface{}, Error) {
 	ctx := context.Background()
 	dbTx, err := db.BeginStateTransaction(ctx)
 	if err != nil {
