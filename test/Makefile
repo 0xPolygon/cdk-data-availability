@@ -26,7 +26,7 @@ test-e2e: run ## Runs the E2E tests
 
 .PHONY: test-unit
 test-unit: ## Runs the unit tests, skips e2e
-	go test -coverprofile coverage.out `go list ../... | grep -v e2e`
+	go test -coverprofile coverage.out `go list ../... | grep -v /test`
 
 ## Help display.
 ## Pulls comments from beside commands and prints a nicely formatted
