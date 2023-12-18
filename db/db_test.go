@@ -60,7 +60,6 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
 			for _, o := range tt.od {
 				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
 					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value))
@@ -73,12 +72,9 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			tx, err := wdb.BeginTxx(context.Background(), nil)
-			require.NoError(t, err)
-
 			dbPG := New(wdb)
 
-			err = dbPG.StoreOffChainData(context.Background(), tt.od, tx)
+			err = dbPG.StoreOffChainData(context.Background(), tt.od, wdb)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -91,11 +87,6 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 }
 
 func Test_DB_GetOffChainData(t *testing.T) {
-	od := []types.OffChainData{{
-		Key:   common.HexToHash("key1"),
-		Value: []byte("value1"),
-	}}
-
 	testTable := []struct {
 		name      string
 		od        []types.OffChainData
@@ -146,7 +137,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			wdb := sqlx.NewDb(db, "postgres")
 
 			// Seed data
-			seedOffchainData(t, wdb, mock, od)
+			seedOffchainData(t, wdb, mock, tt.od)
 
 			expected := mock.ExpectQuery(`SELECT value FROM data_node\.offchain_data WHERE key = \$1 LIMIT 1`).
 				WithArgs(tt.key.Hex())
@@ -245,6 +236,125 @@ func Test_DB_Exist(t *testing.T) {
 			actual := dbPG.Exists(context.Background(), tt.key)
 			require.NoError(t, err)
 			require.Equal(t, tt.count > 0, actual)
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test_DB_StoreLastProcessedBlock(t *testing.T) {
+	testTable := []struct {
+		name      string
+		task      string
+		block     uint64
+		returnErr error
+	}{
+		{
+			name:  "value inserted",
+			task:  "task1",
+			block: 1,
+		},
+		{
+			name:      "error returned",
+			task:      "task1",
+			block:     1,
+			returnErr: errors.New("test error"),
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			expected := mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
+				WithArgs(tt.task, tt.block)
+			if tt.returnErr != nil {
+				expected.WillReturnError(tt.returnErr)
+			} else {
+				expected.WillReturnResult(sqlmock.NewResult(1, 1))
+			}
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			dbPG := New(wdb)
+
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, wdb)
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+			}
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test_DB_GetLastProcessedBlock(t *testing.T) {
+	testTable := []struct {
+		name      string
+		task      string
+		block     uint64
+		returnErr error
+	}{
+		{
+			name:  "successfully selected block",
+			task:  "task1",
+			block: 1,
+		},
+		{
+			name:      "error returned",
+			task:      "task1",
+			block:     1,
+			returnErr: errors.New("test error"),
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
+				WithArgs(tt.task, tt.block).
+				WillReturnResult(sqlmock.NewResult(1, 1))
+
+			expected := mock.ExpectQuery(`SELECT block FROM data_node\.sync_tasks WHERE task = \$1`).
+				WithArgs(tt.task)
+
+			if tt.returnErr != nil {
+				expected.WillReturnError(tt.returnErr)
+			} else {
+				expected.WillReturnRows(sqlmock.NewRows([]string{"block"}).AddRow(tt.block))
+			}
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			dbPG := New(wdb)
+
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block, wdb)
+			require.NoError(t, err)
+
+			actual, err := dbPG.GetLastProcessedBlock(context.Background(), tt.task)
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.block, actual)
+			}
 
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
