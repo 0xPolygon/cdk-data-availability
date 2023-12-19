@@ -9,27 +9,15 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ethereumClient interface {
-	ethereum.ChainReader
-	ethereum.ChainStateReader
-	ethereum.ContractCaller
-	ethereum.GasEstimator
-	ethereum.GasPricer
-	ethereum.LogFilterer
-	ethereum.TransactionReader
-	ethereum.TransactionSender
-
-	bind.DeployBackend
-}
-
 // IEtherman defines functions that should be implemented by Etherman
+//
+//go:generate mockery --name IEtherman --output ../mocks --case=underscore --filename etherman.generated.go
 type IEtherman interface {
 	GetCurrentDataCommittee() (*DataCommittee, error)
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
@@ -45,29 +33,33 @@ var _ IEtherman = (*Etherman)(nil)
 
 // Etherman is the implementation of EtherMan.
 type Etherman struct {
-	EthClient     ethereumClient
+	EthClient     *ethclient.Client
 	CDKValidium   *cdkvalidium.Cdkvalidium
 	DataCommittee *cdkdatacommittee.Cdkdatacommittee
 }
 
-// New creaters a enw etherman
+// New creates a new etherman
 func New(cfg config.L1Config) (*Etherman, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
 	defer cancel()
+
 	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
 	if err != nil {
 		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
 		return nil, err
 	}
+
 	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(cfg.CDKValidiumAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
+
 	dataCommittee, err :=
 		cdkdatacommittee.NewCdkdatacommittee(common.HexToAddress(cfg.DataCommitteeAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}
+
 	return &Etherman{
 		EthClient:     ethClient,
 		CDKValidium:   cdkValidium,
@@ -130,7 +122,7 @@ func (e *Etherman) GetCurrentDataCommittee() (*DataCommittee, error) {
 	}
 
 	return &DataCommittee{
-		AddressesHash:      common.Hash(addrsHash),
+		AddressesHash:      addrsHash,
 		RequiredSignatures: reqSign.Uint64(),
 		Members:            members,
 	}, nil

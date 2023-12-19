@@ -15,6 +15,8 @@ import (
 )
 
 // ISequencerTracker is an interface that defines functions that a sequencer tracker must implement
+//
+//go:generate mockery --name ISequencerTracker --output ../mocks --case=underscore --filename sequencer_tracker.generated.go
 type ISequencerTracker interface {
 	GetSequenceBatch(batchNum uint64) (*SeqBatch, error)
 }
@@ -39,11 +41,13 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 	if err != nil {
 		return nil, err
 	}
+
 	log.Infof("current sequencer addr: %s", addr.Hex())
 	url, err := ethClient.TrustedSequencerURL()
 	if err != nil {
 		return nil, err
 	}
+
 	log.Infof("current sequencer url: %s", url)
 	w := &SequencerTracker{
 		client:  ethClient,
@@ -53,6 +57,7 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 		addr:    addr,
 		url:     url,
 	}
+
 	return w, nil
 }
 

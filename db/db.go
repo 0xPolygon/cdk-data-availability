@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -16,6 +17,8 @@ var (
 )
 
 // IDB defines functions that a DB instance should implement
+//
+//go:generate mockery --name IDB --output ../mocks --case=underscore --filename db.generated.go
 type IDB interface {
 	BeginStateTransaction(ctx context.Context) (IDBTx, error)
 	Exists(ctx context.Context, key common.Hash) bool
@@ -26,11 +29,12 @@ type IDB interface {
 }
 
 // IDBTx is the interface that defines functions a db tx has to implement
+//
+//go:generate mockery --name IDBTx --output ../mocks --case=underscore --filename dbtx.generated.go
 type IDBTx interface {
 	sqlx.ExecerContext
 	sqlx.QueryerContext
-	Rollback() error
-	Commit() error
+	driver.Tx
 }
 
 var _ IDB = (*DB)(nil)
