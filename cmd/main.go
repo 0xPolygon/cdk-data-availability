@@ -118,7 +118,7 @@ func start(cliCtx *cli.Context) error {
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
 	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr,
-		storage, detector.Subscribe(), etherman, sequencerTracker, &client.ClientFactory{})
+		storage, detector.Subscribe(), etherman, sequencerTracker, &client.Factory{})
 	if err != nil {
 		log.Fatal(err)
 	}

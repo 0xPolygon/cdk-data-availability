@@ -22,11 +22,11 @@ type IClient interface {
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
-// ClientFactory is the implementation of the data committee client factory
-type ClientFactory struct{}
+// Factory is the implementation of the data committee client factory
+type Factory struct{}
 
 // New returns an implementation of the data committee node client
-func (f *ClientFactory) New(url string) IClient {
+func (f *Factory) New(url string) IClient {
 	return New(url)
 }
 
