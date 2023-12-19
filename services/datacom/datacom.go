@@ -15,7 +15,7 @@ const APIDATACOM = "datacom"
 
 // DataComEndpoints contains implementations for the "datacom" RPC endpoints
 type DataComEndpoints struct {
-	db               db.IDB
+	db               db.DB
 	txMan            rpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
 	sequencerTracker *sequencer.SequencerTracker
@@ -23,7 +23,7 @@ type DataComEndpoints struct {
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db db.IDB, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
+	db db.DB, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,
@@ -45,7 +45,7 @@ func (d *DataComEndpoints) SignSequence(signedSequence types.SignedSequence) (in
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
 	// Store off-chain data by hash (hash(L2Data): L2Data)
-	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx db.IDBTx) (interface{}, rpc.Error) {
+	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
 		err := d.db.StoreOffChainData(ctx, signedSequence.Sequence.OffChainData(), dbTx)
 		if err != nil {
 			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to store offchain data")

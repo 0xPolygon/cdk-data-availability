@@ -322,8 +322,8 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 		})
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.IDB)
-		txMock := new(mocks.IDBTx)
+		dbMock := new(mocks.DB)
+		txMock := new(mocks.Tx)
 		ethermanMock := new(mocks.IEtherman)
 		sequencerMock := new(mocks.ISequencerTracker)
 

@@ -50,8 +50,8 @@ func Test_InitStartBlock(t *testing.T) {
 	}
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.IDB)
-		txMock := new(mocks.IDBTx)
+		dbMock := new(mocks.DB)
+		txMock := new(mocks.Tx)
 		ethClientMock := new(mocks.IEthClient)
 		ethClientFactoryMock := new(mocks.IEthClientFactory)
 
