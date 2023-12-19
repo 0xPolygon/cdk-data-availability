@@ -18,12 +18,12 @@ type DataComEndpoints struct {
 	db               db.DB
 	txMan            rpc.DBTxManager
 	privateKey       *ecdsa.PrivateKey
-	sequencerTracker *sequencer.SequencerTracker
+	sequencerTracker *sequencer.Tracker
 }
 
 // NewDataComEndpoints returns DataComEndpoints
 func NewDataComEndpoints(
-	db db.DB, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.SequencerTracker,
+	db db.DB, privateKey *ecdsa.PrivateKey, sequencerTracker *sequencer.Tracker,
 ) *DataComEndpoints {
 	return &DataComEndpoints{
 		db:               db,

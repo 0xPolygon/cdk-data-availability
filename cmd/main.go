@@ -98,7 +98,7 @@ func start(cliCtx *cli.Context) error {
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := sequencer.NewSequencerTracker(c.L1, etherman)
+	sequencerTracker, err := sequencer.NewTracker(c.L1, etherman)
 	if err != nil {
 		log.Fatal(err)
 	}

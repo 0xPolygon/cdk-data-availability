@@ -30,7 +30,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	etherman, err := etherman.New(cfg.L1)
 	require.NoError(t, err)
 
-	tracker, err := sequencer.NewSequencerTracker(cfg.L1, etherman)
+	tracker, err := sequencer.NewTracker(cfg.L1, etherman)
 	require.NoError(t, err)
 
 	go tracker.Start()
