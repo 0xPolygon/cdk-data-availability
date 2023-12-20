@@ -9,6 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// SeqBatch structure
+type SeqBatch struct {
+	Number       types.ArgUint64 `json:"number"`
+	AccInputHash common.Hash     `json:"accInputHash"`
+	BatchL2Data  types.ArgBytes  `json:"batchL2Data"`
+}
+
 // GetData returns batch data from the trusted sequencer
 func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 	response, err := rpc.JSONRPCCall(url, "zkevm_getBatchByNumber", batchNum, true)
@@ -24,11 +31,4 @@ func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 		return nil, err
 	}
 	return &result, nil
-}
-
-// SeqBatch structure
-type SeqBatch struct {
-	Number       types.ArgUint64 `json:"number"`
-	AccInputHash common.Hash     `json:"accInputHash"`
-	BatchL2Data  types.ArgBytes  `json:"batchL2Data"`
 }

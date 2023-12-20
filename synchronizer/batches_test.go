@@ -26,7 +26,7 @@ func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
 	t.Run("error getting committee", func(t *testing.T) {
 		t.Parallel()
 
-		ethermanMock := new(mocks.EthermanMock)
+		ethermanMock := new(mocks.IEtherman)
 		ethermanMock.On("GetCurrentDataCommittee").Return(nil, errors.New("error")).Once()
 
 		batchSyncronizer := &BatchSynchronizer{
@@ -57,7 +57,7 @@ func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
 				},
 			},
 		}
-		ethermanMock := new(mocks.EthermanMock)
+		ethermanMock := new(mocks.IEtherman)
 		ethermanMock.On("GetCurrentDataCommittee").Return(committee, nil).Once()
 
 		batchSyncronizer := &BatchSynchronizer{
@@ -97,10 +97,10 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	}
 
 	testFn := func(config testConfig) {
-		clientMock := new(mocks.ClientMock)
-		ethermanMock := new(mocks.EthermanMock)
-		sequencerMock := new(mocks.SequencerTrackerMock)
-		clientFactoryMock := new(mocks.ClientFactoryMock)
+		clientMock := new(mocks.IClient)
+		ethermanMock := new(mocks.IEtherman)
+		sequencerMock := new(mocks.ISequencerTracker)
+		clientFactoryMock := new(mocks.IClientFactory)
 
 		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
 			sequencerMock.On("GetSequenceBatch", config.getSequenceBatchArgs...).Return(
@@ -322,10 +322,10 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 		})
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.DBMock)
-		txMock := new(mocks.TxMock)
-		ethermanMock := new(mocks.EthermanMock)
-		sequencerMock := new(mocks.SequencerTrackerMock)
+		dbMock := new(mocks.DB)
+		txMock := new(mocks.Tx)
+		ethermanMock := new(mocks.IEtherman)
+		sequencerMock := new(mocks.ISequencerTracker)
 
 		if config.getTxArgs != nil && config.getTxReturns != nil {
 			ethermanMock.On("GetTx", config.getTxArgs...).Return(

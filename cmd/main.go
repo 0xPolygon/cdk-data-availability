@@ -98,7 +98,7 @@ func start(cliCtx *cli.Context) error {
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := sequencer.NewSequencerTracker(c.L1, etherman)
+	sequencerTracker, err := sequencer.NewTracker(c.L1, etherman)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func start(cliCtx *cli.Context) error {
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
 	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr,
-		storage, detector.Subscribe(), etherman, sequencerTracker, &client.ClientFactory{})
+		storage, detector.Subscribe(), etherman, sequencerTracker, &client.Factory{})
 	if err != nil {
 		log.Fatal(err)
 	}

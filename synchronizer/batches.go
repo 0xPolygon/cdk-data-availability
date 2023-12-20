@@ -31,7 +31,7 @@ type BatchSynchronizer struct {
 	rpcTimeout       time.Duration
 	blockBatchSize   uint
 	self             common.Address
-	db               db.IDB
+	db               db.DB
 	committee        map[common.Address]etherman.DataCommitteeMember
 	lock             sync.Mutex
 	reorgs           <-chan BlockReorg
@@ -44,7 +44,7 @@ type BatchSynchronizer struct {
 func NewBatchSynchronizer(
 	cfg config.L1Config,
 	self common.Address,
-	db db.IDB,
+	db db.DB,
 	reorgs <-chan BlockReorg,
 	ethClient etherman.IEtherman,
 	sequencer sequencer.ISequencerTracker,

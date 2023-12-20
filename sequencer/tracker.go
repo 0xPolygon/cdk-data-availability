@@ -15,14 +15,16 @@ import (
 )
 
 // ISequencerTracker is an interface that defines functions that a sequencer tracker must implement
+//
+//go:generate mockery --name ISequencerTracker --output ../mocks --case=underscore --filename sequencer_tracker.generated.go
 type ISequencerTracker interface {
 	GetSequenceBatch(batchNum uint64) (*SeqBatch, error)
 }
 
-var _ ISequencerTracker = (*SequencerTracker)(nil)
+var _ ISequencerTracker = (*Tracker)(nil)
 
-// SequencerTracker watches the contract for relevant changes to the sequencer
-type SequencerTracker struct {
+// Tracker watches the contract for relevant changes to the sequencer
+type Tracker struct {
 	client  *etherman.Etherman
 	stop    chan struct{}
 	timeout time.Duration
@@ -32,20 +34,22 @@ type SequencerTracker struct {
 	lock    sync.Mutex
 }
 
-// NewSequencerTracker creates a new SequencerTracker
-func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*SequencerTracker, error) {
+// NewTracker creates a new Tracker
+func NewTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Tracker, error) {
 	log.Info("starting sequencer address tracker")
 	addr, err := ethClient.TrustedSequencer()
 	if err != nil {
 		return nil, err
 	}
+
 	log.Infof("current sequencer addr: %s", addr.Hex())
 	url, err := ethClient.TrustedSequencerURL()
 	if err != nil {
 		return nil, err
 	}
+
 	log.Infof("current sequencer url: %s", url)
-	w := &SequencerTracker{
+	w := &Tracker{
 		client:  ethClient,
 		stop:    make(chan struct{}),
 		timeout: cfg.Timeout.Duration,
@@ -53,42 +57,43 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 		addr:    addr,
 		url:     url,
 	}
+
 	return w, nil
 }
 
 // GetAddr returns the last known address of the Sequencer
-func (st *SequencerTracker) GetAddr() common.Address {
+func (st *Tracker) GetAddr() common.Address {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	return st.addr
 }
 
-func (st *SequencerTracker) setAddr(addr common.Address) {
+func (st *Tracker) setAddr(addr common.Address) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	st.addr = addr
 }
 
 // GetUrl returns the last known URL of the Sequencer
-func (st *SequencerTracker) GetUrl() string {
+func (st *Tracker) GetUrl() string {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	return st.url
 }
 
-func (st *SequencerTracker) setUrl(url string) {
+func (st *Tracker) setUrl(url string) {
 	st.lock.Lock()
 	defer st.lock.Unlock()
 	st.url = url
 }
 
 // Start starts the SequencerTracker
-func (st *SequencerTracker) Start() {
+func (st *Tracker) Start() {
 	go st.trackAddrChanges()
 	go st.trackUrlChanges()
 }
 
-func (st *SequencerTracker) trackAddrChanges() {
+func (st *Tracker) trackAddrChanges() {
 	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencer)
 	defer close(events)
 	for {
@@ -132,7 +137,7 @@ func (st *SequencerTracker) trackAddrChanges() {
 	}
 }
 
-func (st *SequencerTracker) trackUrlChanges() {
+func (st *Tracker) trackUrlChanges() {
 	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL)
 	defer close(events)
 	for {
@@ -177,11 +182,11 @@ func (st *SequencerTracker) trackUrlChanges() {
 }
 
 // GetSequenceBatch returns sequence batch for given batch number
-func (st *SequencerTracker) GetSequenceBatch(batchNum uint64) (*SeqBatch, error) {
+func (st *Tracker) GetSequenceBatch(batchNum uint64) (*SeqBatch, error) {
 	return GetData(st.GetUrl(), batchNum)
 }
 
 // Stop stops the SequencerTracker
-func (st *SequencerTracker) Stop() {
+func (st *Tracker) Stop() {
 	close(st.stop)
 }

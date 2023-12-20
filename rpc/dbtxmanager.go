@@ -10,10 +10,10 @@ import (
 type DBTxManager struct{}
 
 // DBTxScopedFn function to do scopped DB txs
-type DBTxScopedFn func(ctx context.Context, dbTx db.IDBTx) (interface{}, Error)
+type DBTxScopedFn func(ctx context.Context, dbTx db.Tx) (interface{}, Error)
 
 // NewDbTxScope function to initiate DB scopped txs
-func (f *DBTxManager) NewDbTxScope(db db.IDB, scopedFn DBTxScopedFn) (interface{}, Error) {
+func (f *DBTxManager) NewDbTxScope(db db.DB, scopedFn DBTxScopedFn) (interface{}, Error) {
 	ctx := context.Background()
 	dbTx, err := db.BeginStateTransaction(ctx)
 	if err != nil {

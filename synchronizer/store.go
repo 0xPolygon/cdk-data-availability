@@ -14,7 +14,7 @@ const dbTimeout = 2 * time.Second
 
 const l1SyncTask = "L1"
 
-func getStartBlock(db dbTypes.IDB) (uint64, error) {
+func getStartBlock(db dbTypes.DB) (uint64, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -28,12 +28,12 @@ func getStartBlock(db dbTypes.IDB) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(db dbTypes.IDB, block uint64) error {
+func setStartBlock(db dbTypes.DB, block uint64) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	var (
-		dbTx dbTypes.IDBTx
+		dbTx dbTypes.Tx
 		err  error
 	)
 
@@ -52,18 +52,18 @@ func setStartBlock(db dbTypes.IDB, block uint64) error {
 	return nil
 }
 
-func exists(db dbTypes.IDB, key common.Hash) bool {
+func exists(db dbTypes.DB, key common.Hash) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 	return db.Exists(ctx, key)
 }
 
-func store(db dbTypes.IDB, data []types.OffChainData) error {
+func store(db dbTypes.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
 	var (
-		dbTx dbTypes.IDBTx
+		dbTx dbTypes.Tx
 		err  error
 	)
 
@@ -83,7 +83,7 @@ func store(db dbTypes.IDB, data []types.OffChainData) error {
 	return nil
 }
 
-func rollback(err error, dbTx dbTypes.IDBTx) {
+func rollback(err error, dbTx dbTypes.Tx) {
 	if txErr := dbTx.Rollback(); txErr != nil {
 		log.Errorf("failed to roll back transaction after error %v : %v", err, txErr)
 	}

@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -15,9 +16,11 @@ var (
 	ErrStateNotSynchronized = errors.New("state not synchronized")
 )
 
-// IDB defines functions that a DB instance should implement
-type IDB interface {
-	BeginStateTransaction(ctx context.Context) (IDBTx, error)
+// DB defines functions that a DB instance should implement
+//
+//go:generate mockery --name DB --output ../mocks --case=underscore --filename db.generated.go
+type DB interface {
+	BeginStateTransaction(ctx context.Context) (Tx, error)
 	Exists(ctx context.Context, key common.Hash) bool
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
@@ -25,35 +28,34 @@ type IDB interface {
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
 }
 
-// IDBTx is the interface that defines functions a db tx has to implement
-type IDBTx interface {
+// Tx is the interface that defines functions a db tx has to implement
+//
+//go:generate mockery --name Tx --output ../mocks --case=underscore --filename tx.generated.go
+type Tx interface {
 	sqlx.ExecerContext
 	sqlx.QueryerContext
-	Rollback() error
-	Commit() error
+	driver.Tx
 }
 
-var _ IDB = (*DB)(nil)
-
 // DB is the database layer of the data node
-type DB struct {
+type pgDB struct {
 	pg *sqlx.DB
 }
 
 // New instantiates a DB
-func New(pg *sqlx.DB) *DB {
-	return &DB{
+func New(pg *sqlx.DB) DB {
+	return &pgDB{
 		pg: pg,
 	}
 }
 
 // BeginStateTransaction begins a DB transaction. The caller is responsible for committing or rolling back the transaction
-func (db *DB) BeginStateTransaction(ctx context.Context) (IDBTx, error) {
+func (db *pgDB) BeginStateTransaction(ctx context.Context) (Tx, error) {
 	return db.pg.BeginTxx(ctx, nil)
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)
@@ -74,7 +76,7 @@ func (db *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
+func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 
@@ -96,7 +98,7 @@ func (db *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.Qu
 }
 
 // Exists checks if a key exists in offchain data table
-func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
+func (db *pgDB) Exists(ctx context.Context, key common.Hash) bool {
 	const keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1;"
 
 	var (
@@ -111,7 +113,7 @@ func (db *DB) Exists(ctx context.Context, key common.Hash) bool {
 }
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
-func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	const storeLastProcessedBlockSQL = `
 		INSERT INTO data_node.sync_tasks (task, block) 
 		VALUES ($1, $2)
@@ -127,7 +129,7 @@ func (db *DB) StoreLastProcessedBlock(ctx context.Context, task string, block ui
 }
 
 // GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
-func (db *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
+func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
 	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
 
 	var (

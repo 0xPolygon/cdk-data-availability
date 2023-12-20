@@ -8,21 +8,25 @@ import (
 )
 
 // IClientFactory interface for the client factory
+//
+//go:generate mockery --name IClientFactory --output ../mocks --case=underscore --filename client_factory.generated.go
 type IClientFactory interface {
 	New(url string) IClient
 }
 
 // IClient is the interface that defines the implementation of all the endpoints
+//
+//go:generate mockery --name IClient --output ../mocks --case=underscore --filename client.generated.go
 type IClient interface {
 	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
-// ClientFactory is the implementation of the data committee client factory
-type ClientFactory struct{}
+// Factory is the implementation of the data committee client factory
+type Factory struct{}
 
 // New returns an implementation of the data committee node client
-func (f *ClientFactory) New(url string) IClient {
+func (f *Factory) New(url string) IClient {
 	return New(url)
 }
 
