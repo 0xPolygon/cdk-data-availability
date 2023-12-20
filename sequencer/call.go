@@ -22,13 +22,15 @@ func GetData(url string, batchNum uint64) (*SeqBatch, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if response.Error != nil {
 		return nil, fmt.Errorf("%d - %s", response.Error.Code, response.Error.Message)
 	}
+
 	var result SeqBatch
-	err = json.Unmarshal(response.Result, &result)
-	if err != nil {
+	if err = json.Unmarshal(response.Result, &result); err != nil {
 		return nil, err
 	}
+
 	return &result, nil
 }

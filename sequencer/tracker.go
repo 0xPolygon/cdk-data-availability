@@ -109,8 +109,8 @@ func (st *Tracker) trackAddrChanges() {
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
-			sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events)
-			if err != nil {
+
+			if sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
 		}
@@ -153,8 +153,8 @@ func (st *Tracker) trackUrlChanges() {
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
-			sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events)
-			if err != nil {
+
+			if sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
 		}
