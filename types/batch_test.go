@@ -2,6 +2,7 @@ package types
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -50,14 +51,21 @@ func TestBatchSigning(t *testing.T) {
 		require.NoError(t, err)
 		privKeys = append(privKeys, pk)
 	}
-	for _, c := range testBatchCases {
-		for _, pk := range privKeys {
-			signedBatch, err := c.Sign(pk)
-			require.NoError(t, err)
-			actualAddr, err := signedBatch.Signer()
-			require.NoError(t, err)
-			expectedAddr := crypto.PubkeyToAddress(pk.PublicKey)
-			assert.Equal(t, expectedAddr, actualAddr)
-		}
+
+	for i, c := range testBatchCases {
+		c := c
+
+		t.Run(fmt.Sprintf("%d. case", i+1), func(t *testing.T) {
+			t.Parallel()
+
+			for _, pk := range privKeys {
+				signedBatch, err := c.Sign(pk)
+				require.NoError(t, err)
+				actualAddr, err := signedBatch.Signer()
+				require.NoError(t, err)
+				expectedAddr := crypto.PubkeyToAddress(pk.PublicKey)
+				assert.Equal(t, expectedAddr, actualAddr)
+			}
+		})
 	}
 }

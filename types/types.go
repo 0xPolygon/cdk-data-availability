@@ -15,11 +15,10 @@ const (
 	hexBitSize64 = 64
 )
 
-// ArgBytesPtr helps to marshal byte array values provided in the RPC requests
-func ArgBytesPtr(b []byte) *ArgBytes {
-	bb := ArgBytes(b)
-
-	return &bb
+// OffChainData represents some data that is not stored on chain and should be preserved
+type OffChainData struct {
+	Key   common.Hash
+	Value []byte
 }
 
 // ArgUint64 helps to marshal uint64 values provided in the RPC requests
@@ -50,13 +49,15 @@ func (b ArgUint64) Hex() string {
 	return string(bb)
 }
 
-// ArgUint64Ptr returns the pointer of the provided ArgUint64
-func ArgUint64Ptr(a ArgUint64) *ArgUint64 {
-	return &a
-}
-
 // ArgBytes helps to marshal byte array values provided in the RPC requests
 type ArgBytes []byte
+
+// ArgBytesPtr helps to marshal byte array values provided in the RPC requests
+func ArgBytesPtr(b []byte) *ArgBytes {
+	bb := ArgBytes(b)
+
+	return &bb
+}
 
 // MarshalText marshals into text
 func (b ArgBytes) MarshalText() ([]byte, error) {

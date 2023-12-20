@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	interfaces "github.com/0xPolygon/cdk-data-availability/types/interfaces"
+	types "github.com/0xPolygon/cdk-data-availability/types"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -15,19 +15,19 @@ type IEthClientFactory struct {
 }
 
 // CreateEthClient provides a mock function with given fields: ctx, url
-func (_m *IEthClientFactory) CreateEthClient(ctx context.Context, url string) (interfaces.IEthClient, error) {
+func (_m *IEthClientFactory) CreateEthClient(ctx context.Context, url string) (types.IEthClient, error) {
 	ret := _m.Called(ctx, url)
 
-	var r0 interfaces.IEthClient
+	var r0 types.IEthClient
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (interfaces.IEthClient, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (types.IEthClient, error)); ok {
 		return rf(ctx, url)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) interfaces.IEthClient); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) types.IEthClient); ok {
 		r0 = rf(ctx, url)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interfaces.IEthClient)
+			r0 = ret.Get(0).(types.IEthClient)
 		}
 	}
 

@@ -3,10 +3,11 @@
 package mocks
 
 import (
-	context "context"
 	big "math/big"
 
 	common "github.com/ethereum/go-ethereum/common"
+
+	context "context"
 
 	mock "github.com/stretchr/testify/mock"
 
