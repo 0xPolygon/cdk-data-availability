@@ -528,3 +528,87 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 		})
 	})
 }
+
+func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
+	t.Parallel()
+
+	type testConfig struct {
+		getLastProcessedBlockReturns []interface{}
+		commitReturns                []interface{}
+		reorg                        BlockReorg
+	}
+
+	testFn := func(config testConfig) {
+		dbMock := new(mocks.DB)
+		txMock := new(mocks.Tx)
+
+		dbMock.On("GetLastProcessedBlock", mock.Anything, l1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
+		if config.commitReturns != nil {
+			dbMock.On("BeginStateTransaction", mock.Anything).Return(txMock, nil).Once()
+			dbMock.On("StoreLastProcessedBlock", mock.Anything, l1SyncTask, mock.Anything, txMock).Return(nil).Once()
+			txMock.On("Commit").Return(config.commitReturns...).Once()
+		}
+
+		reorgChan := make(chan BlockReorg)
+		batchSynchronizer := &BatchSynchronizer{
+			db:     dbMock,
+			stop:   make(chan struct{}),
+			reorgs: reorgChan,
+		}
+
+		go batchSynchronizer.handleReorgs()
+
+		reorgChan <- config.reorg
+
+		batchSynchronizer.stop <- struct{}{}
+
+		dbMock.AssertExpectations(t)
+		txMock.AssertExpectations(t)
+	}
+
+	t.Run("Getting last processed block fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getLastProcessedBlockReturns: []interface{}{uint64(0), errors.New("error")},
+			reorg: BlockReorg{
+				Number: 10,
+			},
+		})
+	})
+
+	t.Run("Reorg block higher than what we have in db", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getLastProcessedBlockReturns: []interface{}{uint64(5), nil},
+			reorg: BlockReorg{
+				Number: 10,
+			},
+		})
+	})
+
+	t.Run("Reorg block lower than what we have in db, but db throws error", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getLastProcessedBlockReturns: []interface{}{uint64(15), nil},
+			commitReturns:                []interface{}{errors.New("error")},
+			reorg: BlockReorg{
+				Number: 10,
+			},
+		})
+	})
+
+	t.Run("Reorg block lower than what we have in db, store the block in db", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(testConfig{
+			getLastProcessedBlockReturns: []interface{}{uint64(25), nil},
+			commitReturns:                []interface{}{nil},
+			reorg: BlockReorg{
+				Number: 15,
+			},
+		})
+	})
+}
