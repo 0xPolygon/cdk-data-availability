@@ -55,7 +55,7 @@ func TestBatchSigning(t *testing.T) {
 	for i, c := range testBatchCases {
 		c := c
 
-		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("%d. case", i+1), func(t *testing.T) {
 			t.Parallel()
 
 			for _, pk := range privKeys {
