@@ -29,7 +29,7 @@ func TestSyncEndpoints_GetOffChainData(t *testing.T) {
 			hash:  types.ArgHash{},
 			data:  types.ArgBytes("offchaindata"),
 			dbErr: errors.New("test error"),
-			err:   errors.New("failed to get the requested data: test error"),
+			err:   errors.New("failed to get the requested data"),
 		},
 		{
 			name:  "tx returns error",

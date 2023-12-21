@@ -3,6 +3,8 @@ package sync
 import (
 	"context"
 
+	"github.com/0xPolygon/cdk-data-availability/log"
+
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -29,7 +31,8 @@ func (z *SyncEndpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Er
 	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
 		data, err := z.db.GetOffChainData(ctx, hash.Hash(), dbTx)
 		if err != nil {
-			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data: %v", err)
+			log.Errorf("failed to get the offchain requested data from the DB: %v", err)
+			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
 		}
 
 		return data, nil
