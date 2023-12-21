@@ -51,9 +51,9 @@ func TestClient_SignSequence(t *testing.T) {
 				var res rpc.Request
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&res))
 
-				var params [][]types.SignedSequence
+				var params []types.SignedSequence
 				require.NoError(t, json.Unmarshal(res.Params, &params))
-				require.Equal(t, tt.ss, params[0][0])
+				require.Equal(t, tt.ss, params[0])
 
 				_, err := fmt.Fprint(w, tt.result)
 				require.NoError(t, err)

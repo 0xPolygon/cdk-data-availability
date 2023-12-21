@@ -10,7 +10,7 @@ import (
 
 // JSONRPCCall calls JSONRPCCallWithContext with the default context
 func JSONRPCCall(url, method string, params ...interface{}) (Response, error) {
-	return JSONRPCCallWithContext(context.Background(), url, method, params)
+	return JSONRPCCallWithContext(context.Background(), url, method, params...)
 }
 
 // JSONRPCCallWithContext executes a 2.0 JSON RPC HTTP Post Request to the provided URL with
