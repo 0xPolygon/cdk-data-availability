@@ -10,20 +10,20 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 )
 
 func TestClient_SignSequence(t *testing.T) {
 	tests := []struct {
-		name      string
-		ss        types.SignedSequence
-		result    string
-		signature []byte
-		err       error
+		name       string
+		ss         types.SignedSequence
+		result     string
+		signature  []byte
+		statusCode int
+		err        error
 	}{
 		{
 			name: "successfully signed sequence",
@@ -51,6 +51,15 @@ func TestClient_SignSequence(t *testing.T) {
 			},
 			result: `{"result":"invalid-signature"}`,
 		},
+		{
+			name: "unsuccessful status code returned by server",
+			ss: types.SignedSequence{
+				Sequence:  types.Sequence{},
+				Signature: []byte("signature0"),
+			},
+			statusCode: http.StatusInternalServerError,
+			err:        errors.New("invalid status code, expected: 200, found: 500"),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -66,6 +75,10 @@ func TestClient_SignSequence(t *testing.T) {
 				var params []types.SignedSequence
 				require.NoError(t, json.Unmarshal(res.Params, &params))
 				require.Equal(t, tt.ss, params[0])
+
+				if tt.statusCode > 0 {
+					w.WriteHeader(tt.statusCode)
+				}
 
 				_, err := fmt.Fprint(w, tt.result)
 				require.NoError(t, err)
@@ -88,11 +101,12 @@ func TestClient_SignSequence(t *testing.T) {
 
 func TestClient_GetOffChainData(t *testing.T) {
 	tests := []struct {
-		name   string
-		hash   common.Hash
-		result string
-		data   []byte
-		err    error
+		name       string
+		hash       common.Hash
+		result     string
+		data       []byte
+		statusCode int
+		err        error
 	}{
 		{
 			name:   "successfully got offhcain data",
@@ -111,6 +125,12 @@ func TestClient_GetOffChainData(t *testing.T) {
 			hash:   common.BytesToHash([]byte("hash")),
 			result: `{"result":"invalid-signature"}`,
 		},
+		{
+			name:       "unsuccessful status code returned by server",
+			hash:       common.BytesToHash([]byte("hash")),
+			statusCode: http.StatusUnauthorized,
+			err:        errors.New("invalid status code, expected: 200, found: 401"),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -126,6 +146,10 @@ func TestClient_GetOffChainData(t *testing.T) {
 				var params []common.Hash
 				require.NoError(t, json.Unmarshal(res.Params, &params))
 				require.Equal(t, tt.hash, params[0])
+
+				if tt.statusCode > 0 {
+					w.WriteHeader(tt.statusCode)
+				}
 
 				_, err := fmt.Fprint(w, tt.result)
 				require.NoError(t, err)
