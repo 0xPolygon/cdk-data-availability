@@ -3,6 +3,7 @@ package datacom
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
@@ -48,18 +49,18 @@ func (d *DataComEndpoints) SignSequence(signedSequence types.SignedSequence) (in
 	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
 		err := d.db.StoreOffChainData(ctx, signedSequence.Sequence.OffChainData(), dbTx)
 		if err != nil {
-			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to store offchain data")
+			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to store offchain data. Error: %w", err).Error())
 		}
 
 		return nil, nil
 	})
 	if err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to store offchain data")
+		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, err.Error())
 	}
 	// Sign
 	signedSequenceByMe, err := signedSequence.Sequence.Sign(d.privateKey)
 	if err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to sign")
+		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
 	}
 	// Return signature
 	return signedSequenceByMe.Signature, nil

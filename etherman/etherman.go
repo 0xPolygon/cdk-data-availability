@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // IEtherman defines functions that should be implemented by Etherman
@@ -27,6 +28,10 @@ type IEtherman interface {
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 	FilterSequenceBatches(opts *bind.FilterOpts,
 		numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
+	WatchSetTrustedSequencer(opts *bind.WatchOpts,
+		sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)
+	WatchSetTrustedSequencerURL(opts *bind.WatchOpts,
+		sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)
 }
 
 var _ IEtherman = (*Etherman)(nil)
@@ -146,4 +151,16 @@ func (e *Etherman) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, erro
 		})
 	}
 	return members, nil
+}
+
+// WatchSetTrustedSequencer returns an event subscription for events on trusted sequencer
+func (e *Etherman) WatchSetTrustedSequencer(opts *bind.WatchOpts,
+	sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencer(opts, sink)
+}
+
+// WatchSetTrustedSequencerURL returns an event subscription for events on trusted sequencer
+func (e *Etherman) WatchSetTrustedSequencerURL(opts *bind.WatchOpts,
+	sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencerURL(opts, sink)
 }
