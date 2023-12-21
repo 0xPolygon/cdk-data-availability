@@ -3,9 +3,8 @@ package sync
 import (
 	"context"
 
-	"github.com/0xPolygon/cdk-data-availability/log"
-
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
 )
