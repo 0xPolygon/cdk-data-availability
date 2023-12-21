@@ -408,16 +408,14 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 
 // WaitL2BlockToBeVirtualized waits until a L2 Block has been virtualized or the given timeout expires.
 func WaitL2BlockToBeVirtualized(l2Block *big.Int, timeout time.Duration) error {
-	l2NetworkURL := "http://localhost:8123"
 	return Poll(DefaultInterval, timeout, func() (bool, error) {
-		return l2BlockVirtualizationCondition(l2Block, l2NetworkURL)
+		return l2BlockVirtualizationCondition(l2Block, DefaultL2NetworkURL)
 	})
 }
 
 // l2BlockConsolidationCondition
 func l2BlockConsolidationCondition(l2Block *big.Int) (bool, error) {
-	l2NetworkURL := "http://localhost:8123"
-	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockConsolidated", types.HexEncodeBig(l2Block))
+	response, err := rpc.JSONRPCCall(DefaultL2NetworkURL, "zkevm_isBlockConsolidated", types.HexEncodeBig(l2Block))
 	if err != nil {
 		return false, err
 	}
