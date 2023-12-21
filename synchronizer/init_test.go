@@ -50,10 +50,10 @@ func Test_InitStartBlock(t *testing.T) {
 	}
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.DB)
-		txMock := new(mocks.Tx)
-		ethClientMock := new(mocks.IEthClient)
-		ethClientFactoryMock := new(mocks.IEthClientFactory)
+		dbMock := mocks.NewDB(t)
+		txMock := mocks.NewTx(t)
+		ethClientMock := mocks.NewIEthClient(t)
+		ethClientFactoryMock := mocks.NewIEthClientFactory(t)
 
 		if config.getLastProcessedBlockArgs != nil && config.getLastProcessedBlockReturns != nil {
 			dbMock.On("GetLastProcessedBlock", config.getLastProcessedBlockArgs...).Return(

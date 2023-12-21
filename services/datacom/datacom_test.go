@@ -63,8 +63,8 @@ func TestDataCom_SignSequence(t *testing.T) {
 			err            error
 		)
 
-		txMock := new(mocks.Tx)
-		dbMock := new(mocks.DB)
+		txMock := mocks.NewTx(t)
+		dbMock := mocks.NewDB(t)
 		if cfg.beginStateTransactionReturns != nil {
 			dbMock.On("BeginStateTransaction", mock.Anything).Return(cfg.beginStateTransactionReturns...).Once()
 		} else if cfg.storeOffChainDataReturns != nil {
@@ -79,7 +79,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 			}
 		}
 
-		ethermanMock := new(mocks.IEtherman)
+		ethermanMock := mocks.NewIEtherman(t)
 
 		ethermanMock.On("TrustedSequencer").Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
 		ethermanMock.On("TrustedSequencerURL").Return("http://some-url", nil).Once()

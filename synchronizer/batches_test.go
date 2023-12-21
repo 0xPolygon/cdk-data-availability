@@ -26,7 +26,7 @@ func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
 	t.Run("error getting committee", func(t *testing.T) {
 		t.Parallel()
 
-		ethermanMock := new(mocks.IEtherman)
+		ethermanMock := mocks.NewIEtherman(t)
 		ethermanMock.On("GetCurrentDataCommittee").Return(nil, errors.New("error")).Once()
 
 		batchSyncronizer := &BatchSynchronizer{
@@ -57,7 +57,7 @@ func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
 				},
 			},
 		}
-		ethermanMock := new(mocks.IEtherman)
+		ethermanMock := mocks.NewIEtherman(t)
 		ethermanMock.On("GetCurrentDataCommittee").Return(committee, nil).Once()
 
 		batchSyncronizer := &BatchSynchronizer{
@@ -97,10 +97,10 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	}
 
 	testFn := func(config testConfig) {
-		clientMock := new(mocks.IClient)
-		ethermanMock := new(mocks.IEtherman)
-		sequencerMock := new(mocks.ISequencerTracker)
-		clientFactoryMock := new(mocks.IClientFactory)
+		clientMock := mocks.NewIClient(t)
+		ethermanMock := mocks.NewIEtherman(t)
+		sequencerMock := mocks.NewISequencerTracker(t)
+		clientFactoryMock := mocks.NewIClientFactory(t)
 
 		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
 			sequencerMock.On("GetSequenceBatch", config.getSequenceBatchArgs...).Return(
@@ -322,10 +322,10 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 		})
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.DB)
-		txMock := new(mocks.Tx)
-		ethermanMock := new(mocks.IEtherman)
-		sequencerMock := new(mocks.ISequencerTracker)
+		dbMock := mocks.NewDB(t)
+		txMock := mocks.NewTx(t)
+		ethermanMock := mocks.NewIEtherman(t)
+		sequencerMock := mocks.NewISequencerTracker(t)
 
 		if config.getTxArgs != nil && config.getTxReturns != nil {
 			ethermanMock.On("GetTx", config.getTxArgs...).Return(
@@ -539,8 +539,8 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 	}
 
 	testFn := func(config testConfig) {
-		dbMock := new(mocks.DB)
-		txMock := new(mocks.Tx)
+		dbMock := mocks.NewDB(t)
+		txMock := mocks.NewTx(t)
 
 		dbMock.On("GetLastProcessedBlock", mock.Anything, l1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
 		if config.commitReturns != nil {
