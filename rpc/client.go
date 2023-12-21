@@ -2,25 +2,28 @@ package rpc
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 )
 
-// JSONRPCCall executes a 2.0 JSON RPC HTTP Post Request to the provided URL with
+// JSONRPCCall calls JSONRPCCallWithContext with the default context
+func JSONRPCCall(url, method string, params ...interface{}) (Response, error) {
+	return JSONRPCCallWithContext(context.Background(), url, method, params)
+}
+
+// JSONRPCCallWithContext executes a 2.0 JSON RPC HTTP Post Request to the provided URL with
 // the provided method and parameters, which is compatible with the Ethereum
 // JSON RPC Server.
-func JSONRPCCall(url, method string, parameters ...interface{}) (Response, error) {
-	const jsonRPCVersion = "2.0"
-
+func JSONRPCCallWithContext(ctx context.Context, url, method string, parameters ...interface{}) (Response, error) {
 	params, err := json.Marshal(parameters)
 	if err != nil {
 		return Response{}, err
 	}
 
 	req := Request{
-		JSONRPC: jsonRPCVersion,
+		JSONRPC: "2.0",
 		ID:      float64(1),
 		Method:  method,
 		Params:  params,
@@ -32,7 +35,7 @@ func JSONRPCCall(url, method string, parameters ...interface{}) (Response, error
 	}
 
 	reqBodyReader := bytes.NewReader(reqBody)
-	httpReq, err := http.NewRequest(http.MethodPost, url, reqBodyReader)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, reqBodyReader)
 	if err != nil {
 		return Response{}, err
 	}
@@ -44,19 +47,16 @@ func JSONRPCCall(url, method string, parameters ...interface{}) (Response, error
 		return Response{}, err
 	}
 
+	if httpRes.Body != nil {
+		defer httpRes.Body.Close()
+	}
+
 	if httpRes.StatusCode != http.StatusOK {
 		return Response{}, fmt.Errorf("invalid status code, expected: %v, found: %v", http.StatusOK, httpRes.StatusCode)
 	}
 
-	resBody, err := io.ReadAll(httpRes.Body)
-	if err != nil {
-		return Response{}, err
-	}
-	defer httpRes.Body.Close()
-
 	var res Response
-	err = json.Unmarshal(resBody, &res)
-	if err != nil {
+	if err = json.NewDecoder(httpRes.Body).Decode(&res); err != nil {
 		return Response{}, err
 	}
 

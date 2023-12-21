@@ -2,7 +2,10 @@ package client
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
+	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -40,4 +43,43 @@ func New(url string) *Client {
 	return &Client{
 		url: url,
 	}
+}
+
+// SignSequence sends a request to sign the given sequence by the data committee member
+// if successful returns the signature. The signature should be validated after using this method!
+func (c *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
+	response, err := rpc.JSONRPCCall(c.url, "datacom_signSequence", signedSequence)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Error != nil {
+		return nil, fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
+	}
+
+	var result types.ArgBytes
+	if err = json.Unmarshal(response.Result, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// GetOffChainData returns data based on it's hash
+func (c *Client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
+	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_getOffChainData", hash)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Error != nil {
+		return nil, fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
+	}
+
+	var result types.ArgBytes
+	if err = json.Unmarshal(response.Result, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
