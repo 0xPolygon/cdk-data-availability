@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // IEtherman defines functions that should be implemented by Etherman
@@ -23,10 +24,20 @@ type IEtherman interface {
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
 	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
 	TrustedSequencer() (common.Address, error)
+	WatchSetTrustedSequencer(
+		ctx context.Context,
+		events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer,
+	) (event.Subscription, error)
 	TrustedSequencerURL() (string, error)
+	WatchSetTrustedSequencerURL(
+		ctx context.Context,
+		events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL,
+	) (event.Subscription, error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
-	FilterSequenceBatches(opts *bind.FilterOpts,
-		numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
+	FilterSequenceBatches(
+		opts *bind.FilterOpts,
+		numBatch []uint64,
+	) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
 }
 
 var _ IEtherman = (*Etherman)(nil)
@@ -77,9 +88,25 @@ func (e *Etherman) TrustedSequencer() (common.Address, error) {
 	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
+// WatchSetTrustedSequencer watches trusted sequencer address
+func (e *Etherman) WatchSetTrustedSequencer(
+	ctx context.Context,
+	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer,
+) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencer(&bind.WatchOpts{Context: ctx}, events)
+}
+
 // TrustedSequencerURL gets trusted sequencer's RPC url
 func (e *Etherman) TrustedSequencerURL() (string, error) {
 	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+}
+
+// WatchSetTrustedSequencerURL watches trusted sequencer's RPC url
+func (e *Etherman) WatchSetTrustedSequencerURL(
+	ctx context.Context,
+	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL,
+) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencerURL(&bind.WatchOpts{Context: ctx}, events)
 }
 
 // HeaderByNumber returns header by number from the eth client

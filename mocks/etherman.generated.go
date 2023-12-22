@@ -14,6 +14,8 @@ import (
 
 	etherman "github.com/0xPolygon/cdk-data-availability/etherman"
 
+	event "github.com/ethereum/go-ethereum/event"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/ethereum/go-ethereum/core/types"
@@ -204,6 +206,58 @@ func (_m *IEtherman) TrustedSequencerURL() (string, error) {
 
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// WatchSetTrustedSequencer provides a mock function with given fields: ctx, events
+func (_m *IEtherman) WatchSetTrustedSequencer(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
+	ret := _m.Called(ctx, events)
+
+	var r0 event.Subscription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
+		return rf(ctx, events)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) event.Subscription); ok {
+		r0 = rf(ctx, events)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(event.Subscription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) error); ok {
+		r1 = rf(ctx, events)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// WatchSetTrustedSequencerURL provides a mock function with given fields: ctx, events
+func (_m *IEtherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
+	ret := _m.Called(ctx, events)
+
+	var r0 event.Subscription
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
+		return rf(ctx, events)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) event.Subscription); ok {
+		r0 = rf(ctx, events)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(event.Subscription)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) error); ok {
+		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
 	}

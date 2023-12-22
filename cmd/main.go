@@ -81,6 +81,7 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Load EtherMan
 	etherman, err := etherman.New(c.L1)
 	if err != nil {
@@ -102,7 +103,7 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go sequencerTracker.Start()
+	go sequencerTracker.Start(cliCtx.Context)
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
 	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, 1*time.Second)
