@@ -84,7 +84,6 @@ func Test_NewTracker(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestTracker(t *testing.T) {
