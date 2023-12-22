@@ -67,7 +67,7 @@ func TestClient_SignSequence(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				var res rpc.Request
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&res))
 				require.Equal(t, "datacom_signSequence", res.Method)
@@ -83,11 +83,11 @@ func TestClient_SignSequence(t *testing.T) {
 				_, err := fmt.Fprint(w, tt.result)
 				require.NoError(t, err)
 			}))
-			defer svr.Close()
+			defer srv.Close()
 
-			c := &Client{url: svr.URL}
+			client := New(srv.URL)
 
-			got, err := c.SignSequence(tt.ss)
+			got, err := client.SignSequence(tt.ss)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, tt.err, err.Error())
