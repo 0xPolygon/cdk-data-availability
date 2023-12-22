@@ -18,7 +18,6 @@ import (
 )
 
 func TestSequencerAddrExists(t *testing.T) {
-
 	err := operations.StartComponent("network")
 	require.NoError(t, err)
 	defer operations.StopComponent("network")
@@ -33,7 +32,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	tracker, err := sequencer.NewTracker(cfg.L1, etherman)
 	require.NoError(t, err)
 
-	go tracker.Start()
+	go tracker.Start(ctx.Context)
 	defer tracker.Stop()
 
 	addr := tracker.GetAddr()
