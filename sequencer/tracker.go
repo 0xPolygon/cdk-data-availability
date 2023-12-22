@@ -23,13 +23,14 @@ var _ ISequencerTracker = (*Tracker)(nil)
 
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
-	client  etherman.IEtherman
-	stop    chan struct{}
-	timeout time.Duration
-	retry   time.Duration
-	addr    common.Address
-	url     string
-	lock    sync.Mutex
+	client    etherman.IEtherman
+	stop      chan struct{}
+	timeout   time.Duration
+	retry     time.Duration
+	addr      common.Address
+	url       string
+	lock      sync.Mutex
+	startOnce sync.Once
 }
 
 // NewTracker creates a new Tracker
@@ -87,8 +88,10 @@ func (st *Tracker) setUrl(url string) {
 
 // Start starts the SequencerTracker
 func (st *Tracker) Start(ctx context.Context) {
-	go st.trackAddrChanges(ctx)
-	go st.trackUrlChanges(ctx)
+	st.startOnce.Do(func() {
+		go st.trackAddrChanges(ctx)
+		go st.trackUrlChanges(ctx)
+	})
 }
 
 func (st *Tracker) trackAddrChanges(ctx context.Context) {
