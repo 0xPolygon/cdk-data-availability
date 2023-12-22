@@ -2,6 +2,7 @@ package sequencer_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -17,6 +18,74 @@ import (
 )
 
 //go:generate mockery --name Subscription --output ../mocks --case=underscore --srcpkg github.com/ethereum/go-ethereum/event --filename subscription.generated.go
+
+func Test_NewTracker(t *testing.T) {
+	testErr := errors.New("test error")
+
+	testTable := []struct {
+		name     string
+		initMock func(t *testing.T) *mocks.IEtherman
+		err      error
+	}{
+		{
+			name: "successfully created tracker",
+			initMock: func(t *testing.T) *mocks.IEtherman {
+				em := mocks.NewIEtherman(t)
+
+				em.On("TrustedSequencer").Return(common.Address{}, nil)
+				em.On("TrustedSequencerURL").Return("127.0.0.1", nil)
+
+				return em
+			},
+		},
+		{
+			name: "TrustedSequencer returns error",
+			initMock: func(t *testing.T) *mocks.IEtherman {
+				em := mocks.NewIEtherman(t)
+
+				em.On("TrustedSequencer").Return(common.Address{}, testErr)
+
+				return em
+			},
+			err: testErr,
+		},
+		{
+			name: "TrustedSequencerURL returns error",
+			initMock: func(t *testing.T) *mocks.IEtherman {
+				em := mocks.NewIEtherman(t)
+
+				em.On("TrustedSequencer").Return(common.Address{}, nil)
+				em.On("TrustedSequencerURL").Return("", testErr)
+
+				return em
+			},
+			err: testErr,
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			em := tt.initMock(t)
+			defer em.AssertExpectations(t)
+
+			_, err := sequencer.NewTracker(config.L1Config{
+				Timeout:     types.NewDuration(time.Second * 10),
+				RetryPeriod: types.NewDuration(time.Millisecond),
+			}, em)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.EqualError(t, tt.err, err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+
+}
 
 func TestTracker(t *testing.T) {
 	var (
