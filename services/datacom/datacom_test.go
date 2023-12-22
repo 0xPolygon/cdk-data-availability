@@ -79,7 +79,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 			}
 		}
 
-		ethermanMock := mocks.NewIEtherman(t)
+		ethermanMock := mocks.NewEtherman(t)
 
 		ethermanMock.On("TrustedSequencer").Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
 		ethermanMock.On("TrustedSequencerURL").Return("http://some-url", nil).Once()
