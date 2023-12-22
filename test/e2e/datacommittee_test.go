@@ -37,7 +37,7 @@ import (
 
 const (
 	nSignatures      = 4
-	mMembers         = 5
+	dacMembersCount  = 5
 	ksFile           = "/tmp/pkey"
 	cfgFile          = "/tmp/dacnodeconfigfile.json"
 	ksPass           = "pass"
@@ -91,7 +91,7 @@ func TestDataCommittee(t *testing.T) {
 	membs := members{}
 	addrsBytes := []byte{}
 	urls := []string{}
-	for i := 0; i < mMembers; i++ {
+	for i := 0; i < dacMembersCount; i++ {
 		pk, err := crypto.GenerateKey()
 		require.NoError(t, err)
 		membs = append(membs, member{
@@ -168,7 +168,7 @@ func TestDataCommittee(t *testing.T) {
 	}
 
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, dacMembersCount)
 	require.NoError(t, err)
 
 	startDACMember(t, m0) // start the skipped one, it should catch up through synchronization
