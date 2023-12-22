@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -21,6 +22,11 @@ const (
 	ParserErrorCode = -32700
 	// AccessDeniedCode error code when requests are denied
 	AccessDeniedCode = -32800
+)
+
+var (
+	// invalidJSONReqErr denotes error that is returned when invalid JSON request is received
+	invalidJSONReqErr = errors.New("Invalid json request")
 )
 
 // Error interface
