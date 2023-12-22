@@ -82,8 +82,12 @@ func BuildJsonHTTPRequest(ctx context.Context, url, method string, parameters ..
 		return nil, err
 	}
 
-	reqBodyReader := bytes.NewReader(reqBody)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, reqBodyReader)
+	return BuildJsonHttpRequestWithBody(ctx, url, reqBody)
+}
+
+// BuildJsonHttpRequestWithBody creates JSON RPC http request using provided url and request body
+func BuildJsonHttpRequestWithBody(ctx context.Context, url string, reqBody []byte) (*http.Request, error) {
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(reqBody))
 	if err != nil {
 		return nil, err
 	}

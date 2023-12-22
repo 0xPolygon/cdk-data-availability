@@ -14,7 +14,12 @@ import (
 )
 
 func Test_ServerHandleRequest(t *testing.T) {
-	// Create a test Server with mock configuration and services
+	const (
+		funcName   = "greeter_handleReq"
+		paramValue = "John Doe"
+	)
+
+	// Create a test Server with mock configuration and service
 	cfg := Config{
 		Host:                      "localhost",
 		Port:                      8080,
@@ -26,6 +31,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 		{Name: "greeter", Service: &greeterService{}},
 	}
 	server := NewServer(cfg, services)
+	url := fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port)
 
 	defer func() {
 		// Stop the server
@@ -43,26 +49,64 @@ func Test_ServerHandleRequest(t *testing.T) {
 	// You might need to adjust the sleep duration based on your system and test conditions
 	<-time.After(100 * time.Millisecond)
 
-	t.Run("handle single request", func(t *testing.T) {
-		url := fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port)
-		name := "John Doe"
+	expectedResponse := fmt.Sprintf("\"Hello, %s!\"", paramValue)
 
+	t.Run("handle single request", func(t *testing.T) {
 		// Create a new request with the specified method, URL, and payload
-		req, err := BuildJsonHTTPRequest(context.Background(), url, "greeter_handleReq", name)
+		req, err := BuildJsonHTTPRequest(context.Background(), url, funcName, paramValue)
 		require.NoError(t, err)
 
-		// // Perform an HTTP request to the server (you can use an HTTP client library or http.NewRequest)
+		// Perform an HTTP request to the server
 		respRecorder := httptest.NewRecorder()
 		server.handle(respRecorder, req)
 
-		// // Assert the response (you might need to adjust the assertions based on your actual implementation)
+		// Assert the response
 		require.Equal(t, http.StatusOK, respRecorder.Code)
 		var resp Response
 		err = json.Unmarshal(respRecorder.Body.Bytes(), &resp)
 		require.NoError(t, err)
 
-		expectedResponse := fmt.Sprintf("\"Hello, %s!\"", name)
 		require.Equal(t, expectedResponse, string(resp.Result))
+	})
+
+	t.Run("handle batch request", func(t *testing.T) {
+		const batchSize = 3
+
+		params, err := json.Marshal([]interface{}{paramValue})
+		require.NoError(t, err)
+
+		// Construct batch request
+		reqs := make([]Request, batchSize)
+		for i := 0; i < batchSize; i++ {
+			reqs[i] = Request{
+				JSONRPC: "2.0",
+				ID:      float64(i + 1),
+				Method:  funcName,
+				Params:  params,
+			}
+		}
+
+		reqBody, err := json.Marshal(reqs)
+		require.NoError(t, err)
+
+		httpReq, err := BuildJsonHttpRequestWithBody(context.Background(), url, reqBody)
+		require.NoError(t, err)
+
+		respRecorder := httptest.NewRecorder()
+		server.handle(respRecorder, httpReq)
+
+		require.Equal(t, http.StatusOK, respRecorder.Code)
+
+		// Parse the response body
+		var resp []Response
+		err = json.Unmarshal(respRecorder.Body.Bytes(), &resp)
+		require.NoError(t, err)
+
+		require.Len(t, resp, batchSize)
+		for i := 0; i < batchSize; i++ {
+			require.Equal(t, float64(i+1), resp[i].ID)
+			require.Equal(t, expectedResponse, string(resp[i].Result))
+		}
 	})
 }
 
