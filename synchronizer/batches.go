@@ -25,7 +25,7 @@ const defaultBlockBatchSize = 32
 
 // BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client           etherman.IEtherman
+	client           etherman.Etherman
 	stop             chan struct{}
 	retry            time.Duration
 	rpcTimeout       time.Duration
@@ -46,7 +46,7 @@ func NewBatchSynchronizer(
 	self common.Address,
 	db db.DB,
 	reorgs <-chan BlockReorg,
-	ethClient etherman.IEtherman,
+	ethClient etherman.Etherman,
 	sequencer sequencer.ISequencerTracker,
 	rpcClientFactory client.IClientFactory,
 ) (*BatchSynchronizer, error) {

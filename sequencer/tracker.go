@@ -25,7 +25,7 @@ var _ ISequencerTracker = (*Tracker)(nil)
 
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
-	client  *etherman.Etherman
+	client  etherman.Etherman
 	stop    chan struct{}
 	timeout time.Duration
 	retry   time.Duration
@@ -35,7 +35,7 @@ type Tracker struct {
 }
 
 // NewTracker creates a new Tracker
-func NewTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Tracker, error) {
+func NewTracker(cfg config.L1Config, ethClient etherman.Etherman) (*Tracker, error) {
 	log.Info("starting sequencer address tracker")
 	addr, err := ethClient.TrustedSequencer()
 	if err != nil {
@@ -104,13 +104,13 @@ func (st *Tracker) trackAddrChanges() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
 		opts := &bind.WatchOpts{Context: ctx}
-		sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events)
+		sub, err = st.client.WatchSetTrustedSequencer(opts, events)
 
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
 
-			if sub, err = st.client.CDKValidium.WatchSetTrustedSequencer(opts, events); err != nil {
+			if sub, err = st.client.WatchSetTrustedSequencer(opts, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
 		}
@@ -148,13 +148,13 @@ func (st *Tracker) trackUrlChanges() {
 
 		ctx, cancel := context.WithTimeout(context.Background(), st.timeout)
 		opts := &bind.WatchOpts{Context: ctx}
-		sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events)
+		sub, err = st.client.WatchSetTrustedSequencerURL(opts, events)
 
 		// if no subscription, retry until established
 		for err != nil {
 			<-time.After(st.retry)
 
-			if sub, err = st.client.CDKValidium.WatchSetTrustedSequencerURL(opts, events); err != nil {
+			if sub, err = st.client.WatchSetTrustedSequencerURL(opts, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
 		}
