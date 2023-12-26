@@ -23,13 +23,13 @@ var _ ISequencerTracker = (*Tracker)(nil)
 
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
-	client  etherman.Etherman
-	stop    chan struct{}
-	timeout time.Duration
-	retry   time.Duration
-	addr    common.Address
-	url     string
-	lock    sync.Mutex
+	client    etherman.Etherman
+	stop      chan struct{}
+	timeout   time.Duration
+	retry     time.Duration
+	addr      common.Address
+	url       string
+	lock      sync.Mutex
 	startOnce sync.Once
 }
 

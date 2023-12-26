@@ -241,9 +241,9 @@ func (_m *Etherman) TrustedSequencerURL() (string, error) {
 	return r0, r1
 }
 
-// WatchSetTrustedSequencer provides a mock function with given fields: opts, sink
-func (_m *Etherman) WatchSetTrustedSequencer(opts *bind.WatchOpts, sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
-	ret := _m.Called(opts, sink)
+// WatchSetTrustedSequencer provides a mock function with given fields: ctx, events
+func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
+	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WatchSetTrustedSequencer")
@@ -251,19 +251,19 @@ func (_m *Etherman) WatchSetTrustedSequencer(opts *bind.WatchOpts, sink chan<- *
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
-		return rf(opts, sink)
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
+		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) event.Subscription); ok {
-		r0 = rf(opts, sink)
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) event.Subscription); ok {
+		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(event.Subscription)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) error); ok {
-		r1 = rf(opts, sink)
+	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) error); ok {
+		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -271,9 +271,9 @@ func (_m *Etherman) WatchSetTrustedSequencer(opts *bind.WatchOpts, sink chan<- *
 	return r0, r1
 }
 
-// WatchSetTrustedSequencerURL provides a mock function with given fields: opts, sink
-func (_m *Etherman) WatchSetTrustedSequencerURL(opts *bind.WatchOpts, sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
-	ret := _m.Called(opts, sink)
+// WatchSetTrustedSequencerURL provides a mock function with given fields: ctx, events
+func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
+	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
 		panic("no return value specified for WatchSetTrustedSequencerURL")
@@ -281,19 +281,19 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(opts *bind.WatchOpts, sink chan<
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
-		return rf(opts, sink)
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
+		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) event.Subscription); ok {
-		r0 = rf(opts, sink)
+	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) event.Subscription); ok {
+		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(event.Subscription)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.WatchOpts, chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) error); ok {
-		r1 = rf(opts, sink)
+	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) error); ok {
+		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
 	}
