@@ -24,13 +24,13 @@ func Test_NewTracker(t *testing.T) {
 
 	testTable := []struct {
 		name     string
-		initMock func(t *testing.T) *mocks.IEtherman
+		initMock func(t *testing.T) *mocks.Etherman
 		err      error
 	}{
 		{
 			name: "successfully created tracker",
-			initMock: func(t *testing.T) *mocks.IEtherman {
-				em := mocks.NewIEtherman(t)
+			initMock: func(t *testing.T) *mocks.Etherman {
+				em := mocks.NewEtherman(t)
 
 				em.On("TrustedSequencer").Return(common.Address{}, nil)
 				em.On("TrustedSequencerURL").Return("127.0.0.1", nil)
@@ -40,8 +40,8 @@ func Test_NewTracker(t *testing.T) {
 		},
 		{
 			name: "TrustedSequencer returns error",
-			initMock: func(t *testing.T) *mocks.IEtherman {
-				em := mocks.NewIEtherman(t)
+			initMock: func(t *testing.T) *mocks.Etherman {
+				em := mocks.NewEtherman(t)
 
 				em.On("TrustedSequencer").Return(common.Address{}, testErr)
 
@@ -51,8 +51,8 @@ func Test_NewTracker(t *testing.T) {
 		},
 		{
 			name: "TrustedSequencerURL returns error",
-			initMock: func(t *testing.T) *mocks.IEtherman {
-				em := mocks.NewIEtherman(t)
+			initMock: func(t *testing.T) *mocks.Etherman {
+				em := mocks.NewEtherman(t)
 
 				em.On("TrustedSequencer").Return(common.Address{}, nil)
 				em.On("TrustedSequencerURL").Return("", testErr)
@@ -94,7 +94,7 @@ func TestTracker(t *testing.T) {
 
 	ctx := context.Background()
 
-	etherman := mocks.NewIEtherman(t)
+	etherman := mocks.NewEtherman(t)
 	defer etherman.AssertExpectations(t)
 
 	etherman.On("TrustedSequencer").Return(common.Address{}, nil)
