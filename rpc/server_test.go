@@ -49,7 +49,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 	// You might need to adjust the sleep duration based on your system and test conditions
 	<-time.After(100 * time.Millisecond)
 
-	expectedResponse := fmt.Sprintf("\"Hello, %s!\"", paramValue)
+	expectedResponse := fmt.Sprintf(`"Hello, %s!"`, paramValue)
 
 	t.Run("handle single request", func(t *testing.T) {
 		// Create a new request with the specified method, URL, and payload
