@@ -16,10 +16,10 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-// IEtherman defines functions that should be implemented by Etherman
+// Etherman defines functions that should be implemented by Etherman
 //
-//go:generate mockery --name IEtherman --output ../mocks --case=underscore --filename etherman.generated.go
-type IEtherman interface {
+//go:generate mockery --name Etherman --output ../mocks --case=underscore --filename etherman.generated.go
+type Etherman interface {
 	GetCurrentDataCommittee() (*DataCommittee, error)
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
 	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
@@ -40,17 +40,17 @@ type IEtherman interface {
 	) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
 }
 
-var _ IEtherman = (*Etherman)(nil)
+var _ Etherman = (*EthermanImpl)(nil)
 
-// Etherman is the implementation of EtherMan.
-type Etherman struct {
+// EthermanImpl is the implementation of EtherMan.
+type EthermanImpl struct {
 	EthClient     *ethclient.Client
 	CDKValidium   *cdkvalidium.Cdkvalidium
 	DataCommittee *cdkdatacommittee.Cdkdatacommittee
 }
 
 // New creates a new etherman
-func New(cfg config.L1Config) (*Etherman, error) {
+func New(cfg config.L1Config) (*EthermanImpl, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
 	defer cancel()
 
@@ -71,7 +71,7 @@ func New(cfg config.L1Config) (*Etherman, error) {
 		return nil, err
 	}
 
-	return &Etherman{
+	return &EthermanImpl{
 		EthClient:     ethClient,
 		CDKValidium:   cdkValidium,
 		DataCommittee: dataCommittee,
@@ -79,17 +79,17 @@ func New(cfg config.L1Config) (*Etherman, error) {
 }
 
 // GetTx function get ethereum tx
-func (e *Etherman) GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
+func (e *EthermanImpl) GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	return e.EthClient.TransactionByHash(ctx, txHash)
 }
 
 // TrustedSequencer gets trusted sequencer address
-func (e *Etherman) TrustedSequencer() (common.Address, error) {
+func (e *EthermanImpl) TrustedSequencer() (common.Address, error) {
 	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
 // WatchSetTrustedSequencer watches trusted sequencer address
-func (e *Etherman) WatchSetTrustedSequencer(
+func (e *EthermanImpl) WatchSetTrustedSequencer(
 	ctx context.Context,
 	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer,
 ) (event.Subscription, error) {
@@ -97,12 +97,12 @@ func (e *Etherman) WatchSetTrustedSequencer(
 }
 
 // TrustedSequencerURL gets trusted sequencer's RPC url
-func (e *Etherman) TrustedSequencerURL() (string, error) {
+func (e *EthermanImpl) TrustedSequencerURL() (string, error) {
 	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
 }
 
 // WatchSetTrustedSequencerURL watches trusted sequencer's RPC url
-func (e *Etherman) WatchSetTrustedSequencerURL(
+func (e *EthermanImpl) WatchSetTrustedSequencerURL(
 	ctx context.Context,
 	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL,
 ) (event.Subscription, error) {
@@ -110,12 +110,12 @@ func (e *Etherman) WatchSetTrustedSequencerURL(
 }
 
 // HeaderByNumber returns header by number from the eth client
-func (e *Etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
+func (e *EthermanImpl) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
 	return e.EthClient.HeaderByNumber(ctx, number)
 }
 
 // FilterSequenceBatches retrieves filtered batches on CDK validium
-func (e *Etherman) FilterSequenceBatches(opts *bind.FilterOpts,
+func (e *EthermanImpl) FilterSequenceBatches(opts *bind.FilterOpts,
 	numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
 	return e.CDKValidium.FilterSequenceBatches(opts, numBatch)
 }
@@ -134,7 +134,7 @@ type DataCommittee struct {
 }
 
 // GetCurrentDataCommittee return the currently registered data committee
-func (e *Etherman) GetCurrentDataCommittee() (*DataCommittee, error) {
+func (e *EthermanImpl) GetCurrentDataCommittee() (*DataCommittee, error) {
 	addrsHash, err := e.DataCommittee.CommitteeHash(&bind.CallOpts{Pending: false})
 	if err != nil {
 		return nil, fmt.Errorf("error getting CommitteeHash from L1 SC: %w", err)
@@ -156,7 +156,7 @@ func (e *Etherman) GetCurrentDataCommittee() (*DataCommittee, error) {
 }
 
 // GetCurrentDataCommitteeMembers return the currently registered data committee members
-func (e *Etherman) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error) {
+func (e *EthermanImpl) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error) {
 	members := []DataCommitteeMember{}
 	nMembers, err := e.DataCommittee.GetAmountOfMembers(&bind.CallOpts{Pending: false})
 	if err != nil {

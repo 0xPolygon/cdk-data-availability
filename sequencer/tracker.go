@@ -23,18 +23,18 @@ var _ ISequencerTracker = (*Tracker)(nil)
 
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
-	client    etherman.IEtherman
-	stop      chan struct{}
-	timeout   time.Duration
-	retry     time.Duration
-	addr      common.Address
-	url       string
-	lock      sync.Mutex
+	client  etherman.Etherman
+	stop    chan struct{}
+	timeout time.Duration
+	retry   time.Duration
+	addr    common.Address
+	url     string
+	lock    sync.Mutex
 	startOnce sync.Once
 }
 
 // NewTracker creates a new Tracker
-func NewTracker(cfg config.L1Config, ethClient etherman.IEtherman) (*Tracker, error) {
+func NewTracker(cfg config.L1Config, ethClient etherman.Etherman) (*Tracker, error) {
 	log.Info("starting sequencer address tracker")
 	addr, err := ethClient.TrustedSequencer()
 	if err != nil {
