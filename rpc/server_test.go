@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,13 +19,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 	)
 
 	// Create a test Server with mock configuration and service
-	cfg := Config{
-		Host:                      "localhost",
-		Port:                      8080,
-		MaxRequestsPerIPAndSecond: 100,
-		ReadTimeout:               types.Duration{Duration: 10},
-		WriteTimeout:              types.Duration{Duration: 10},
-	}
+	cfg := Config{Host: "localhost", Port: 8080}
 	services := []Service{
 		{Name: "greeter", Service: &greeterService{}},
 	}
