@@ -24,14 +24,20 @@ type Etherman interface {
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
 	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
 	TrustedSequencer() (common.Address, error)
+	WatchSetTrustedSequencer(
+		ctx context.Context,
+		events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer,
+	) (event.Subscription, error)
 	TrustedSequencerURL() (string, error)
+	WatchSetTrustedSequencerURL(
+		ctx context.Context,
+		events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL,
+	) (event.Subscription, error)
 	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
-	FilterSequenceBatches(opts *bind.FilterOpts,
-		numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
-	WatchSetTrustedSequencer(opts *bind.WatchOpts,
-		sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)
-	WatchSetTrustedSequencerURL(opts *bind.WatchOpts,
-		sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)
+	FilterSequenceBatches(
+		opts *bind.FilterOpts,
+		numBatch []uint64,
+	) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)
 }
 
 var _ Etherman = (*EthermanImpl)(nil)
@@ -82,9 +88,25 @@ func (e *EthermanImpl) TrustedSequencer() (common.Address, error) {
 	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
 }
 
+// WatchSetTrustedSequencer watches trusted sequencer address
+func (e *EthermanImpl) WatchSetTrustedSequencer(
+	ctx context.Context,
+	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer,
+) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencer(&bind.WatchOpts{Context: ctx}, events)
+}
+
 // TrustedSequencerURL gets trusted sequencer's RPC url
 func (e *EthermanImpl) TrustedSequencerURL() (string, error) {
 	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+}
+
+// WatchSetTrustedSequencerURL watches trusted sequencer's RPC url
+func (e *EthermanImpl) WatchSetTrustedSequencerURL(
+	ctx context.Context,
+	events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL,
+) (event.Subscription, error) {
+	return e.CDKValidium.WatchSetTrustedSequencerURL(&bind.WatchOpts{Context: ctx}, events)
 }
 
 // HeaderByNumber returns header by number from the eth client
@@ -151,16 +173,4 @@ func (e *EthermanImpl) GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, 
 		})
 	}
 	return members, nil
-}
-
-// WatchSetTrustedSequencer returns an event subscription for events on trusted sequencer
-func (e *EthermanImpl) WatchSetTrustedSequencer(opts *bind.WatchOpts,
-	sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
-	return e.CDKValidium.WatchSetTrustedSequencer(opts, sink)
-}
-
-// WatchSetTrustedSequencerURL returns an event subscription for events on trusted sequencer
-func (e *EthermanImpl) WatchSetTrustedSequencerURL(opts *bind.WatchOpts,
-	sink chan<- *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
-	return e.CDKValidium.WatchSetTrustedSequencerURL(opts, sink)
 }
