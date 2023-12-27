@@ -14,7 +14,6 @@ require (
 	github.com/lib/pq v1.10.7
 	github.com/miguelmota/go-solidity-sha3 v0.1.1
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/onsi/gomega v1.30.0
 	github.com/rubenv/sql-migrate v1.5.2
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
@@ -85,6 +84,7 @@ require (
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
+	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
