@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,7 +22,10 @@ func Test_ServerHandleRequest(t *testing.T) {
 	// Create a test Server with mock configuration and service
 	cfg := Config{Host: "localhost", Port: 8080}
 	services := []Service{
-		{Name: "greeter", Service: &greeterService{}},
+		{
+			Name:    "greeter",
+			Service: &greeterService{},
+		},
 	}
 	server := NewServer(cfg, services)
 	url := fmt.Sprintf("http://%s:%d", cfg.Host, cfg.Port)
@@ -39,8 +43,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 	}()
 
 	// Allow some time for the server to start
-	// You might need to adjust the sleep duration based on your system and test conditions
-	<-time.After(100 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	expectedResponse := fmt.Sprintf(`"Hello, %s!"`, paramValue)
 
@@ -86,6 +89,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 		require.NoError(t, err)
 
 		respRecorder := httptest.NewRecorder()
+		respRecorder.Flush()
 		server.handle(respRecorder, httpReq)
 
 		require.Equal(t, http.StatusOK, respRecorder.Code)
@@ -100,6 +104,54 @@ func Test_ServerHandleRequest(t *testing.T) {
 			require.Equal(t, float64(i+1), resp[i].ID)
 			require.Equal(t, expectedResponse, string(resp[i].Result))
 		}
+	})
+
+	t.Run("invalid batch request", func(t *testing.T) {
+		reqBody, err := json.Marshal([]Request{})
+		require.NoError(t, err)
+
+		// modify body, so it results in invalid batch request
+		reqBody[0] = 13
+
+		httpReq, err := BuildJsonHttpRequestWithBody(context.Background(), url, reqBody)
+		require.NoError(t, err)
+
+		respRecorder := httptest.NewRecorder()
+		server.handle(respRecorder, httpReq)
+
+		require.Equal(t, http.StatusInternalServerError, respRecorder.Result().StatusCode)
+		require.Equal(t, invalidJSONReqErr.Error(), respRecorder.Body.String())
+	})
+
+	t.Run("GET method request", func(t *testing.T) {
+		const expectedResponse = "zkEVM JSON RPC Server"
+
+		reqBody, err := json.Marshal(Request{})
+		require.NoError(t, err)
+
+		httpReq, err := http.NewRequest(http.MethodGet, url, bytes.NewReader(reqBody))
+		require.NoError(t, err)
+
+		respRecorder := httptest.NewRecorder()
+		server.handle(respRecorder, httpReq)
+
+		require.Equal(t, expectedResponse, respRecorder.Body.String())
+	})
+
+	t.Run("PUT method request (error is returned)", func(t *testing.T) {
+		expectedErr := fmt.Sprintf("method %s not allowed", http.MethodPut)
+
+		reqBody, err := json.Marshal(Request{})
+		require.NoError(t, err)
+
+		httpReq, err := http.NewRequest(http.MethodPut, url, bytes.NewReader(reqBody))
+		require.NoError(t, err)
+
+		respRecorder := httptest.NewRecorder()
+		server.handle(respRecorder, httpReq)
+
+		require.Equal(t, http.StatusInternalServerError, respRecorder.Result().StatusCode)
+		require.Equal(t, expectedErr, respRecorder.Body.String())
 	})
 }
 

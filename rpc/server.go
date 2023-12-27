@@ -235,6 +235,7 @@ func (s *Server) handleInvalidRequest(w http.ResponseWriter, err error) {
 
 func handleError(w http.ResponseWriter, err error) {
 	log.Error(err)
+	w.WriteHeader(http.StatusInternalServerError)
 	_, err = w.Write([]byte(err.Error()))
 	if err != nil {
 		log.Error(err)
