@@ -12,7 +12,6 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/onsi/gomega"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -141,10 +140,9 @@ func TestTracker(t *testing.T) {
 		updatedURL     = "127.0.0.1:9585"
 	)
 
-	gomega.NewWithT(t).Eventually(func(g gomega.Gomega) {
-		g.Expect(addressesChan).NotTo(gomega.BeNil())
-		g.Expect(urlsChan).NotTo(gomega.BeNil())
-	}, "10s", "1s").Should(gomega.Succeed())
+	eventually(t, 10, func() bool {
+		return addressesChan != nil && urlsChan != nil
+	})
 
 	addressesChan <- &cdkvalidium.CdkvalidiumSetTrustedSequencer{
 		NewTrustedSequencer: updatedAddress,
@@ -157,8 +155,21 @@ func TestTracker(t *testing.T) {
 	tracker.Stop()
 
 	// Wait for values to be updated
-	gomega.NewWithT(t).Eventually(func(g gomega.Gomega) {
-		g.Expect(tracker.GetAddr()).Should(gomega.Equal(updatedAddress))
-		g.Expect(tracker.GetUrl()).Should(gomega.Equal(updatedURL))
-	}, "10s", "1s").Should(gomega.Succeed())
+	eventually(t, 10, func() bool {
+		return tracker.GetAddr() == updatedAddress && tracker.GetUrl() == updatedURL
+	})
+}
+
+func eventually(t *testing.T, num int, f func() bool) {
+	t.Helper()
+
+	for i := 0; i < num; i++ {
+		if f() {
+			return
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	t.Failed()
 }

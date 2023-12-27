@@ -88,7 +88,7 @@ func Test_GetData(t *testing.T) {
 				require.EqualError(t, tt.err, err.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, *tt.expectedData, *got)
+				require.Equal(t, tt.expectedData, got)
 			}
 		})
 	}
