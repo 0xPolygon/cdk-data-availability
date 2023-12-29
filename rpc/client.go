@@ -62,3 +62,37 @@ func JSONRPCCallWithContext(ctx context.Context, url, method string, parameters 
 
 	return res, nil
 }
+
+// BuildJsonHTTPRequest creates JSON RPC http request using provided url, method and parameters
+func BuildJsonHTTPRequest(ctx context.Context, url, method string, parameters ...interface{}) (*http.Request, error) {
+	params, err := json.Marshal(parameters)
+	if err != nil {
+		return nil, err
+	}
+
+	req := Request{
+		JSONRPC: "2.0",
+		ID:      float64(1),
+		Method:  method,
+		Params:  params,
+	}
+
+	reqBody, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return BuildJsonHttpRequestWithBody(ctx, url, reqBody)
+}
+
+// BuildJsonHttpRequestWithBody creates JSON RPC http request using provided url and request body
+func BuildJsonHttpRequestWithBody(ctx context.Context, url string, reqBody []byte) (*http.Request, error) {
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(reqBody))
+	if err != nil {
+		return nil, err
+	}
+
+	httpReq.Header.Add("Content-type", "application/json")
+
+	return httpReq, nil
+}

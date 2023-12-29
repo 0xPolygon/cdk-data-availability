@@ -72,8 +72,10 @@ func newJSONRpcHandler() *Handler {
 	return handler
 }
 
-var connectionCounter = 0
-var connectionCounterMutex sync.Mutex
+var (
+	connectionCounter      = 0
+	connectionCounterMutex sync.Mutex
+)
 
 // Handle is the function that knows which and how a function should
 // be executed when a JSON RPC request is received
@@ -159,7 +161,7 @@ func (h *Handler) HandleWs(reqBody []byte, wsConn *websocket.Conn, httpReq *http
 	log.Debugf("WS message received: %v", string(reqBody))
 	var req Request
 	if err := json.Unmarshal(reqBody, &req); err != nil {
-		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, "Invalid json request")).Bytes()
+		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())).Bytes()
 	}
 
 	handleReq := handleRequest{

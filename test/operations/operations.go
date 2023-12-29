@@ -30,16 +30,33 @@ const (
 	cmdFolder = "test"
 	// DefaultInterval is a time interval
 	DefaultInterval = 2 * time.Second
+
 	// DefaultDeadline is a time interval
-	DefaultDeadline                          = 2 * time.Minute
-	DefaultL1NetworkURL                      = "http://localhost:8545"
-	DefaultL2NetworkURL                      = "http://localhost:8123"
-	DefaultSequencerPrivateKey               = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	DefaultL2ChainID                  uint64 = 1001
-	DefaultL1ChainID                  uint64 = 1337
-	DefaultL1DataCommitteeContract           = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
-	DefaultTimeoutTxToBeMined                = 1 * time.Minute
-	DefaultL1CDKValidiumSmartContract        = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+	DefaultDeadline = 2 * time.Minute
+
+	// DefaultL1NetworkURL is the L1 node URL
+	DefaultL1NetworkURL = "http://localhost:8545"
+
+	// DefaultL2NetworkURL is the L2 node URL
+	DefaultL2NetworkURL = "http://localhost:8123"
+
+	// DefaultSequencerPrivateKey is the sequencer private key
+	DefaultSequencerPrivateKey = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
+	// DefaultL2ChainID is the l2 chain id
+	DefaultL2ChainID uint64 = 1001
+
+	// DefaultL1ChainID is the l1 chain id
+	DefaultL1ChainID uint64 = 1337
+
+	// DefaultL1DataCommitteeContract is the l1 data committee contract address
+	DefaultL1DataCommitteeContract = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+
+	// DefaultTimeoutTxToBeMined is the timeout for blocks to be mined
+	DefaultTimeoutTxToBeMined = 1 * time.Minute
+
+	// DefaultL1CDKValidiumSmartContract is the l1 CDK validium contract address
+	DefaultL1CDKValidiumSmartContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
 )
 
 var (
@@ -305,33 +322,30 @@ func RevertReason(ctx context.Context, c ethClienter, tx *ethTypes.Transaction, 
 // ApplyL2Txs sends the given L2 txs, waits for them to be consolidated and
 // checks the final state.
 func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.TransactOpts,
-	client *ethclient.Client, confirmationLevel ConfirmationLevel) ([]*big.Int, error) {
-	var err error
+	client *ethclient.Client, confirmationLevel ConfirmationLevel, committeeMembersCount int) ([]*big.Int, error) {
 	if auth == nil {
-		auth, err = GetAuth(DefaultSequencerPrivateKey, DefaultL2ChainID)
-		if err != nil {
-			return nil, err
-		}
+		return nil, errors.New("auth is undefined")
 	}
 
 	if client == nil {
-		client, err = ethclient.Dial(DefaultL2NetworkURL)
-		if err != nil {
-			return nil, err
-		}
+		return nil, errors.New("client is undefined")
 	}
+
+	var err error
 	waitToBeMined := confirmationLevel != PoolConfirmationLevel
-	var initialNonce uint64
+	initialNonce := uint64(0)
 	if waitToBeMined {
 		initialNonce, err = client.NonceAt(ctx, auth.From, nil)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	sentTxs, err := applyTxs(ctx, txs, auth, client, waitToBeMined)
 	if err != nil {
 		return nil, err
 	}
+
 	if confirmationLevel == PoolConfirmationLevel {
 		return nil, nil
 	}
@@ -350,55 +364,26 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 		if tx.Nonce() != expectedNonce {
 			return nil, fmt.Errorf("mismatching nonce for tx %v: want %d, got %d\n", tx.Hash(), expectedNonce, tx.Nonce())
 		}
+
 		if confirmationLevel == TrustedConfirmationLevel {
 			continue
 		}
 
 		// wait for l2 block to be virtualized
 		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
-		err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, 1*time.Minute) //nolint:gomnd
-		if err != nil {
-			// tmp
-			cmd := exec.Command(
-				"docker", "logs", "zkevm-node",
-			)
-			out, _ := cmd.CombinedOutput()
-			log.Debug("zkevm node: ", string(out))
-			cmd = exec.Command(
-				"docker", "logs", "--tail", "1000", "cdk-data-availability-0",
-			)
-			out, _ = cmd.CombinedOutput()
-			log.Debug("DA0: ", string(out))
-			cmd = exec.Command(
-				"docker", "logs", "--tail", "1000", "cdk-data-availability-1",
-			)
-			out, _ = cmd.CombinedOutput()
-			log.Debug("DA1: ", string(out))
-			cmd = exec.Command(
-				"docker", "logs", "--tail", "1000", "cdk-data-availability-2",
-			)
-			out, _ = cmd.CombinedOutput()
-			log.Debug("DA2: ", string(out))
-			cmd = exec.Command(
-				"docker", "logs", "--tail", "1000", "cdk-data-availability-3",
-			)
-			out, _ = cmd.CombinedOutput()
-			log.Debug("DA3: ", string(out))
-			cmd = exec.Command(
-				"docker", "logs", "--tail", "1000", "cdk-data-availability-4",
-			)
-			out, _ = cmd.CombinedOutput()
-			log.Debug("DA4: ", string(out))
+		if err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, DefaultTimeoutTxToBeMined); err != nil {
+			collectDockerLogs(committeeMembersCount)
+
 			return nil, err
 		}
+
 		if confirmationLevel == VirtualConfirmationLevel {
 			continue
 		}
 
 		// wait for l2 block number to be consolidated
 		log.Infof("waiting for the block number %v to be consolidated", receipt.BlockNumber.String())
-		err = WaitL2BlockToBeConsolidated(receipt.BlockNumber, 4*time.Minute) //nolint:gomnd
-		if err != nil {
+		if err = WaitL2BlockToBeConsolidated(receipt.BlockNumber, DefaultDeadline); err != nil {
 			return nil, err
 		}
 	}
@@ -406,18 +391,31 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 	return l2BlockNumbers, nil
 }
 
+// collectDockerLogs retrieves the logs from Docker containers and writes them into the logger
+func collectDockerLogs(committeeMembersCount int) {
+	cmd := exec.Command("docker", "logs", "zkevm-node")
+	out, _ := cmd.CombinedOutput()
+	log.Debug("zkevm node: ", string(out))
+
+	for i := 0; i < committeeMembersCount; i++ {
+		nodeName := fmt.Sprintf("cdk-data-availability-%d", i)
+		cmd = exec.Command("docker", "logs", "--tail", "1000", nodeName)
+
+		out, _ = cmd.CombinedOutput()
+		log.Debug(fmt.Sprintf("DAN-%d: ", i), string(out))
+	}
+}
+
 // WaitL2BlockToBeVirtualized waits until a L2 Block has been virtualized or the given timeout expires.
 func WaitL2BlockToBeVirtualized(l2Block *big.Int, timeout time.Duration) error {
-	l2NetworkURL := "http://localhost:8123"
 	return Poll(DefaultInterval, timeout, func() (bool, error) {
-		return l2BlockVirtualizationCondition(l2Block, l2NetworkURL)
+		return l2BlockVirtualizationCondition(l2Block, DefaultL2NetworkURL)
 	})
 }
 
 // l2BlockConsolidationCondition
 func l2BlockConsolidationCondition(l2Block *big.Int) (bool, error) {
-	l2NetworkURL := "http://localhost:8123"
-	response, err := rpc.JSONRPCCall(l2NetworkURL, "zkevm_isBlockConsolidated", types.HexEncodeBig(l2Block))
+	response, err := rpc.JSONRPCCall(DefaultL2NetworkURL, "zkevm_isBlockConsolidated", types.HexEncodeBig(l2Block))
 	if err != nil {
 		return false, err
 	}
