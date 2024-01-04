@@ -17,30 +17,10 @@ func JSONRPCCall(url, method string, params ...interface{}) (Response, error) {
 // the provided method and parameters, which is compatible with the Ethereum
 // JSON RPC Server.
 func JSONRPCCallWithContext(ctx context.Context, url, method string, parameters ...interface{}) (Response, error) {
-	params, err := json.Marshal(parameters)
+	httpReq, err := BuildJsonHTTPRequest(ctx, url, method, parameters...)
 	if err != nil {
 		return Response{}, err
 	}
-
-	req := Request{
-		JSONRPC: "2.0",
-		ID:      float64(1),
-		Method:  method,
-		Params:  params,
-	}
-
-	reqBody, err := json.Marshal(req)
-	if err != nil {
-		return Response{}, err
-	}
-
-	reqBodyReader := bytes.NewReader(reqBody)
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, reqBodyReader)
-	if err != nil {
-		return Response{}, err
-	}
-
-	httpReq.Header.Add("Content-type", "application/json")
 
 	httpRes, err := http.DefaultClient.Do(httpReq)
 	if err != nil {

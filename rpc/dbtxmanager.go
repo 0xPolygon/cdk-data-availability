@@ -15,6 +15,7 @@ type DBTxScopedFn func(ctx context.Context, dbTx db.Tx) (interface{}, Error)
 // NewDbTxScope function to initiate DB scopped txs
 func (f *DBTxManager) NewDbTxScope(db db.DB, scopedFn DBTxScopedFn) (interface{}, Error) {
 	ctx := context.Background()
+
 	dbTx, err := db.BeginStateTransaction(ctx)
 	if err != nil {
 		return RPCErrorResponse(DefaultErrorCode, "failed to connect to the state", err)
