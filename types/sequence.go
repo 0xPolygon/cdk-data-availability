@@ -30,16 +30,18 @@ func (s *Sequence) HashToSign() []byte {
 		types := []string{
 			"bytes32", // oldAccInputHash
 			"bytes32", // currentTransactionsHash
-			"bytes32", // globalExitRoot
-			"uint64",  // timestamp
+			"bytes32", // forcedGlobalExitRoot
+			"uint64",  // forcedTimestamp
 			"address", // coinbase
+			"bytes32", // forcedBlockHashL1
 		}
 		values := []interface{}{
 			currentHash,
 			crypto.Keccak256(b.L2Data),
-			b.GlobalExitRoot,
-			uint64(b.Timestamp),
+			b.ForcedGlobalExitRoot,
+			uint64(b.ForcedTimestamp),
 			b.Coinbase,
+			b.ForcedBlockHashL1,
 		}
 		currentHash = solsha3.SoliditySHA3(types, values)
 	}

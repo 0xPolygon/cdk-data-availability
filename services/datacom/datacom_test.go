@@ -34,18 +34,18 @@ func TestDataCom_SignSequence(t *testing.T) {
 		OldAccInputHash: common.HexToHash("0x101"),
 		Batches: []types.Batch{
 			{
-				Number:         types.ArgUint64(1),
-				GlobalExitRoot: common.HexToHash("0x001"),
-				L2Data:         types.ArgBytes([]byte{0, 1}),
-				Timestamp:      types.ArgUint64(1),
-				Coinbase:       common.HexToAddress("0x011"),
+				Number:               types.ArgUint64(1),
+				ForcedGlobalExitRoot: common.HexToHash("0x001"),
+				L2Data:               types.ArgBytes([]byte{0, 1}),
+				ForcedTimestamp:      types.ArgUint64(1),
+				Coinbase:             common.HexToAddress("0x011"),
 			},
 			{
-				Number:         types.ArgUint64(2),
-				GlobalExitRoot: common.HexToHash("0x002"),
-				L2Data:         types.ArgBytes([]byte{2, 3}),
-				Timestamp:      types.ArgUint64(2),
-				Coinbase:       common.HexToAddress("0x012"),
+				Number:               types.ArgUint64(2),
+				ForcedGlobalExitRoot: common.HexToHash("0x002"),
+				L2Data:               types.ArgBytes([]byte{2, 3}),
+				ForcedTimestamp:      types.ArgUint64(2),
+				Coinbase:             common.HexToAddress("0x012"),
 			},
 		},
 	}

@@ -9,12 +9,13 @@ import (
 
 // Batch represents a batch used for synchronization
 type Batch struct {
-	Number         ArgUint64           `json:"number"`
-	GlobalExitRoot common.Hash         `json:"globalExitRoot"`
-	Timestamp      ArgUint64           `json:"timestamp"`
-	Coinbase       common.Address      `json:"coinbase"`
-	L2Data         ArgBytes            `json:"batchL2Data"`
-	Transactions   []TransactionOrHash `json:"transactions"`
+	Number               ArgUint64           `json:"number"`
+	ForcedGlobalExitRoot common.Hash         `json:"forcedGlobalExitRoot"`
+	ForcedTimestamp      ArgUint64           `json:"forcedTimestamp"`
+	Coinbase             common.Address      `json:"coinbase"`
+	L2Data               ArgBytes            `json:"batchL2Data"`
+	Transactions         []TransactionOrHash `json:"transactions"`
+	ForcedBlockHashL1    common.Hash         `json:"forcedBlockHashL1"`
 }
 
 // TransactionOrHash for union type of transaction and types.Hash
@@ -26,10 +27,11 @@ type TransactionOrHash struct {
 func (b *Batch) HashToSign() []byte {
 	return crypto.Keccak256(
 		[]byte(b.Number.Hex()),
-		b.GlobalExitRoot[:],
-		[]byte(b.Timestamp.Hex()),
+		b.ForcedGlobalExitRoot[:],
+		[]byte(b.ForcedTimestamp.Hex()),
 		b.Coinbase[:],
 		b.L2Data,
+		b.ForcedBlockHashL1[:],
 	)
 }
 
