@@ -22,7 +22,7 @@ type Sequence []ArgBytes
 // HashToSign returns the accumulated input hash of the sequence.
 // Note that this is equivalent to what happens on the smart contract
 func (s *Sequence) HashToSign() []byte {
-	currentHash := []byte{}
+	currentHash := common.Hex2Bytes("0x0000000000000000000000000000000000000000000000000000000000000000")
 	for _, batchData := range ([]ArgBytes)(*s) {
 		types := []string{
 			"bytes32",
