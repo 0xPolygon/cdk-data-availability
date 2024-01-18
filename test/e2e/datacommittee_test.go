@@ -17,8 +17,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	datacommittee "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygondatacommittee"
+	validium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
@@ -73,7 +73,7 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 
 	// The default sequencer URL is incorrect, set it to match the docker container
-	validiumContract, err := cdkvalidium.NewCdkvalidium(
+	validiumContract, err := validium.NewPolygonvalidiumetrog(
 		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
 		clientL1,
 	)
@@ -81,7 +81,7 @@ func TestDataCommittee(t *testing.T) {
 	_, err = validiumContract.SetTrustedSequencerURL(authL1, "http://zkevm-node:8123")
 	require.NoError(t, err)
 
-	dacSC, err := cdkdatacommittee.NewCdkdatacommittee(
+	dacSC, err := datacommittee.NewPolygondatacommittee(
 		common.HexToAddress(operations.DefaultL1DataCommitteeContract),
 		clientL1,
 	)
@@ -195,9 +195,9 @@ func TestDataCommittee(t *testing.T) {
 	}
 }
 
-func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*validium.PolygonvalidiumetrogSequenceBatchesIterator, error) {
 	// Get the expected data keys of the batches from what was submitted to L1
-	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
+	cdkValidium, err := validium.NewPolygonvalidiumetrog(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +209,7 @@ func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*cdkvalidium.C
 	return iter, nil
 }
 
-func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.CdkvalidiumSequenceBatches) ([]common.Hash, error) {
+func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *validium.PolygonvalidiumetrogSequenceBatches) ([]common.Hash, error) {
 	ctx := context.Background()
 	tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
 	if err != nil {
