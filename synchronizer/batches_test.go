@@ -262,7 +262,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	})
 }
 
-func TestBatchSyncronizer_HandleEvent(t *testing.T) {
+func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
@@ -301,15 +301,14 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			TransactionsHash:     txHash,
 			ForcedGlobalExitRoot: common.BytesToHash([]byte{6, 7, 8, 9, 10, 11}),
 			ForcedTimestamp:      101,
-			// MinForcedTimestamp: 11,
+			// ForcedBlockHashL1:    ??,
 		},
 	}
 
 	a, err := abi.JSON(strings.NewReader(validium.PolygonvalidiumetrogABI))
 	require.NoError(t, err)
 
-	data, err := a.Methods["sequenceBatches"].Inputs.Pack(batchData,
-		common.HexToAddress("0xABCD"), []byte{22, 23, 24})
+	data, err := a.Methods["sequenceBatches"].Inputs.Pack(batchData, common.HexToAddress("0xABCD"))
 	require.NoError(t, err)
 
 	tx := ethTypes.NewTx(
