@@ -42,7 +42,7 @@ func Test_InitStartBlock(t *testing.T) {
 	l1Config := config.L1Config{
 		WsURL:                "ws://localhost:8080/ws",
 		RpcURL:               "http://localhost:8081",
-		CDKValidiumAddress:   "0xCDKValidium",
+		PolygonValidium:      "0xCDKValidium",
 		DataCommitteeAddress: "0xDAC",
 		Timeout:              types.NewDuration(time.Minute),
 		RetryPeriod:          types.NewDuration(time.Second * 2),
@@ -237,8 +237,8 @@ func Test_InitStartBlock(t *testing.T) {
 				Number: big.NewInt(3),
 			}), nil},
 			codeAtArgs: [][]interface{}{
-				{mock.Anything, common.HexToAddress(l1Config.CDKValidiumAddress), big.NewInt(1)},
-				{mock.Anything, common.HexToAddress(l1Config.CDKValidiumAddress), big.NewInt(2)},
+				{mock.Anything, common.HexToAddress(l1Config.PolygonValidium), big.NewInt(1)},
+				{mock.Anything, common.HexToAddress(l1Config.PolygonValidium), big.NewInt(2)},
 			},
 			codeAtReturns: [][]interface{}{
 				{nil, errors.New("error")},
