@@ -269,12 +269,12 @@ func createKeyStore(pk *ecdsa.PrivateKey, outputDir, password string) error {
 func startDACMember(t *testing.T, m member) {
 	dacNodeConfig := config.Config{
 		L1: config.L1Config{
-			WsURL:                "ws://l1:8546",
-			RpcURL:               "http://l1:8545",
-			PolygonValidium:      operations.DefaultL1CDKValidiumSmartContract,
-			DataCommitteeAddress: operations.DefaultL1DataCommitteeContract,
-			Timeout:              cTypes.Duration{Duration: time.Second},
-			RetryPeriod:          cTypes.Duration{Duration: time.Second},
+			WsURL:                  "ws://l1:8546",
+			RpcURL:                 "http://l1:8545",
+			PolygonValidiumAddress: operations.DefaultL1CDKValidiumSmartContract,
+			DataCommitteeAddress:   operations.DefaultL1DataCommitteeContract,
+			Timeout:                cTypes.Duration{Duration: time.Second},
+			RetryPeriod:            cTypes.Duration{Duration: time.Second},
 		},
 		PrivateKey: cTypes.KeystoreFileConfig{
 			Path:     ksFile,

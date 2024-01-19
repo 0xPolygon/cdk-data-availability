@@ -3,7 +3,7 @@ PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 [L1]
 WsURL = "ws://l1:8546"
 RpcURL = "http://l1:8545"
-PolygonValidium = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
+PolygonValidiumAddress = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
 DataCommitteeAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 Timeout = "3m"
 RetryPeriod = "5s"

@@ -60,7 +60,7 @@ func New(cfg config.L1Config) (*EthermanImpl, error) {
 		return nil, err
 	}
 
-	cdkValidium, err := polygonvalidium.NewPolygonvalidium(common.HexToAddress(cfg.PolygonValidium), ethClient)
+	cdkValidium, err := polygonvalidium.NewPolygonvalidium(common.HexToAddress(cfg.PolygonValidiumAddress), ethClient)
 	if err != nil {
 		return nil, err
 	}

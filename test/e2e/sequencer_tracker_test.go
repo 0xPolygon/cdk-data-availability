@@ -39,7 +39,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	require.Equal(t, common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"), addr)
 
 	url := tracker.GetUrl()
-	require.Equal(t, "http://cdk-validium-json-rpc:8123", url) // the default
+	require.Equal(t, "http://zkevm-json-rpc:8123", url) // the default
 
 	clientL1, err := ethclient.Dial(operations.DefaultL1NetworkURL)
 	require.NoError(t, err)

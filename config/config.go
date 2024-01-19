@@ -32,13 +32,13 @@ type Config struct {
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
-	WsURL                string         `mapstructure:"WsURL"`
-	RpcURL               string         `mapstructure:"RpcURL"`
-	PolygonValidium      string         `mapstructure:"PolygonValidiumAddress"`
-	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
-	Timeout              types.Duration `mapstructure:"Timeout"`
-	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
-	BlockBatchSize       uint           `mapstructure:"BlockBatchSize"`
+	WsURL                  string         `mapstructure:"WsURL"`
+	RpcURL                 string         `mapstructure:"RpcURL"`
+	PolygonValidiumAddress string         `mapstructure:"PolygonValidiumAddress"`
+	DataCommitteeAddress   string         `mapstructure:"DataCommitteeAddress"`
+	Timeout                types.Duration `mapstructure:"Timeout"`
+	RetryPeriod            types.Duration `mapstructure:"RetryPeriod"`
+	BlockBatchSize         uint           `mapstructure:"BlockBatchSize"`
 }
 
 // Load loads the configuration baseed on the cli context

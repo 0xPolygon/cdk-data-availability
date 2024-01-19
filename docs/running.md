@@ -78,7 +78,7 @@ PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"} # CHANGE
 [L1]
 WsURL = "ws://URLofYourL1Node:8546"     # CHANGE THIS: use the URL of your L1 node
 RpcURL = "http://URLofYourL1Node:8545"  # CHANGE THIS: use the URL of your L1 node
-PolygonValidium = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"       # CHANGE THIS: Address of the Validium smart contract
+PolygonValidiumAddress = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"       # CHANGE THIS: Address of the Validium smart contract
 DataCommitteeAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"     # CHANGE THIS: Address of the data availability committee smart contract
 Timeout = "3m"
 RetryPeriod = "5s"
