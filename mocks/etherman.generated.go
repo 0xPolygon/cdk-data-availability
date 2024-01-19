@@ -5,7 +5,7 @@ package mocks
 import (
 	big "math/big"
 
-	cdkvalidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	polygonvalidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	common "github.com/ethereum/go-ethereum/common"
@@ -27,23 +27,23 @@ type Etherman struct {
 }
 
 // FilterSequenceBatches provides a mock function with given fields: opts, numBatch
-func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error) {
 	ret := _m.Called(opts, numBatch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FilterSequenceBatches")
 	}
 
-	var r0 *cdkvalidium.CdkvalidiumSequenceBatchesIterator
+	var r0 *polygonvalidium.PolygonvalidiumSequenceBatchesIterator
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)); ok {
+	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error)); ok {
 		return rf(opts, numBatch)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) *cdkvalidium.CdkvalidiumSequenceBatchesIterator); ok {
+	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) *polygonvalidium.PolygonvalidiumSequenceBatchesIterator); ok {
 		r0 = rf(opts, numBatch)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*cdkvalidium.CdkvalidiumSequenceBatchesIterator)
+			r0 = ret.Get(0).(*polygonvalidium.PolygonvalidiumSequenceBatchesIterator)
 		}
 	}
 
@@ -242,7 +242,7 @@ func (_m *Etherman) TrustedSequencerURL() (string, error) {
 }
 
 // WatchSetTrustedSequencer provides a mock function with given fields: ctx, events
-func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error) {
+func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) (event.Subscription, error) {
 	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
@@ -251,10 +251,10 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *c
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
 		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) event.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) event.Subscription); ok {
 		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
@@ -262,7 +262,7 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *c
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) error); ok {
 		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
@@ -272,7 +272,7 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *c
 }
 
 // WatchSetTrustedSequencerURL provides a mock function with given fields: ctx, events
-func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
+func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
 	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
@@ -281,10 +281,10 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
 		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) event.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) event.Subscription); ok {
 		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
@@ -292,7 +292,7 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) error); ok {
 		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)

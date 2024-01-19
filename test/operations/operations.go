@@ -56,7 +56,7 @@ const (
 	DefaultTimeoutTxToBeMined = 1 * time.Minute
 
 	// DefaultL1CDKValidiumSmartContract is the l1 CDK validium contract address
-	DefaultL1CDKValidiumSmartContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+	DefaultL1CDKValidiumSmartContract = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
 )
 
 var (

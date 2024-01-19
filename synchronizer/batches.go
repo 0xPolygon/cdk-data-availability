@@ -11,7 +11,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
@@ -35,7 +35,7 @@ type BatchSynchronizer struct {
 	committee        map[common.Address]etherman.DataCommitteeMember
 	lock             sync.Mutex
 	reorgs           <-chan BlockReorg
-	events           chan *cdkvalidium.CdkvalidiumSequenceBatches
+	events           chan *polygonvalidium.PolygonvalidiumSequenceBatches
 	sequencer        sequencer.ISequencerTracker
 	rpcClientFactory client.IClientFactory
 }
@@ -63,7 +63,7 @@ func NewBatchSynchronizer(
 		self:             self,
 		db:               db,
 		reorgs:           reorgs,
-		events:           make(chan *cdkvalidium.CdkvalidiumSequenceBatches),
+		events:           make(chan *polygonvalidium.PolygonvalidiumSequenceBatches),
 		sequencer:        sequencer,
 		rpcClientFactory: rpcClientFactory,
 	}
@@ -204,7 +204,7 @@ type batchKey struct {
 	hash   common.Hash
 }
 
-func (bs *BatchSynchronizer) handleEvent(event *cdkvalidium.CdkvalidiumSequenceBatches) error {
+func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
 	defer cancel()
 
