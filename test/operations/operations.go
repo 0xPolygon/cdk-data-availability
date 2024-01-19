@@ -50,7 +50,7 @@ const (
 	DefaultL1ChainID uint64 = 1337
 
 	// DefaultL1DataCommitteeContract is the l1 data committee contract address
-	DefaultL1DataCommitteeContract = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+	DefaultL1DataCommitteeContract = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 
 	// DefaultTimeoutTxToBeMined is the timeout for blocks to be mined
 	DefaultTimeoutTxToBeMined = 1 * time.Minute
