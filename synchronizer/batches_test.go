@@ -261,7 +261,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	})
 }
 
-func TestBatchSyncronizer_HandleEvent(t *testing.T) {
+func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
@@ -285,7 +285,6 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 	}
 
 	to := common.HexToAddress("0xFFFF")
-	sequencBatchesFnID := []byte{67, 138, 83, 153}
 	event := &polygonvalidium.PolygonvalidiumSequenceBatches{
 		Raw: ethTypes.Log{
 			TxHash: common.BytesToHash([]byte{0, 1, 2, 3}),
@@ -304,8 +303,10 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 	a, err := abi.JSON(strings.NewReader(polygonvalidium.PolygonvalidiumABI))
 	require.NoError(t, err)
 
-	data, err := a.Methods["sequenceBatches"].Inputs.Pack(batchData,
-		common.HexToAddress("0xABCD"), []byte{22, 23, 24})
+	methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
+	require.True(t, ok)
+
+	data, err := methodDefinition.Inputs.Pack(batchData, common.HexToAddress("0xABCD"), []byte{22, 23, 24})
 	require.NoError(t, err)
 
 	tx := ethTypes.NewTx(
@@ -315,7 +316,7 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			Gas:      21_000,
 			To:       &to,
 			Value:    ethgo.Ether(1),
-			Data:     append(sequencBatchesFnID, data...),
+			Data:     append(methodDefinition.ID, data...),
 		})
 
 	testFn := func(config testConfig) {
