@@ -135,11 +135,12 @@ func TestDataCommittee(t *testing.T) {
 	}()
 
 	// pick one to start later
-	m0 := membs[0]
+	startCount := len(membs) - 1
+	delayedMember := membs[startCount]
 
-	// Start DAC nodes & DBs
-	for _, m := range membs[1:] { // note starting all but first
-		startDACMember(t, m)
+	// Start DAC nodes & DBs (except for delayed member)
+	for i := 0; i < startCount; i++ {
+		startDACMember(t, membs[i])
 	}
 
 	// Send txs
@@ -168,10 +169,10 @@ func TestDataCommittee(t *testing.T) {
 	}
 
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, dacMembersCount)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, startCount)
 	require.NoError(t, err)
 
-	startDACMember(t, m0) // start the skipped one, it should catch up through synchronization
+	startDACMember(t, delayedMember) // start the delayed one, it should catch up through synchronization
 
 	// allow the member to startup and synchronize
 	<-time.After(20 * time.Second)
