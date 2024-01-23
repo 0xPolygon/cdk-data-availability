@@ -19,6 +19,14 @@ type IEthClient struct {
 	mock.Mock
 }
 
+type IEthClient_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IEthClient) EXPECT() *IEthClient_Expecter {
+	return &IEthClient_Expecter{mock: &_m.Mock}
+}
+
 // BlockByNumber provides a mock function with given fields: ctx, number
 func (_m *IEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
 	ret := _m.Called(ctx, number)
@@ -49,6 +57,35 @@ func (_m *IEthClient) BlockByNumber(ctx context.Context, number *big.Int) (*type
 	return r0, r1
 }
 
+// IEthClient_BlockByNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BlockByNumber'
+type IEthClient_BlockByNumber_Call struct {
+	*mock.Call
+}
+
+// BlockByNumber is a helper method to define mock.On call
+//   - ctx context.Context
+//   - number *big.Int
+func (_e *IEthClient_Expecter) BlockByNumber(ctx interface{}, number interface{}) *IEthClient_BlockByNumber_Call {
+	return &IEthClient_BlockByNumber_Call{Call: _e.mock.On("BlockByNumber", ctx, number)}
+}
+
+func (_c *IEthClient_BlockByNumber_Call) Run(run func(ctx context.Context, number *big.Int)) *IEthClient_BlockByNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*big.Int))
+	})
+	return _c
+}
+
+func (_c *IEthClient_BlockByNumber_Call) Return(_a0 *types.Block, _a1 error) *IEthClient_BlockByNumber_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEthClient_BlockByNumber_Call) RunAndReturn(run func(context.Context, *big.Int) (*types.Block, error)) *IEthClient_BlockByNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CodeAt provides a mock function with given fields: ctx, account, blockNumber
 func (_m *IEthClient) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
 	ret := _m.Called(ctx, account, blockNumber)
@@ -77,6 +114,36 @@ func (_m *IEthClient) CodeAt(ctx context.Context, account common.Address, blockN
 	}
 
 	return r0, r1
+}
+
+// IEthClient_CodeAt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CodeAt'
+type IEthClient_CodeAt_Call struct {
+	*mock.Call
+}
+
+// CodeAt is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account common.Address
+//   - blockNumber *big.Int
+func (_e *IEthClient_Expecter) CodeAt(ctx interface{}, account interface{}, blockNumber interface{}) *IEthClient_CodeAt_Call {
+	return &IEthClient_CodeAt_Call{Call: _e.mock.On("CodeAt", ctx, account, blockNumber)}
+}
+
+func (_c *IEthClient_CodeAt_Call) Run(run func(ctx context.Context, account common.Address, blockNumber *big.Int)) *IEthClient_CodeAt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Address), args[2].(*big.Int))
+	})
+	return _c
+}
+
+func (_c *IEthClient_CodeAt_Call) Return(_a0 []byte, _a1 error) *IEthClient_CodeAt_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEthClient_CodeAt_Call) RunAndReturn(run func(context.Context, common.Address, *big.Int) ([]byte, error)) *IEthClient_CodeAt_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIEthClient creates a new instance of IEthClient. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

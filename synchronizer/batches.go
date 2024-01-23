@@ -37,7 +37,7 @@ type BatchSynchronizer struct {
 	reorgs           <-chan BlockReorg
 	events           chan *cdkvalidium.CdkvalidiumSequenceBatches
 	sequencer        sequencer.ISequencerTracker
-	rpcClientFactory client.IClientFactory
+	rpcClientFactory client.ClientFactory
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -48,7 +48,7 @@ func NewBatchSynchronizer(
 	reorgs <-chan BlockReorg,
 	ethClient etherman.Etherman,
 	sequencer sequencer.ISequencerTracker,
-	rpcClientFactory client.IClientFactory,
+	rpcClientFactory client.ClientFactory,
 ) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block number size is not set, setting to default %d", defaultBlockBatchSize)

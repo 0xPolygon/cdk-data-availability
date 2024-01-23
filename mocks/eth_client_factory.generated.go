@@ -14,6 +14,14 @@ type IEthClientFactory struct {
 	mock.Mock
 }
 
+type IEthClientFactory_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *IEthClientFactory) EXPECT() *IEthClientFactory_Expecter {
+	return &IEthClientFactory_Expecter{mock: &_m.Mock}
+}
+
 // CreateEthClient provides a mock function with given fields: ctx, url
 func (_m *IEthClientFactory) CreateEthClient(ctx context.Context, url string) (types.IEthClient, error) {
 	ret := _m.Called(ctx, url)
@@ -42,6 +50,35 @@ func (_m *IEthClientFactory) CreateEthClient(ctx context.Context, url string) (t
 	}
 
 	return r0, r1
+}
+
+// IEthClientFactory_CreateEthClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateEthClient'
+type IEthClientFactory_CreateEthClient_Call struct {
+	*mock.Call
+}
+
+// CreateEthClient is a helper method to define mock.On call
+//   - ctx context.Context
+//   - url string
+func (_e *IEthClientFactory_Expecter) CreateEthClient(ctx interface{}, url interface{}) *IEthClientFactory_CreateEthClient_Call {
+	return &IEthClientFactory_CreateEthClient_Call{Call: _e.mock.On("CreateEthClient", ctx, url)}
+}
+
+func (_c *IEthClientFactory_CreateEthClient_Call) Run(run func(ctx context.Context, url string)) *IEthClientFactory_CreateEthClient_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *IEthClientFactory_CreateEthClient_Call) Return(_a0 types.IEthClient, _a1 error) *IEthClientFactory_CreateEthClient_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IEthClientFactory_CreateEthClient_Call) RunAndReturn(run func(context.Context, string) (types.IEthClient, error)) *IEthClientFactory_CreateEthClient_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewIEthClientFactory creates a new instance of IEthClientFactory. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

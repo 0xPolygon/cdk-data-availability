@@ -12,6 +12,14 @@ type ISequencerTracker struct {
 	mock.Mock
 }
 
+type ISequencerTracker_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *ISequencerTracker) EXPECT() *ISequencerTracker_Expecter {
+	return &ISequencerTracker_Expecter{mock: &_m.Mock}
+}
+
 // GetSequenceBatch provides a mock function with given fields: batchNum
 func (_m *ISequencerTracker) GetSequenceBatch(batchNum uint64) (*sequencer.SeqBatch, error) {
 	ret := _m.Called(batchNum)
@@ -40,6 +48,34 @@ func (_m *ISequencerTracker) GetSequenceBatch(batchNum uint64) (*sequencer.SeqBa
 	}
 
 	return r0, r1
+}
+
+// ISequencerTracker_GetSequenceBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSequenceBatch'
+type ISequencerTracker_GetSequenceBatch_Call struct {
+	*mock.Call
+}
+
+// GetSequenceBatch is a helper method to define mock.On call
+//   - batchNum uint64
+func (_e *ISequencerTracker_Expecter) GetSequenceBatch(batchNum interface{}) *ISequencerTracker_GetSequenceBatch_Call {
+	return &ISequencerTracker_GetSequenceBatch_Call{Call: _e.mock.On("GetSequenceBatch", batchNum)}
+}
+
+func (_c *ISequencerTracker_GetSequenceBatch_Call) Run(run func(batchNum uint64)) *ISequencerTracker_GetSequenceBatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(uint64))
+	})
+	return _c
+}
+
+func (_c *ISequencerTracker_GetSequenceBatch_Call) Return(_a0 *sequencer.SeqBatch, _a1 error) *ISequencerTracker_GetSequenceBatch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ISequencerTracker_GetSequenceBatch_Call) RunAndReturn(run func(uint64) (*sequencer.SeqBatch, error)) *ISequencerTracker_GetSequenceBatch_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewISequencerTracker creates a new instance of ISequencerTracker. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

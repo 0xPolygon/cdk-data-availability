@@ -13,8 +13,6 @@ import (
 )
 
 // ISequencerTracker is an interface that defines functions that a sequencer tracker must implement
-//
-//go:generate mockery --name ISequencerTracker --output ../mocks --case=underscore --filename sequencer_tracker.generated.go
 type ISequencerTracker interface {
 	GetSequenceBatch(batchNum uint64) (*SeqBatch, error)
 }
