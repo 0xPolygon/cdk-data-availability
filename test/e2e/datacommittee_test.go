@@ -168,13 +168,19 @@ func TestDataCommittee(t *testing.T) {
 		txs = append(txs, tx)
 	}
 
+	startedIndices := []int{}
+	for i := 0; i < len(membs); i++ {
+		startedIndices = append(startedIndices, membs[i].i)
+	}
+
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, startCount)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, startedIndices)
 	require.NoError(t, err)
 
 	startDACMember(t, delayedMember) // start the delayed one, it should catch up through synchronization
 
 	// allow the member to startup and synchronize
+	log.Infof("waiting for delayed member %d to synchronize...", delayedMember.i)
 	<-time.After(20 * time.Second)
 
 	iter, err := getSequenceBatchesEventIterator(clientL1)

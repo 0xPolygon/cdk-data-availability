@@ -322,7 +322,7 @@ func RevertReason(ctx context.Context, c ethClienter, tx *ethTypes.Transaction, 
 // ApplyL2Txs sends the given L2 txs, waits for them to be consolidated and
 // checks the final state.
 func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.TransactOpts,
-	client *ethclient.Client, confirmationLevel ConfirmationLevel, committeeMembersCount int) ([]*big.Int, error) {
+	client *ethclient.Client, confirmationLevel ConfirmationLevel, dacIndices []int) ([]*big.Int, error) {
 	if auth == nil {
 		return nil, errors.New("auth is undefined")
 	}
@@ -372,7 +372,7 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 		// wait for l2 block to be virtualized
 		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
 		if err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, DefaultTimeoutTxToBeMined); err != nil {
-			collectDockerLogs(committeeMembersCount)
+			collectDockerLogs(dacIndices)
 
 			return nil, err
 		}
@@ -392,17 +392,18 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 }
 
 // collectDockerLogs retrieves the logs from Docker containers and writes them into the logger
-func collectDockerLogs(committeeMembersCount int) {
+func collectDockerLogs(dacIndices []int) {
 	cmd := exec.Command("docker", "logs", "zkevm-node")
 	out, _ := cmd.CombinedOutput()
 	log.Debug("zkevm node: ", string(out))
 
-	for i := 0; i < committeeMembersCount; i++ {
-		nodeName := fmt.Sprintf("cdk-data-availability-%d", i)
+	for i := 0; i < len(dacIndices); i++ {
+		idx := dacIndices[i]
+		nodeName := fmt.Sprintf("cdk-data-availability-%d", idx)
 		cmd = exec.Command("docker", "logs", "--tail", "1000", nodeName)
 
 		out, _ = cmd.CombinedOutput()
-		log.Debug(fmt.Sprintf("DAN-%d: ", i), string(out))
+		log.Debug(fmt.Sprintf("DAN-%d: ", idx), string(out))
 	}
 }
 
