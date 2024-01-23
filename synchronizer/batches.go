@@ -252,10 +252,12 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 
 func (bs *BatchSynchronizer) resolve(batch batchKey) (*types.OffChainData, error) {
 	// First try to get the data from the trusted sequencer
-	data := bs.trySequencer(batch)
-	if data != nil {
-		return data, nil
-	}
+	/*
+		data := bs.trySequencer(batch)
+		if data != nil {
+			return data, nil
+		}
+	*/
 
 	// If the sequencer failed to produce data, try the other nodes
 	if len(bs.committee) == 0 {
