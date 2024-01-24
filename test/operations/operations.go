@@ -393,7 +393,11 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 func CollectDockerLogs(dacIndices []int) {
 	cmd := exec.Command("docker", "logs", "zkevm-node")
 	out, _ := cmd.CombinedOutput()
-	log.Debug("========> zkevm-node: ", string(out))
+	log.Debug("DOCKER LOGS ZKEVM-NODE: ", string(out))
+
+	cmd = exec.Command("docker", "logs", "l1")
+	out, _ = cmd.CombinedOutput()
+	log.Debug("DOCKER LOGS L1: ", string(out))
 
 	for i := 0; i < len(dacIndices); i++ {
 		idx := dacIndices[i]
@@ -401,7 +405,7 @@ func CollectDockerLogs(dacIndices []int) {
 		cmd = exec.Command("docker", "logs", "--tail", "1000", nodeName)
 
 		out, _ = cmd.CombinedOutput()
-		log.Debug(fmt.Sprintf("========> DAN-%d: ", idx), string(out))
+		log.Debug(fmt.Sprintf("DOCKER LOGS DAN-%d: ", idx), string(out))
 	}
 }
 
