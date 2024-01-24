@@ -26,6 +26,14 @@ type Etherman struct {
 	mock.Mock
 }
 
+type Etherman_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Etherman) EXPECT() *Etherman_Expecter {
+	return &Etherman_Expecter{mock: &_m.Mock}
+}
+
 // FilterSequenceBatches provides a mock function with given fields: opts, numBatch
 func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
 	ret := _m.Called(opts, numBatch)
@@ -54,6 +62,35 @@ func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint
 	}
 
 	return r0, r1
+}
+
+// Etherman_FilterSequenceBatches_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FilterSequenceBatches'
+type Etherman_FilterSequenceBatches_Call struct {
+	*mock.Call
+}
+
+// FilterSequenceBatches is a helper method to define mock.On call
+//   - opts *bind.FilterOpts
+//   - numBatch []uint64
+func (_e *Etherman_Expecter) FilterSequenceBatches(opts interface{}, numBatch interface{}) *Etherman_FilterSequenceBatches_Call {
+	return &Etherman_FilterSequenceBatches_Call{Call: _e.mock.On("FilterSequenceBatches", opts, numBatch)}
+}
+
+func (_c *Etherman_FilterSequenceBatches_Call) Run(run func(opts *bind.FilterOpts, numBatch []uint64)) *Etherman_FilterSequenceBatches_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.FilterOpts), args[1].([]uint64))
+	})
+	return _c
+}
+
+func (_c *Etherman_FilterSequenceBatches_Call) Return(_a0 *cdkvalidium.CdkvalidiumSequenceBatchesIterator, _a1 error) *Etherman_FilterSequenceBatches_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_FilterSequenceBatches_Call) RunAndReturn(run func(*bind.FilterOpts, []uint64) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error)) *Etherman_FilterSequenceBatches_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetCurrentDataCommittee provides a mock function with given fields:
@@ -86,6 +123,33 @@ func (_m *Etherman) GetCurrentDataCommittee() (*etherman.DataCommittee, error) {
 	return r0, r1
 }
 
+// Etherman_GetCurrentDataCommittee_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCurrentDataCommittee'
+type Etherman_GetCurrentDataCommittee_Call struct {
+	*mock.Call
+}
+
+// GetCurrentDataCommittee is a helper method to define mock.On call
+func (_e *Etherman_Expecter) GetCurrentDataCommittee() *Etherman_GetCurrentDataCommittee_Call {
+	return &Etherman_GetCurrentDataCommittee_Call{Call: _e.mock.On("GetCurrentDataCommittee")}
+}
+
+func (_c *Etherman_GetCurrentDataCommittee_Call) Run(run func()) *Etherman_GetCurrentDataCommittee_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Etherman_GetCurrentDataCommittee_Call) Return(_a0 *etherman.DataCommittee, _a1 error) *Etherman_GetCurrentDataCommittee_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_GetCurrentDataCommittee_Call) RunAndReturn(run func() (*etherman.DataCommittee, error)) *Etherman_GetCurrentDataCommittee_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetCurrentDataCommitteeMembers provides a mock function with given fields:
 func (_m *Etherman) GetCurrentDataCommitteeMembers() ([]etherman.DataCommitteeMember, error) {
 	ret := _m.Called()
@@ -114,6 +178,33 @@ func (_m *Etherman) GetCurrentDataCommitteeMembers() ([]etherman.DataCommitteeMe
 	}
 
 	return r0, r1
+}
+
+// Etherman_GetCurrentDataCommitteeMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCurrentDataCommitteeMembers'
+type Etherman_GetCurrentDataCommitteeMembers_Call struct {
+	*mock.Call
+}
+
+// GetCurrentDataCommitteeMembers is a helper method to define mock.On call
+func (_e *Etherman_Expecter) GetCurrentDataCommitteeMembers() *Etherman_GetCurrentDataCommitteeMembers_Call {
+	return &Etherman_GetCurrentDataCommitteeMembers_Call{Call: _e.mock.On("GetCurrentDataCommitteeMembers")}
+}
+
+func (_c *Etherman_GetCurrentDataCommitteeMembers_Call) Run(run func()) *Etherman_GetCurrentDataCommitteeMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Etherman_GetCurrentDataCommitteeMembers_Call) Return(_a0 []etherman.DataCommitteeMember, _a1 error) *Etherman_GetCurrentDataCommitteeMembers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_GetCurrentDataCommitteeMembers_Call) RunAndReturn(run func() ([]etherman.DataCommitteeMember, error)) *Etherman_GetCurrentDataCommitteeMembers_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetTx provides a mock function with given fields: ctx, txHash
@@ -153,6 +244,35 @@ func (_m *Etherman) GetTx(ctx context.Context, txHash common.Hash) (*types.Trans
 	return r0, r1, r2
 }
 
+// Etherman_GetTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTx'
+type Etherman_GetTx_Call struct {
+	*mock.Call
+}
+
+// GetTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - txHash common.Hash
+func (_e *Etherman_Expecter) GetTx(ctx interface{}, txHash interface{}) *Etherman_GetTx_Call {
+	return &Etherman_GetTx_Call{Call: _e.mock.On("GetTx", ctx, txHash)}
+}
+
+func (_c *Etherman_GetTx_Call) Run(run func(ctx context.Context, txHash common.Hash)) *Etherman_GetTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Hash))
+	})
+	return _c
+}
+
+func (_c *Etherman_GetTx_Call) Return(_a0 *types.Transaction, _a1 bool, _a2 error) *Etherman_GetTx_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *Etherman_GetTx_Call) RunAndReturn(run func(context.Context, common.Hash) (*types.Transaction, bool, error)) *Etherman_GetTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HeaderByNumber provides a mock function with given fields: ctx, number
 func (_m *Etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
 	ret := _m.Called(ctx, number)
@@ -181,6 +301,35 @@ func (_m *Etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types
 	}
 
 	return r0, r1
+}
+
+// Etherman_HeaderByNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HeaderByNumber'
+type Etherman_HeaderByNumber_Call struct {
+	*mock.Call
+}
+
+// HeaderByNumber is a helper method to define mock.On call
+//   - ctx context.Context
+//   - number *big.Int
+func (_e *Etherman_Expecter) HeaderByNumber(ctx interface{}, number interface{}) *Etherman_HeaderByNumber_Call {
+	return &Etherman_HeaderByNumber_Call{Call: _e.mock.On("HeaderByNumber", ctx, number)}
+}
+
+func (_c *Etherman_HeaderByNumber_Call) Run(run func(ctx context.Context, number *big.Int)) *Etherman_HeaderByNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*big.Int))
+	})
+	return _c
+}
+
+func (_c *Etherman_HeaderByNumber_Call) Return(_a0 *types.Header, _a1 error) *Etherman_HeaderByNumber_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_HeaderByNumber_Call) RunAndReturn(run func(context.Context, *big.Int) (*types.Header, error)) *Etherman_HeaderByNumber_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // TrustedSequencer provides a mock function with given fields:
@@ -213,6 +362,33 @@ func (_m *Etherman) TrustedSequencer() (common.Address, error) {
 	return r0, r1
 }
 
+// Etherman_TrustedSequencer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TrustedSequencer'
+type Etherman_TrustedSequencer_Call struct {
+	*mock.Call
+}
+
+// TrustedSequencer is a helper method to define mock.On call
+func (_e *Etherman_Expecter) TrustedSequencer() *Etherman_TrustedSequencer_Call {
+	return &Etherman_TrustedSequencer_Call{Call: _e.mock.On("TrustedSequencer")}
+}
+
+func (_c *Etherman_TrustedSequencer_Call) Run(run func()) *Etherman_TrustedSequencer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Etherman_TrustedSequencer_Call) Return(_a0 common.Address, _a1 error) *Etherman_TrustedSequencer_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_TrustedSequencer_Call) RunAndReturn(run func() (common.Address, error)) *Etherman_TrustedSequencer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TrustedSequencerURL provides a mock function with given fields:
 func (_m *Etherman) TrustedSequencerURL() (string, error) {
 	ret := _m.Called()
@@ -239,6 +415,33 @@ func (_m *Etherman) TrustedSequencerURL() (string, error) {
 	}
 
 	return r0, r1
+}
+
+// Etherman_TrustedSequencerURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TrustedSequencerURL'
+type Etherman_TrustedSequencerURL_Call struct {
+	*mock.Call
+}
+
+// TrustedSequencerURL is a helper method to define mock.On call
+func (_e *Etherman_Expecter) TrustedSequencerURL() *Etherman_TrustedSequencerURL_Call {
+	return &Etherman_TrustedSequencerURL_Call{Call: _e.mock.On("TrustedSequencerURL")}
+}
+
+func (_c *Etherman_TrustedSequencerURL_Call) Run(run func()) *Etherman_TrustedSequencerURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Etherman_TrustedSequencerURL_Call) Return(_a0 string, _a1 error) *Etherman_TrustedSequencerURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_TrustedSequencerURL_Call) RunAndReturn(run func() (string, error)) *Etherman_TrustedSequencerURL_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // WatchSetTrustedSequencer provides a mock function with given fields: ctx, events
@@ -271,6 +474,35 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *c
 	return r0, r1
 }
 
+// Etherman_WatchSetTrustedSequencer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WatchSetTrustedSequencer'
+type Etherman_WatchSetTrustedSequencer_Call struct {
+	*mock.Call
+}
+
+// WatchSetTrustedSequencer is a helper method to define mock.On call
+//   - ctx context.Context
+//   - events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer
+func (_e *Etherman_Expecter) WatchSetTrustedSequencer(ctx interface{}, events interface{}) *Etherman_WatchSetTrustedSequencer_Call {
+	return &Etherman_WatchSetTrustedSequencer_Call{Call: _e.mock.On("WatchSetTrustedSequencer", ctx, events)}
+}
+
+func (_c *Etherman_WatchSetTrustedSequencer_Call) Run(run func(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencer)) *Etherman_WatchSetTrustedSequencer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(chan *cdkvalidium.CdkvalidiumSetTrustedSequencer))
+	})
+	return _c
+}
+
+func (_c *Etherman_WatchSetTrustedSequencer_Call) Return(_a0 event.Subscription, _a1 error) *Etherman_WatchSetTrustedSequencer_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_WatchSetTrustedSequencer_Call) RunAndReturn(run func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencer) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // WatchSetTrustedSequencerURL provides a mock function with given fields: ctx, events
 func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
 	ret := _m.Called(ctx, events)
@@ -299,6 +531,35 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan
 	}
 
 	return r0, r1
+}
+
+// Etherman_WatchSetTrustedSequencerURL_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WatchSetTrustedSequencerURL'
+type Etherman_WatchSetTrustedSequencerURL_Call struct {
+	*mock.Call
+}
+
+// WatchSetTrustedSequencerURL is a helper method to define mock.On call
+//   - ctx context.Context
+//   - events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL
+func (_e *Etherman_Expecter) WatchSetTrustedSequencerURL(ctx interface{}, events interface{}) *Etherman_WatchSetTrustedSequencerURL_Call {
+	return &Etherman_WatchSetTrustedSequencerURL_Call{Call: _e.mock.On("WatchSetTrustedSequencerURL", ctx, events)}
+}
+
+func (_c *Etherman_WatchSetTrustedSequencerURL_Call) Run(run func(ctx context.Context, events chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL)) *Etherman_WatchSetTrustedSequencerURL_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL))
+	})
+	return _c
+}
+
+func (_c *Etherman_WatchSetTrustedSequencerURL_Call) Return(_a0 event.Subscription, _a1 error) *Etherman_WatchSetTrustedSequencerURL_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Etherman_WatchSetTrustedSequencerURL_Call) RunAndReturn(run func(context.Context, chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencerURL_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewEtherman creates a new instance of Etherman. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

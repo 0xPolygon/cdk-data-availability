@@ -10,44 +10,45 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// IClientFactory interface for the client factory
-//
-//go:generate mockery --name IClientFactory --output ../mocks --case=underscore --filename client_factory.generated.go
-type IClientFactory interface {
-	New(url string) IClient
+// Factory interface for the client factory
+type Factory interface {
+	New(url string) Client
 }
 
-// IClient is the interface that defines the implementation of all the endpoints
-//
-//go:generate mockery --name IClient --output ../mocks --case=underscore --filename client.generated.go
-type IClient interface {
+// Client is the interface that defines the implementation of all the endpoints
+type Client interface {
 	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
-// Factory is the implementation of the data committee client factory
-type Factory struct{}
+// factory is the implementation of the data committee client factory
+type factory struct{}
+
+// NewFactory is the constructor of factory
+func NewFactory() Factory {
+	return &factory{}
+}
 
 // New returns an implementation of the data committee node client
-func (f *Factory) New(url string) IClient {
+func (f *factory) New(url string) Client {
 	return New(url)
 }
 
 // Client wraps all the available endpoints of the data abailability committee node server
-type Client struct {
+type client struct {
 	url string
 }
 
 // New returns a client ready to be used
-func New(url string) *Client {
-	return &Client{
+func New(url string) Client {
+	return &client{
 		url: url,
 	}
 }
 
 // SignSequence sends a request to sign the given sequence by the data committee member
 // if successful returns the signature. The signature should be validated after using this method!
-func (c *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
+func (c *client) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
 	response, err := rpc.JSONRPCCall(c.url, "datacom_signSequence", signedSequence)
 	if err != nil {
 		return nil, err
@@ -66,7 +67,7 @@ func (c *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, erro
 }
 
 // GetOffChainData returns data based on it's hash
-func (c *Client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
+func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
 	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_getOffChainData", hash)
 	if err != nil {
 		return nil, err

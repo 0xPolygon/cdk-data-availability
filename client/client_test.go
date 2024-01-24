@@ -156,7 +156,7 @@ func TestClient_GetOffChainData(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			c := &Client{url: svr.URL}
+			c := &client{url: svr.URL}
 
 			got, err := c.GetOffChainData(context.Background(), tt.hash)
 			if tt.err != nil {

@@ -17,8 +17,6 @@ var (
 )
 
 // DB defines functions that a DB instance should implement
-//
-//go:generate mockery --name DB --output ../mocks --case=underscore --filename db.generated.go
 type DB interface {
 	BeginStateTransaction(ctx context.Context) (Tx, error)
 	Exists(ctx context.Context, key common.Hash) bool
@@ -29,8 +27,6 @@ type DB interface {
 }
 
 // Tx is the interface that defines functions a db tx has to implement
-//
-//go:generate mockery --name Tx --output ../mocks --case=underscore --filename tx.generated.go
 type Tx interface {
 	sqlx.ExecerContext
 	sqlx.QueryerContext

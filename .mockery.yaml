@@ -1,0 +1,47 @@
+with-expecter: true
+dir: "mocks"
+filename: "{{.InterfaceName | lower }}.generated.go"
+mockname: "{{.InterfaceName}}"
+outpkg: "mocks"
+packages:
+  github.com/ethereum/go-ethereum/event:
+    config:
+    interfaces:
+      Subscription:
+        config:
+  github.com/0xPolygon/cdk-data-availability/db:
+    config:
+    interfaces:
+      DB:
+        config:
+      Tx:
+        config:
+  github.com/0xPolygon/cdk-data-availability/client:
+    config:
+    interfaces:
+      Factory:
+        config:
+          mockname: ClientFactory
+          filename: client_factory.generated.go
+      Client:
+        config:
+  github.com/0xPolygon/cdk-data-availability/etherman:
+    config:
+    interfaces:
+      Etherman:
+        config:
+  github.com/0xPolygon/cdk-data-availability/synchronizer:
+    config:
+    interfaces:
+      SequencerTracker:
+        config:
+          filename: sequencer_tracker.generated.go
+  github.com/0xPolygon/cdk-data-availability/types:
+    config:
+    interfaces:
+      EthClient:
+        config:
+          filename: eth_client.generated.go
+      EthClientFactory:
+        config:
+          filename: eth_client_factory.generated.go

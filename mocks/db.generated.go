@@ -21,6 +21,14 @@ type DB struct {
 	mock.Mock
 }
 
+type DB_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *DB) EXPECT() *DB_Expecter {
+	return &DB_Expecter{mock: &_m.Mock}
+}
+
 // BeginStateTransaction provides a mock function with given fields: ctx
 func (_m *DB) BeginStateTransaction(ctx context.Context) (db.Tx, error) {
 	ret := _m.Called(ctx)
@@ -51,6 +59,34 @@ func (_m *DB) BeginStateTransaction(ctx context.Context) (db.Tx, error) {
 	return r0, r1
 }
 
+// DB_BeginStateTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BeginStateTransaction'
+type DB_BeginStateTransaction_Call struct {
+	*mock.Call
+}
+
+// BeginStateTransaction is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *DB_Expecter) BeginStateTransaction(ctx interface{}) *DB_BeginStateTransaction_Call {
+	return &DB_BeginStateTransaction_Call{Call: _e.mock.On("BeginStateTransaction", ctx)}
+}
+
+func (_c *DB_BeginStateTransaction_Call) Run(run func(ctx context.Context)) *DB_BeginStateTransaction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_BeginStateTransaction_Call) Return(_a0 db.Tx, _a1 error) *DB_BeginStateTransaction_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_BeginStateTransaction_Call) RunAndReturn(run func(context.Context) (db.Tx, error)) *DB_BeginStateTransaction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Exists provides a mock function with given fields: ctx, key
 func (_m *DB) Exists(ctx context.Context, key common.Hash) bool {
 	ret := _m.Called(ctx, key)
@@ -67,6 +103,35 @@ func (_m *DB) Exists(ctx context.Context, key common.Hash) bool {
 	}
 
 	return r0
+}
+
+// DB_Exists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Exists'
+type DB_Exists_Call struct {
+	*mock.Call
+}
+
+// Exists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key common.Hash
+func (_e *DB_Expecter) Exists(ctx interface{}, key interface{}) *DB_Exists_Call {
+	return &DB_Exists_Call{Call: _e.mock.On("Exists", ctx, key)}
+}
+
+func (_c *DB_Exists_Call) Run(run func(ctx context.Context, key common.Hash)) *DB_Exists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Hash))
+	})
+	return _c
+}
+
+func (_c *DB_Exists_Call) Return(_a0 bool) *DB_Exists_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_Exists_Call) RunAndReturn(run func(context.Context, common.Hash) bool) *DB_Exists_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetLastProcessedBlock provides a mock function with given fields: ctx, task
@@ -95,6 +160,35 @@ func (_m *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, e
 	}
 
 	return r0, r1
+}
+
+// DB_GetLastProcessedBlock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLastProcessedBlock'
+type DB_GetLastProcessedBlock_Call struct {
+	*mock.Call
+}
+
+// GetLastProcessedBlock is a helper method to define mock.On call
+//   - ctx context.Context
+//   - task string
+func (_e *DB_Expecter) GetLastProcessedBlock(ctx interface{}, task interface{}) *DB_GetLastProcessedBlock_Call {
+	return &DB_GetLastProcessedBlock_Call{Call: _e.mock.On("GetLastProcessedBlock", ctx, task)}
+}
+
+func (_c *DB_GetLastProcessedBlock_Call) Run(run func(ctx context.Context, task string)) *DB_GetLastProcessedBlock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *DB_GetLastProcessedBlock_Call) Return(_a0 uint64, _a1 error) *DB_GetLastProcessedBlock_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetLastProcessedBlock_Call) RunAndReturn(run func(context.Context, string) (uint64, error)) *DB_GetLastProcessedBlock_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // GetOffChainData provides a mock function with given fields: ctx, key, dbTx
@@ -127,6 +221,36 @@ func (_m *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.Qu
 	return r0, r1
 }
 
+// DB_GetOffChainData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOffChainData'
+type DB_GetOffChainData_Call struct {
+	*mock.Call
+}
+
+// GetOffChainData is a helper method to define mock.On call
+//   - ctx context.Context
+//   - key common.Hash
+//   - dbTx sqlx.QueryerContext
+func (_e *DB_Expecter) GetOffChainData(ctx interface{}, key interface{}, dbTx interface{}) *DB_GetOffChainData_Call {
+	return &DB_GetOffChainData_Call{Call: _e.mock.On("GetOffChainData", ctx, key, dbTx)}
+}
+
+func (_c *DB_GetOffChainData_Call) Run(run func(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext)) *DB_GetOffChainData_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.Hash), args[2].(sqlx.QueryerContext))
+	})
+	return _c
+}
+
+func (_c *DB_GetOffChainData_Call) Return(_a0 types.ArgBytes, _a1 error) *DB_GetOffChainData_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash, sqlx.QueryerContext) (types.ArgBytes, error)) *DB_GetOffChainData_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreLastProcessedBlock provides a mock function with given fields: ctx, task, block, dbTx
 func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	ret := _m.Called(ctx, task, block, dbTx)
@@ -145,6 +269,37 @@ func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block ui
 	return r0
 }
 
+// DB_StoreLastProcessedBlock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreLastProcessedBlock'
+type DB_StoreLastProcessedBlock_Call struct {
+	*mock.Call
+}
+
+// StoreLastProcessedBlock is a helper method to define mock.On call
+//   - ctx context.Context
+//   - task string
+//   - block uint64
+//   - dbTx sqlx.ExecerContext
+func (_e *DB_Expecter) StoreLastProcessedBlock(ctx interface{}, task interface{}, block interface{}, dbTx interface{}) *DB_StoreLastProcessedBlock_Call {
+	return &DB_StoreLastProcessedBlock_Call{Call: _e.mock.On("StoreLastProcessedBlock", ctx, task, block, dbTx)}
+}
+
+func (_c *DB_StoreLastProcessedBlock_Call) Run(run func(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext)) *DB_StoreLastProcessedBlock_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(uint64), args[3].(sqlx.ExecerContext))
+	})
+	return _c
+}
+
+func (_c *DB_StoreLastProcessedBlock_Call) Return(_a0 error) *DB_StoreLastProcessedBlock_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context, string, uint64, sqlx.ExecerContext) error) *DB_StoreLastProcessedBlock_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreOffChainData provides a mock function with given fields: ctx, od, dbTx
 func (_m *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
 	ret := _m.Called(ctx, od, dbTx)
@@ -161,6 +316,36 @@ func (_m *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, db
 	}
 
 	return r0
+}
+
+// DB_StoreOffChainData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreOffChainData'
+type DB_StoreOffChainData_Call struct {
+	*mock.Call
+}
+
+// StoreOffChainData is a helper method to define mock.On call
+//   - ctx context.Context
+//   - od []types.OffChainData
+//   - dbTx sqlx.ExecerContext
+func (_e *DB_Expecter) StoreOffChainData(ctx interface{}, od interface{}, dbTx interface{}) *DB_StoreOffChainData_Call {
+	return &DB_StoreOffChainData_Call{Call: _e.mock.On("StoreOffChainData", ctx, od, dbTx)}
+}
+
+func (_c *DB_StoreOffChainData_Call) Run(run func(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext)) *DB_StoreOffChainData_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]types.OffChainData), args[2].(sqlx.ExecerContext))
+	})
+	return _c
+}
+
+func (_c *DB_StoreOffChainData_Call) Return(_a0 error) *DB_StoreOffChainData_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_StoreOffChainData_Call) RunAndReturn(run func(context.Context, []types.OffChainData, sqlx.ExecerContext) error) *DB_StoreOffChainData_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewDB creates a new instance of DB. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

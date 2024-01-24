@@ -17,8 +17,6 @@ import (
 )
 
 // Etherman defines functions that should be implemented by Etherman
-//
-//go:generate mockery --name Etherman --output ../mocks --case=underscore --filename etherman.generated.go
 type Etherman interface {
 	GetCurrentDataCommittee() (*DataCommittee, error)
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
