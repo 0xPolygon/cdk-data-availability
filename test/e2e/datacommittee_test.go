@@ -116,11 +116,13 @@ func TestDataCommittee(t *testing.T) {
 	err = operations.WaitTxToBeMined(ctx, clientL1, tx, operations.DefaultTimeoutTxToBeMined)
 	require.NoError(t, err)
 
+	var runningDacs []member
+
 	defer func() {
 		if !stopDacs {
 			return
 		}
-		for _, m := range membs {
+		for _, m := range runningDacs {
 			stopDACMember(t, m)
 		}
 		// Remove tmp files
@@ -141,6 +143,7 @@ func TestDataCommittee(t *testing.T) {
 	// Start DAC nodes & DBs (except for delayed member)
 	for i := 0; i < startCount; i++ {
 		startDACMember(t, membs[i])
+		runningDacs = append(runningDacs, membs[i])
 	}
 
 	// Send txs
@@ -181,6 +184,7 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 
 	startDACMember(t, delayedMember) // start the delayed one, it should catch up through synchronization
+	runningDacs = append(runningDacs, delayedMember)
 
 	// allow the member to startup and synchronize
 	log.Infof("waiting for delayed member %d to synchronize...", delayedMember.i)
