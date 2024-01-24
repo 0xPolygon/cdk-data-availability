@@ -12,7 +12,7 @@ Outputs = ["stderr"]
 	Name = "state_db"
 	Host = "zkevm-state-db"
 	Port = "5432"
-	EnableLog = false	
+	EnableLog = false
 	MaxConns = 200
 	[State.Batch]
 		[State.Batch.Constraints]
@@ -45,7 +45,7 @@ GlobalQueue = 1024
 		ByteGasCost = 16
 		ZeroByteGasCost = 4
 		NetProfit = 1
-	    BreakEvenFactor = 1.1			
+	    BreakEvenFactor = 1.1
 		FinalDeviationPct = 10
 		L2GasPriceSuggesterFactor = 0.5
 	[Pool.DB]
@@ -81,7 +81,7 @@ EnableL2SuggestedGasPricePolling = true
 SyncInterval = "1s"
 SyncChunkSize = 100
 TrustedSequencerURL = "" # If it is empty or not specified, then the value is read from the smc.
-L1SynchronizationMode = "parallel"
+L1SynchronizationMode = "sequential"
 	[Synchronizer.L1ParallelSynchronization]
 		MaxClients = 10
 		MaxPendingNoProcessedBlocks = 25
