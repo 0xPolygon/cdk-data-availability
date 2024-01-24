@@ -99,7 +99,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	testFn := func(config testConfig) {
 		clientMock := mocks.NewClient(t)
 		ethermanMock := mocks.NewEtherman(t)
-		sequencerMock := mocks.NewISequencerTracker(t)
+		sequencerMock := mocks.NewSequencerTracker(t)
 		clientFactoryMock := mocks.NewClientFactory(t)
 
 		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
@@ -325,7 +325,7 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 		dbMock := mocks.NewDB(t)
 		txMock := mocks.NewTx(t)
 		ethermanMock := mocks.NewEtherman(t)
-		sequencerMock := mocks.NewISequencerTracker(t)
+		sequencerMock := mocks.NewSequencerTracker(t)
 
 		if config.getTxArgs != nil && config.getTxReturns != nil {
 			ethermanMock.On("GetTx", config.getTxArgs...).Return(

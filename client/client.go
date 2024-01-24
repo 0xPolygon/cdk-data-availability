@@ -10,8 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ClientFactory interface for the client factory
-type ClientFactory interface {
+// Factory interface for the client factory
+type Factory interface {
 	New(url string) Client
 }
 
@@ -21,11 +21,16 @@ type Client interface {
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
-// Factory is the implementation of the data committee client factory
-type Factory struct{}
+// factory is the implementation of the data committee client factory
+type factory struct{}
+
+// NewFactory is the constructor of factory
+func NewFactory() Factory {
+	return &factory{}
+}
 
 // New returns an implementation of the data committee node client
-func (f *Factory) New(url string) Client {
+func (f *factory) New(url string) Client {
 	return New(url)
 }
 
@@ -35,7 +40,7 @@ type client struct {
 }
 
 // New returns a client ready to be used
-func New(url string) *client {
+func New(url string) Client {
 	return &client{
 		url: url,
 	}

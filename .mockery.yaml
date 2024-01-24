@@ -19,8 +19,10 @@ packages:
   github.com/0xPolygon/cdk-data-availability/client:
     config:
     interfaces:
-      ClientFactory:
+      Factory:
         config:
+          mockname: ClientFactory
+          filename: client_factory.generated.go
       Client:
         config:
   github.com/0xPolygon/cdk-data-availability/etherman:
@@ -28,18 +30,18 @@ packages:
     interfaces:
       Etherman:
         config:
-  github.com/0xPolygon/cdk-data-availability/sequencer:
+  github.com/0xPolygon/cdk-data-availability/synchronizer:
     config:
     interfaces:
-      ISequencerTracker:
+      SequencerTracker:
         config:
           filename: sequencer_tracker.generated.go
   github.com/0xPolygon/cdk-data-availability/types:
     config:
     interfaces:
-      IEthClient:
+      EthClient:
         config:
           filename: eth_client.generated.go
-      IEthClientFactory:
+      EthClientFactory:
         config:
           filename: eth_client_factory.generated.go

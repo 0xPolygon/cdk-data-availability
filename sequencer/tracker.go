@@ -12,13 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// ISequencerTracker is an interface that defines functions that a sequencer tracker must implement
-type ISequencerTracker interface {
-	GetSequenceBatch(batchNum uint64) (*SeqBatch, error)
-}
-
-var _ ISequencerTracker = (*Tracker)(nil)
-
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
 	client    etherman.Etherman
