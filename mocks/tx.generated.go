@@ -17,6 +17,14 @@ type Tx struct {
 	mock.Mock
 }
 
+type Tx_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *Tx) EXPECT() *Tx_Expecter {
+	return &Tx_Expecter{mock: &_m.Mock}
+}
+
 // Commit provides a mock function with given fields:
 func (_m *Tx) Commit() error {
 	ret := _m.Called()
@@ -33,6 +41,33 @@ func (_m *Tx) Commit() error {
 	}
 
 	return r0
+}
+
+// Tx_Commit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Commit'
+type Tx_Commit_Call struct {
+	*mock.Call
+}
+
+// Commit is a helper method to define mock.On call
+func (_e *Tx_Expecter) Commit() *Tx_Commit_Call {
+	return &Tx_Commit_Call{Call: _e.mock.On("Commit")}
+}
+
+func (_c *Tx_Commit_Call) Run(run func()) *Tx_Commit_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Tx_Commit_Call) Return(_a0 error) *Tx_Commit_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Tx_Commit_Call) RunAndReturn(run func() error) *Tx_Commit_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ExecContext provides a mock function with given fields: ctx, query, args
@@ -68,6 +103,43 @@ func (_m *Tx) ExecContext(ctx context.Context, query string, args ...interface{}
 	return r0, r1
 }
 
+// Tx_ExecContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExecContext'
+type Tx_ExecContext_Call struct {
+	*mock.Call
+}
+
+// ExecContext is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - args ...interface{}
+func (_e *Tx_Expecter) ExecContext(ctx interface{}, query interface{}, args ...interface{}) *Tx_ExecContext_Call {
+	return &Tx_ExecContext_Call{Call: _e.mock.On("ExecContext",
+		append([]interface{}{ctx, query}, args...)...)}
+}
+
+func (_c *Tx_ExecContext_Call) Run(run func(ctx context.Context, query string, args ...interface{})) *Tx_ExecContext_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Tx_ExecContext_Call) Return(_a0 sql.Result, _a1 error) *Tx_ExecContext_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Tx_ExecContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (sql.Result, error)) *Tx_ExecContext_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // QueryContext provides a mock function with given fields: ctx, query, args
 func (_m *Tx) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	var _ca []interface{}
@@ -101,6 +173,43 @@ func (_m *Tx) QueryContext(ctx context.Context, query string, args ...interface{
 	return r0, r1
 }
 
+// Tx_QueryContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryContext'
+type Tx_QueryContext_Call struct {
+	*mock.Call
+}
+
+// QueryContext is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - args ...interface{}
+func (_e *Tx_Expecter) QueryContext(ctx interface{}, query interface{}, args ...interface{}) *Tx_QueryContext_Call {
+	return &Tx_QueryContext_Call{Call: _e.mock.On("QueryContext",
+		append([]interface{}{ctx, query}, args...)...)}
+}
+
+func (_c *Tx_QueryContext_Call) Run(run func(ctx context.Context, query string, args ...interface{})) *Tx_QueryContext_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Tx_QueryContext_Call) Return(_a0 *sql.Rows, _a1 error) *Tx_QueryContext_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Tx_QueryContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (*sql.Rows, error)) *Tx_QueryContext_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // QueryRowxContext provides a mock function with given fields: ctx, query, args
 func (_m *Tx) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
 	var _ca []interface{}
@@ -122,6 +231,43 @@ func (_m *Tx) QueryRowxContext(ctx context.Context, query string, args ...interf
 	}
 
 	return r0
+}
+
+// Tx_QueryRowxContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryRowxContext'
+type Tx_QueryRowxContext_Call struct {
+	*mock.Call
+}
+
+// QueryRowxContext is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - args ...interface{}
+func (_e *Tx_Expecter) QueryRowxContext(ctx interface{}, query interface{}, args ...interface{}) *Tx_QueryRowxContext_Call {
+	return &Tx_QueryRowxContext_Call{Call: _e.mock.On("QueryRowxContext",
+		append([]interface{}{ctx, query}, args...)...)}
+}
+
+func (_c *Tx_QueryRowxContext_Call) Run(run func(ctx context.Context, query string, args ...interface{})) *Tx_QueryRowxContext_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Tx_QueryRowxContext_Call) Return(_a0 *sqlx.Row) *Tx_QueryRowxContext_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Tx_QueryRowxContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) *sqlx.Row) *Tx_QueryRowxContext_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // QueryxContext provides a mock function with given fields: ctx, query, args
@@ -157,6 +303,43 @@ func (_m *Tx) QueryxContext(ctx context.Context, query string, args ...interface
 	return r0, r1
 }
 
+// Tx_QueryxContext_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'QueryxContext'
+type Tx_QueryxContext_Call struct {
+	*mock.Call
+}
+
+// QueryxContext is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - args ...interface{}
+func (_e *Tx_Expecter) QueryxContext(ctx interface{}, query interface{}, args ...interface{}) *Tx_QueryxContext_Call {
+	return &Tx_QueryxContext_Call{Call: _e.mock.On("QueryxContext",
+		append([]interface{}{ctx, query}, args...)...)}
+}
+
+func (_c *Tx_QueryxContext_Call) Run(run func(ctx context.Context, query string, args ...interface{})) *Tx_QueryxContext_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-2)
+		for i, a := range args[2:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].(context.Context), args[1].(string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *Tx_QueryxContext_Call) Return(_a0 *sqlx.Rows, _a1 error) *Tx_QueryxContext_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Tx_QueryxContext_Call) RunAndReturn(run func(context.Context, string, ...interface{}) (*sqlx.Rows, error)) *Tx_QueryxContext_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Rollback provides a mock function with given fields:
 func (_m *Tx) Rollback() error {
 	ret := _m.Called()
@@ -173,6 +356,33 @@ func (_m *Tx) Rollback() error {
 	}
 
 	return r0
+}
+
+// Tx_Rollback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Rollback'
+type Tx_Rollback_Call struct {
+	*mock.Call
+}
+
+// Rollback is a helper method to define mock.On call
+func (_e *Tx_Expecter) Rollback() *Tx_Rollback_Call {
+	return &Tx_Rollback_Call{Call: _e.mock.On("Rollback")}
+}
+
+func (_c *Tx_Rollback_Call) Run(run func()) *Tx_Rollback_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Tx_Rollback_Call) Return(_a0 error) *Tx_Rollback_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Tx_Rollback_Call) RunAndReturn(run func() error) *Tx_Rollback_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // NewTx creates a new instance of Tx. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

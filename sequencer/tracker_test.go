@@ -16,8 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//go:generate mockery --name Subscription --output ../mocks --case=underscore --srcpkg github.com/ethereum/go-ethereum/event --filename subscription.generated.go
-
 func Test_NewTracker(t *testing.T) {
 	testErr := errors.New("test error")
 

@@ -101,7 +101,7 @@ type testClient struct {
 
 func newTestClient(url string, addr common.Address) *testClient {
 	return &testClient{
-		client:        *client.New(url),
+		client:        client.New(url),
 		dacMemberAddr: addr,
 	}
 }

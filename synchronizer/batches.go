@@ -23,6 +23,11 @@ import (
 
 const defaultBlockBatchSize = 32
 
+// SequencerTracker is an interface that defines functions that a sequencer tracker must implement
+type SequencerTracker interface {
+	GetSequenceBatch(batchNum uint64) (*sequencer.SeqBatch, error)
+}
+
 // BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
 	client           etherman.Etherman
@@ -36,8 +41,8 @@ type BatchSynchronizer struct {
 	lock             sync.Mutex
 	reorgs           <-chan BlockReorg
 	events           chan *polygonvalidium.PolygonvalidiumSequenceBatches
-	sequencer        sequencer.ISequencerTracker
-	rpcClientFactory client.IClientFactory
+	sequencer        SequencerTracker
+	rpcClientFactory client.Factory
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -47,8 +52,8 @@ func NewBatchSynchronizer(
 	db db.DB,
 	reorgs <-chan BlockReorg,
 	ethClient etherman.Etherman,
-	sequencer sequencer.ISequencerTracker,
-	rpcClientFactory client.IClientFactory,
+	sequencer SequencerTracker,
+	rpcClientFactory client.Factory,
 ) (*BatchSynchronizer, error) {
 	if cfg.BlockBatchSize == 0 {
 		log.Infof("block number size is not set, setting to default %d", defaultBlockBatchSize)
