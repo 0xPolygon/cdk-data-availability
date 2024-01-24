@@ -174,7 +174,7 @@ func TestDataCommittee(t *testing.T) {
 	}
 
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, startedIndices)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VirtualConfirmationLevel, startedIndices)
 	require.NoError(t, err)
 
 	startDACMember(t, delayedMember) // start the delayed one, it should catch up through synchronization
