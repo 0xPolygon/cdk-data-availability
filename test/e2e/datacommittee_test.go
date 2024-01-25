@@ -36,8 +36,8 @@ import (
 )
 
 const (
-	nSignatures      = 4
-	dacMembersCount  = 5
+	nSignatures      = 2
+	dacMembersCount  = 3
 	ksFile           = "/tmp/pkey"
 	cfgFile          = "/tmp/dacnodeconfigfile.json"
 	ksPass           = "pass"
