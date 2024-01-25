@@ -177,7 +177,7 @@ func TestDataCommittee(t *testing.T) {
 	}
 
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.TrustedConfirmationLevel)
 	if err != nil {
 		operations.CollectDockerLogs(startedIndices)
 	}
