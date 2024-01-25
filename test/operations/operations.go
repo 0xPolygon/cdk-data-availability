@@ -395,10 +395,6 @@ func CollectDockerLogs(dacIndices []int) {
 	out, _ := cmd.CombinedOutput()
 	log.Debug("DOCKER LOGS ZKEVM-NODE: ", string(out))
 
-	cmd = exec.Command("docker", "logs", "l1")
-	out, _ = cmd.CombinedOutput()
-	log.Debug("DOCKER LOGS L1: ", string(out))
-
 	for i := 0; i < len(dacIndices); i++ {
 		idx := dacIndices[i]
 		nodeName := fmt.Sprintf("cdk-data-availability-%d", idx)
