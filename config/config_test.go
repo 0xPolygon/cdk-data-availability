@@ -1,6 +1,9 @@
 package config
 
 import (
+	"flag"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -54,6 +57,31 @@ func Test_Defaults(t *testing.T) {
 			require.Equal(t, tc.expectedValue, actual)
 		})
 	}
+}
+
+func Test_ConfigFileNotFound(t *testing.T) {
+	flags := flag.FlagSet{}
+	flags.String("cfg", "/fictitious-file/foo.cfg", "")
+
+	ctx := cli.NewContext(cli.NewApp(), &flags, nil)
+	_, err := Load(ctx)
+	require.Error(t, err)
+}
+
+func Test_ConfigFileOverride(t *testing.T) {
+	tempDir := t.TempDir()
+	overrides := filepath.Join(tempDir, "overrides.toml")
+	f, err := os.Create(overrides)
+	require.NoError(t, err)
+	_, err = f.WriteString("[L1]\n")
+	require.NoError(t, err)
+	_, err = f.WriteString("PolygonValidiumAddress = \"0xDEADBEEF\"")
+	flags := flag.FlagSet{}
+	flags.String("cfg", overrides, "")
+	ctx := cli.NewContext(cli.NewApp(), &flags, nil)
+	cfg, err := Load(ctx)
+	require.NoError(t, err)
+	require.Equal(t, "0xDEADBEEF", cfg.L1.PolygonValidiumAddress)
 }
 
 func getValueFromStruct(path string, object interface{}) interface{} {

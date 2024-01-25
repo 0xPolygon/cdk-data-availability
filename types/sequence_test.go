@@ -30,6 +30,7 @@ func TestHashToSign(t *testing.T) {
 			t, c.expectedHash.Hex(),
 			"0x"+common.Bytes2Hex(c.s.HashToSign()),
 		)
+		require.Equal(t, 1, len(c.s.OffChainData()))
 	}
 }
 
