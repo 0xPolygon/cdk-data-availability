@@ -76,6 +76,7 @@ func Test_ConfigFileOverride(t *testing.T) {
 	_, err = f.WriteString("[L1]\n")
 	require.NoError(t, err)
 	_, err = f.WriteString("PolygonValidiumAddress = \"0xDEADBEEF\"")
+	require.NoError(t, err)
 	flags := flag.FlagSet{}
 	flags.String("cfg", overrides, "")
 	ctx := cli.NewContext(cli.NewApp(), &flags, nil)
