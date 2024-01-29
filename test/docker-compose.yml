@@ -121,10 +121,13 @@ services:
 
   zkevm-prover:
     container_name: zkevm-prover
+    platform: linux/amd64
     image: hermeznetwork/zkevm-prover:v4.0.0-RC19
     ports:
       - 50061:50061 # MT
       - 50071:50071 # Executor
+    environment:
+      - EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU=1
     volumes:
       - ./config/prover.json:/usr/src/app/config.json
     command: >
@@ -141,7 +144,7 @@ services:
       - ./config/aggregator.keystore:/pk/aggregator.keystore
       - ./config/node.toml:/app/config.toml
       - ./config/genesis.json:/app/genesis.json
-    command: 
+    command:
       - "/bin/sh"
       - "-c"
       - "/app/zkevm-node approve --network custom --custom-network-file /app/genesis.json --am 115792089237316195423570985008687907853269984665640564039457584007913129639935 -y --cfg /app/config.toml --key-store-path /pk/sequencer.keystore --password testonly &&
