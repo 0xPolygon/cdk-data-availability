@@ -170,7 +170,7 @@ func (a ArgBig) MarshalText() ([]byte, error) {
 }
 
 // Hex returns a hexadecimal representation
-func (b ArgBig) Hex() string {
-	bb, _ := b.MarshalText()
+func (a ArgBig) Hex() string {
+	bb, _ := a.MarshalText()
 	return string(bb)
 }

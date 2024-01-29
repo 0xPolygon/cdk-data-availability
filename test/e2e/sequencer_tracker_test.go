@@ -26,10 +26,10 @@ func TestSequencerAddrExists(t *testing.T) {
 	ctx := cli.NewContext(cli.NewApp(), nil, nil)
 	cfg, err := config.Load(ctx)
 	require.NoError(t, err)
-	etherman, err := etherman.New(cfg.L1)
+	etm, err := etherman.New(cfg.L1)
 	require.NoError(t, err)
 
-	tracker, err := sequencer.NewTracker(cfg.L1, etherman)
+	tracker, err := sequencer.NewTracker(cfg.L1, etm)
 	require.NoError(t, err)
 
 	go tracker.Start(ctx.Context)
