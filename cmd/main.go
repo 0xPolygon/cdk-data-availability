@@ -92,7 +92,7 @@ func start(cliCtx *cli.Context) error {
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
 	// ensure synchro/reorg start block is set
-	err = synchronizer.InitStartBlock(storage, &types.EthClientFactoryImpl{}, c.L1)
+	err = synchronizer.InitStartBlock(storage, types.NewEthClientFactory(), c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}

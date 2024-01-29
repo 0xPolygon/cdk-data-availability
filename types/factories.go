@@ -20,12 +20,15 @@ type EthClientFactory interface {
 	CreateEthClient(ctx context.Context, url string) (EthClient, error)
 }
 
-var _ EthClientFactory = (*EthClientFactoryImpl)(nil)
+// ethClientFactory is the implementation of EthClientFactory interface
+type ethClientFactory struct{}
 
-// EthClientFactoryImpl is the implementation of EthClientFactory interface
-type EthClientFactoryImpl struct{}
+// NewEthClientFactory is the constructor of ethClientFactory
+func NewEthClientFactory() EthClientFactory {
+	return &ethClientFactory{}
+}
 
 // CreateEthClient creates a new eth client
-func (e *EthClientFactoryImpl) CreateEthClient(ctx context.Context, url string) (EthClient, error) {
+func (e *ethClientFactory) CreateEthClient(ctx context.Context, url string) (EthClient, error) {
 	return ethclient.DialContext(ctx, url)
 }
