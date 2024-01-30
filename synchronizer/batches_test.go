@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -261,7 +261,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	})
 }
 
-func TestBatchSyncronizer_HandleEvent(t *testing.T) {
+func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
@@ -285,8 +285,7 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 	}
 
 	to := common.HexToAddress("0xFFFF")
-	sequencBatchesFnID := []byte{67, 138, 83, 153}
-	event := &cdkvalidium.CdkvalidiumSequenceBatches{
+	event := &polygonvalidium.PolygonvalidiumSequenceBatches{
 		Raw: ethTypes.Log{
 			TxHash: common.BytesToHash([]byte{0, 1, 2, 3}),
 		},
@@ -295,20 +294,19 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 	batchL2Data := []byte{1, 2, 3, 4, 5, 6}
 	txHash := crypto.Keccak256Hash(batchL2Data)
 
-	batchData := []cdkvalidium.CDKValidiumBatchData{
+	batchData := []polygonvalidium.PolygonValidiumEtrogValidiumBatchData{
 		{
-			TransactionsHash:   txHash,
-			GlobalExitRoot:     common.BytesToHash([]byte{6, 7, 8, 9, 10, 11}),
-			Timestamp:          101,
-			MinForcedTimestamp: 11,
+			TransactionsHash: txHash,
 		},
 	}
 
-	a, err := abi.JSON(strings.NewReader(cdkvalidium.CdkvalidiumABI))
+	a, err := abi.JSON(strings.NewReader(polygonvalidium.PolygonvalidiumABI))
 	require.NoError(t, err)
 
-	data, err := a.Methods["sequenceBatches"].Inputs.Pack(batchData,
-		common.HexToAddress("0xABCD"), []byte{22, 23, 24})
+	methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
+	require.True(t, ok)
+
+	data, err := methodDefinition.Inputs.Pack(batchData, common.HexToAddress("0xABCD"), []byte{22, 23, 24})
 	require.NoError(t, err)
 
 	tx := ethTypes.NewTx(
@@ -318,7 +316,7 @@ func TestBatchSyncronizer_HandleEvent(t *testing.T) {
 			Gas:      21_000,
 			To:       &to,
 			Value:    ethgo.Ether(1),
-			Data:     append(sequencBatchesFnID, data...),
+			Data:     append(methodDefinition.ID, data...),
 		})
 
 	testFn := func(config testConfig) {

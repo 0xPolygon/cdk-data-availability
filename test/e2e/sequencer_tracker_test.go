@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum/common"
@@ -26,10 +26,10 @@ func TestSequencerAddrExists(t *testing.T) {
 	ctx := cli.NewContext(cli.NewApp(), nil, nil)
 	cfg, err := config.Load(ctx)
 	require.NoError(t, err)
-	etherman, err := etherman.New(cfg.L1)
+	etm, err := etherman.New(cfg.L1)
 	require.NoError(t, err)
 
-	tracker, err := sequencer.NewTracker(cfg.L1, etherman)
+	tracker, err := sequencer.NewTracker(cfg.L1, etm)
 	require.NoError(t, err)
 
 	go tracker.Start(ctx.Context)
@@ -39,11 +39,11 @@ func TestSequencerAddrExists(t *testing.T) {
 	require.Equal(t, common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"), addr)
 
 	url := tracker.GetUrl()
-	require.Equal(t, "http://cdk-validium-json-rpc:8123", url) // the default
+	require.Equal(t, "http://zkevm-json-rpc:8123", url) // the default
 
 	clientL1, err := ethclient.Dial(operations.DefaultL1NetworkURL)
 	require.NoError(t, err)
-	validiumContract, err := cdkvalidium.NewCdkvalidium(
+	validiumContract, err := polygonvalidium.NewPolygonvalidium(
 		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
 		clientL1,
 	)

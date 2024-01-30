@@ -17,29 +17,20 @@ const (
 
 // Sequence represents the data that the sequencer will send to L1
 // and other metadata needed to build the accumulated input hash aka accInputHash
-type Sequence struct {
-	Batches         []Batch     `json:"batches"`
-	OldAccInputHash common.Hash `json:"oldAccInputhash"`
-}
+type Sequence []ArgBytes
 
 // HashToSign returns the accumulated input hash of the sequence.
 // Note that this is equivalent to what happens on the smart contract
 func (s *Sequence) HashToSign() []byte {
-	currentHash := s.OldAccInputHash.Bytes()
-	for _, b := range s.Batches {
+	currentHash := common.Hash{}.Bytes()
+	for _, batchData := range ([]ArgBytes)(*s) {
 		types := []string{
-			"bytes32", // oldAccInputHash
-			"bytes32", // currentTransactionsHash
-			"bytes32", // globalExitRoot
-			"uint64",  // timestamp
-			"address", // coinbase
+			"bytes32",
+			"bytes32",
 		}
 		values := []interface{}{
 			currentHash,
-			crypto.Keccak256(b.L2Data),
-			b.GlobalExitRoot,
-			uint64(b.Timestamp),
-			b.Coinbase,
+			crypto.Keccak256(batchData),
 		}
 		currentHash = solsha3.SoliditySHA3(types, values)
 	}
@@ -87,10 +78,10 @@ func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
 // OffChainData returns the data that needs to be stored off chain from a given sequence
 func (s *Sequence) OffChainData() []OffChainData {
 	od := []OffChainData{}
-	for _, b := range s.Batches {
+	for _, batchData := range ([]ArgBytes)(*s) {
 		od = append(od, OffChainData{
-			Key:   crypto.Keccak256Hash(b.L2Data),
-			Value: b.L2Data,
+			Key:   crypto.Keccak256Hash(batchData),
+			Value: batchData,
 		})
 	}
 	return od

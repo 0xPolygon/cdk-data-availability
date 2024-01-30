@@ -32,13 +32,13 @@ type Config struct {
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
-	WsURL                string         `mapstructure:"WsURL"`
-	RpcURL               string         `mapstructure:"RpcURL"`
-	CDKValidiumAddress   string         `mapstructure:"CDKValidiumAddress"`
-	DataCommitteeAddress string         `mapstructure:"DataCommitteeAddress"`
-	Timeout              types.Duration `mapstructure:"Timeout"`
-	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
-	BlockBatchSize       uint           `mapstructure:"BlockBatchSize"`
+	WsURL                  string         `mapstructure:"WsURL"`
+	RpcURL                 string         `mapstructure:"RpcURL"`
+	PolygonValidiumAddress string         `mapstructure:"PolygonValidiumAddress"`
+	DataCommitteeAddress   string         `mapstructure:"DataCommitteeAddress"`
+	Timeout                types.Duration `mapstructure:"Timeout"`
+	RetryPeriod            types.Duration `mapstructure:"RetryPeriod"`
+	BlockBatchSize         uint           `mapstructure:"BlockBatchSize"`
 }
 
 // Load loads the configuration baseed on the cli context
@@ -47,6 +47,12 @@ func Load(ctx *cli.Context) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	viper.AutomaticEnv()
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.SetEnvPrefix("DATA_NODE")
+
 	configFilePath := ctx.String(FlagCfg)
 	if configFilePath != "" {
 		dirName, fileName := filepath.Split(configFilePath)
@@ -57,18 +63,8 @@ func Load(ctx *cli.Context) (*Config, error) {
 		viper.AddConfigPath(dirName)
 		viper.SetConfigName(fileNameWithoutExtension)
 		viper.SetConfigType(fileExtension)
-	}
-	viper.AutomaticEnv()
-	replacer := strings.NewReplacer(".", "_")
-	viper.SetEnvKeyReplacer(replacer)
-	viper.SetEnvPrefix("DATA_NODE")
-	err = viper.ReadInConfig()
-	if err != nil {
-		_, ok := err.(viper.ConfigFileNotFoundError)
-		if ok {
-			log.Infof("config file not found")
-		} else {
-			log.Infof("error reading config file: ", err)
+		err = viper.ReadInConfig()
+		if err != nil {
 			return nil, err
 		}
 	}

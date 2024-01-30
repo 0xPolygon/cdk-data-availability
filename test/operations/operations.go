@@ -50,13 +50,13 @@ const (
 	DefaultL1ChainID uint64 = 1337
 
 	// DefaultL1DataCommitteeContract is the l1 data committee contract address
-	DefaultL1DataCommitteeContract = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+	DefaultL1DataCommitteeContract = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 
 	// DefaultTimeoutTxToBeMined is the timeout for blocks to be mined
 	DefaultTimeoutTxToBeMined = 1 * time.Minute
 
 	// DefaultL1CDKValidiumSmartContract is the l1 CDK validium contract address
-	DefaultL1CDKValidiumSmartContract = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+	DefaultL1CDKValidiumSmartContract = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
 )
 
 var (
@@ -322,7 +322,7 @@ func RevertReason(ctx context.Context, c ethClienter, tx *ethTypes.Transaction, 
 // ApplyL2Txs sends the given L2 txs, waits for them to be consolidated and
 // checks the final state.
 func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.TransactOpts,
-	client *ethclient.Client, confirmationLevel ConfirmationLevel, committeeMembersCount int) ([]*big.Int, error) {
+	client *ethclient.Client, confirmationLevel ConfirmationLevel) ([]*big.Int, error) {
 	if auth == nil {
 		return nil, errors.New("auth is undefined")
 	}
@@ -372,8 +372,6 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 		// wait for l2 block to be virtualized
 		log.Infof("waiting for the block number %v to be virtualized", receipt.BlockNumber.String())
 		if err = WaitL2BlockToBeVirtualized(receipt.BlockNumber, DefaultTimeoutTxToBeMined); err != nil {
-			collectDockerLogs(committeeMembersCount)
-
 			return nil, err
 		}
 
@@ -391,18 +389,19 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 	return l2BlockNumbers, nil
 }
 
-// collectDockerLogs retrieves the logs from Docker containers and writes them into the logger
-func collectDockerLogs(committeeMembersCount int) {
+// CollectDockerLogs retrieves the logs from Docker containers and writes them into the logger
+func CollectDockerLogs(dacIndices []int) {
 	cmd := exec.Command("docker", "logs", "zkevm-node")
 	out, _ := cmd.CombinedOutput()
-	log.Debug("zkevm node: ", string(out))
+	log.Debug("DOCKER LOGS ZKEVM-NODE: ", string(out))
 
-	for i := 0; i < committeeMembersCount; i++ {
-		nodeName := fmt.Sprintf("cdk-data-availability-%d", i)
+	for i := 0; i < len(dacIndices); i++ {
+		idx := dacIndices[i]
+		nodeName := fmt.Sprintf("cdk-data-availability-%d", idx)
 		cmd = exec.Command("docker", "logs", "--tail", "1000", nodeName)
 
 		out, _ = cmd.CombinedOutput()
-		log.Debug(fmt.Sprintf("DAN-%d: ", i), string(out))
+		log.Debug(fmt.Sprintf("DOCKER LOGS DAN-%d: ", idx), string(out))
 	}
 }
 

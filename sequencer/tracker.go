@@ -7,7 +7,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/common"
 )
@@ -86,7 +86,7 @@ func (st *Tracker) Start(ctx context.Context) {
 }
 
 func (st *Tracker) trackAddrChanges(ctx context.Context) {
-	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencer)
+	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
 	defer close(events)
 
 	for {
@@ -133,7 +133,7 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 }
 
 func (st *Tracker) trackUrlChanges(ctx context.Context) {
-	events := make(chan *cdkvalidium.CdkvalidiumSetTrustedSequencerURL)
+	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
 	defer close(events)
 
 	for {

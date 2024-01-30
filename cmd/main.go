@@ -83,7 +83,7 @@ func start(cliCtx *cli.Context) error {
 	}
 
 	// Load EtherMan
-	etherman, err := etherman.New(c.L1)
+	etm, err := etherman.New(c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,14 +92,14 @@ func start(cliCtx *cli.Context) error {
 	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
 
 	// ensure synchro/reorg start block is set
-	err = synchronizer.InitStartBlock(storage, &types.EthClientFactoryImpl{}, c.L1)
+	err = synchronizer.InitStartBlock(storage, types.NewEthClientFactory(), c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := sequencer.NewTracker(c.L1, etherman)
+	sequencerTracker, err := sequencer.NewTracker(c.L1, etm)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -119,7 +119,7 @@ func start(cliCtx *cli.Context) error {
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
 	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr,
-		storage, detector.Subscribe(), etherman, sequencerTracker, client.NewFactory())
+		storage, detector.Subscribe(), etm, sequencerTracker, client.NewFactory())
 	if err != nil {
 		log.Fatal(err)
 	}

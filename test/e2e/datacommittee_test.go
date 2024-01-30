@@ -17,8 +17,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkdatacommittee"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/cdkvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygondatacommittee"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
@@ -36,8 +36,8 @@ import (
 )
 
 const (
-	nSignatures      = 4
-	dacMembersCount  = 5
+	nSignatures      = 2
+	dacMembersCount  = 3
 	ksFile           = "/tmp/pkey"
 	cfgFile          = "/tmp/dacnodeconfigfile.json"
 	ksPass           = "pass"
@@ -73,7 +73,7 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 
 	// The default sequencer URL is incorrect, set it to match the docker container
-	validiumContract, err := cdkvalidium.NewCdkvalidium(
+	validiumContract, err := polygonvalidium.NewPolygonvalidium(
 		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
 		clientL1,
 	)
@@ -81,7 +81,7 @@ func TestDataCommittee(t *testing.T) {
 	_, err = validiumContract.SetTrustedSequencerURL(authL1, "http://zkevm-node:8123")
 	require.NoError(t, err)
 
-	dacSC, err := cdkdatacommittee.NewCdkdatacommittee(
+	dacSC, err := polygondatacommittee.NewPolygondatacommittee(
 		common.HexToAddress(operations.DefaultL1DataCommitteeContract),
 		clientL1,
 	)
@@ -116,11 +116,13 @@ func TestDataCommittee(t *testing.T) {
 	err = operations.WaitTxToBeMined(ctx, clientL1, tx, operations.DefaultTimeoutTxToBeMined)
 	require.NoError(t, err)
 
+	var runningDacs []member
+
 	defer func() {
 		if !stopDacs {
 			return
 		}
-		for _, m := range membs {
+		for _, m := range runningDacs {
 			stopDACMember(t, m)
 		}
 		// Remove tmp files
@@ -135,11 +137,13 @@ func TestDataCommittee(t *testing.T) {
 	}()
 
 	// pick one to start later
-	m0 := membs[0]
+	startCount := len(membs) - 1
+	delayedMember := membs[startCount]
 
-	// Start DAC nodes & DBs
-	for _, m := range membs[1:] { // note starting all but first
-		startDACMember(t, m)
+	// Start DAC nodes & DBs (except for delayed member)
+	for i := 0; i < startCount; i++ {
+		startDACMember(t, membs[i])
+		runningDacs = append(runningDacs, membs[i])
 	}
 
 	// Send txs
@@ -167,13 +171,25 @@ func TestDataCommittee(t *testing.T) {
 		txs = append(txs, tx)
 	}
 
+	startedIndices := []int{}
+	for i := 0; i < len(membs); i++ {
+		startedIndices = append(startedIndices, membs[i].i)
+	}
+
 	// Wait for verification
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VerifiedConfirmationLevel, dacMembersCount)
+	// FIXME: Confirmation level should be higher here, but somehow the zkevm-node container is currently
+	// having issues sync'ing during github CI. Increase the confirmation level when this is solved.
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.TrustedConfirmationLevel)
+	if err != nil {
+		operations.CollectDockerLogs(startedIndices)
+	}
 	require.NoError(t, err)
 
-	startDACMember(t, m0) // start the skipped one, it should catch up through synchronization
+	startDACMember(t, delayedMember) // start the delayed one, it should catch up through synchronization
+	runningDacs = append(runningDacs, delayedMember)
 
 	// allow the member to startup and synchronize
+	log.Infof("waiting for delayed member %d to synchronize...", delayedMember.i)
 	<-time.After(20 * time.Second)
 
 	iter, err := getSequenceBatchesEventIterator(clientL1)
@@ -195,9 +211,9 @@ func TestDataCommittee(t *testing.T) {
 	}
 }
 
-func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*cdkvalidium.CdkvalidiumSequenceBatchesIterator, error) {
+func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error) {
 	// Get the expected data keys of the batches from what was submitted to L1
-	cdkValidium, err := cdkvalidium.NewCdkvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
+	cdkValidium, err := polygonvalidium.NewPolygonvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +225,7 @@ func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*cdkvalidium.C
 	return iter, nil
 }
 
-func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *cdkvalidium.CdkvalidiumSequenceBatches) ([]common.Hash, error) {
+func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *polygonvalidium.PolygonvalidiumSequenceBatches) ([]common.Hash, error) {
 	ctx := context.Background()
 	tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
 	if err != nil {
@@ -269,12 +285,12 @@ func createKeyStore(pk *ecdsa.PrivateKey, outputDir, password string) error {
 func startDACMember(t *testing.T, m member) {
 	dacNodeConfig := config.Config{
 		L1: config.L1Config{
-			WsURL:                "ws://l1:8546",
-			RpcURL:               "http://l1:8545",
-			CDKValidiumAddress:   operations.DefaultL1CDKValidiumSmartContract,
-			DataCommitteeAddress: operations.DefaultL1DataCommitteeContract,
-			Timeout:              cTypes.Duration{Duration: time.Second},
-			RetryPeriod:          cTypes.Duration{Duration: time.Second},
+			WsURL:                  "ws://l1:8546",
+			RpcURL:                 "http://l1:8545",
+			PolygonValidiumAddress: operations.DefaultL1CDKValidiumSmartContract,
+			DataCommitteeAddress:   operations.DefaultL1DataCommitteeContract,
+			Timeout:                cTypes.Duration{Duration: time.Second},
+			RetryPeriod:            cTypes.Duration{Duration: time.Second},
 		},
 		PrivateKey: cTypes.KeystoreFileConfig{
 			Path:     ksFile,

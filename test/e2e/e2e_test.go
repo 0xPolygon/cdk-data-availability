@@ -43,22 +43,8 @@ func TestSignSequence(t *testing.T) {
 		expectedErr error
 	}
 	expectedSequence := types.Sequence{
-		Batches: []types.Batch{
-			{
-				Number:         3,
-				GlobalExitRoot: common.HexToHash("0x678343456734678"),
-				Timestamp:      3457834,
-				Coinbase:       common.HexToAddress("0x345678934t567889137"),
-				L2Data:         common.Hex2Bytes("274567245673256275642756243560234572347657236520"),
-			},
-			{
-				Number:         4,
-				GlobalExitRoot: common.HexToHash("0x34678345678345789534678912345678"),
-				Timestamp:      78907890,
-				Coinbase:       common.HexToAddress("0x3457234672345789234567"),
-				L2Data:         common.Hex2Bytes("7863456782345678923456789354"),
-			},
-		},
+		common.Hex2Bytes("274567245673256275642756243560234572347657236520"),
+		common.Hex2Bytes("7863456782345678923456789354"),
 	}
 
 	unexpectedSenderPrivKey, err := crypto.GenerateKey()

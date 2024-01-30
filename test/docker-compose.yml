@@ -50,7 +50,7 @@ services:
 
   l1:
     container_name: l1
-    image: hermeznetwork/geth-cdk-validium-contracts:v0.0.1
+    image: hermeznetwork/geth-cdk-validium-contracts:v0.0.3
     healthcheck:
       test: [ "CMD-SHELL", "geth attach --datadir /geth_data --exec eth.blockNumber" ]
       interval: 10s
@@ -121,10 +121,13 @@ services:
 
   zkevm-prover:
     container_name: zkevm-prover
-    image: hermeznetwork/zkevm-prover:v2.2.0
+    platform: linux/amd64
+    image: hermeznetwork/zkevm-prover:v4.0.0-RC19
     ports:
       - 50061:50061 # MT
       - 50071:50071 # Executor
+    environment:
+      - EXPERIMENTAL_DOCKER_DESKTOP_FORCE_QEMU=1
     volumes:
       - ./config/prover.json:/usr/src/app/config.json
     command: >
@@ -132,7 +135,7 @@ services:
 
   zkevm-node:
     container_name: zkevm-node
-    image: hermeznetwork/zkevm-node:bring-validium-home
+    image: hermeznetwork/cdk-validium-node:v0.0.4
     ports:
       - 8123:8123
       - 61090:61090
@@ -141,7 +144,7 @@ services:
       - ./config/aggregator.keystore:/pk/aggregator.keystore
       - ./config/node.toml:/app/config.toml
       - ./config/genesis.json:/app/genesis.json
-    command: 
+    command:
       - "/bin/sh"
       - "-c"
       - "/app/zkevm-node approve --network custom --custom-network-file /app/genesis.json --am 115792089237316195423570985008687907853269984665640564039457584007913129639935 -y --cfg /app/config.toml --key-store-path /pk/sequencer.keystore --password testonly &&

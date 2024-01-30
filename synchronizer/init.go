@@ -30,14 +30,14 @@ func InitStartBlock(db db.DB, ethClientFactory types.EthClientFactory, l1 config
 		// no need to resolve start block, it's already been set
 		return nil
 	}
-	log.Info("starting search for start block of contract ", l1.CDKValidiumAddress)
+	log.Info("starting search for start block of contract ", l1.PolygonValidiumAddress)
 
 	ethClient, err := ethClientFactory.CreateEthClient(ctx, l1.RpcURL)
 	if err != nil {
 		return err
 	}
 
-	startBlock, err := findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.CDKValidiumAddress))
+	startBlock, err := findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.PolygonValidiumAddress))
 	if err != nil {
 		return err
 	}
