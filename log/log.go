@@ -11,14 +11,14 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// LogEnvironment represents the possible log environments.
-type LogEnvironment string
+// Environment represents the possible log environments.
+type Environment string
 
 const (
 	// EnvironmentProduction production log environment.
-	EnvironmentProduction = LogEnvironment("production")
+	EnvironmentProduction = Environment("production")
 	// EnvironmentDevelopment development log environment.
-	EnvironmentDevelopment = LogEnvironment("development")
+	EnvironmentDevelopment = Environment("development")
 )
 
 // Logger is a wrapper providing logging facilities.

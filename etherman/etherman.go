@@ -59,8 +59,8 @@ type etherman struct {
 }
 
 // New creates a new etherman
-func New(cfg config.L1Config) (Etherman, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout.Duration)
+func New(ctx context.Context, cfg config.L1Config) (Etherman, error) {
+	ctx, cancel := context.WithTimeout(ctx, cfg.Timeout.Duration)
 	defer cancel()
 
 	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
@@ -69,13 +69,18 @@ func New(cfg config.L1Config) (Etherman, error) {
 		return nil, err
 	}
 
-	cdkValidium, err := polygonvalidium.NewPolygonvalidium(common.HexToAddress(cfg.PolygonValidiumAddress), ethClient)
+	cdkValidium, err := polygonvalidium.NewPolygonvalidium(
+		common.HexToAddress(cfg.PolygonValidiumAddress),
+		ethClient,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	dataCommittee, err :=
-		polygondatacommittee.NewPolygondatacommittee(common.HexToAddress(cfg.DataCommitteeAddress), ethClient)
+	dataCommittee, err := polygondatacommittee.NewPolygondatacommittee(
+		common.HexToAddress(cfg.DataCommitteeAddress),
+		ethClient,
+	)
 	if err != nil {
 		return nil, err
 	}

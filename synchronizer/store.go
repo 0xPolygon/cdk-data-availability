@@ -55,6 +55,7 @@ func setStartBlock(db dbTypes.DB, block uint64) error {
 func exists(db dbTypes.DB, key common.Hash) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
+
 	return db.Exists(ctx, key)
 }
 

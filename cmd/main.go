@@ -83,7 +83,7 @@ func start(cliCtx *cli.Context) error {
 	}
 
 	// Load EtherMan
-	etm, err := etherman.New(c.L1)
+	etm, err := etherman.New(cliCtx.Context, c.L1)
 	if err != nil {
 		log.Fatal(err)
 	}
