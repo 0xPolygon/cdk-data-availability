@@ -16,10 +16,10 @@ type Request struct {
 
 // Response is a jsonrpc  success response
 type Response struct {
-	JSONRPC string
-	ID      interface{}
-	Result  json.RawMessage
-	Error   *ErrorObject
+	JSONRPC string          `json:"jsonrpc"`
+	ID      interface{}     `json:"id"`
+	Result  json.RawMessage `json:"result"`
+	Error   *ErrorObject    `json:"error"`
 }
 
 // NewResponse returns Success/Error response object
