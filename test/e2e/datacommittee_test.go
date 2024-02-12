@@ -59,7 +59,6 @@ func TestDataCommittee(t *testing.T) {
 	}()
 	err = operations.Teardown()
 	require.NoError(t, err)
-	require.NoError(t, err)
 	err = operations.Setup()
 	if err != nil {
 		operations.ShowRunningDockerContainers()

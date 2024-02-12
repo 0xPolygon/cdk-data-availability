@@ -391,18 +391,26 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 
 // CollectDockerLogs retrieves the logs from Docker containers and writes them into the logger
 func CollectDockerLogs(dacIndices []int) {
-	cmd := exec.Command("docker", "logs", "zkevm-node")
-	out, _ := cmd.CombinedOutput()
-	log.Debug("DOCKER LOGS ZKEVM-NODE: \n", string(out))
-
+	ReportContainerLogs("zkevm-node", -1)
+	ReportContainerLogs("l1", 100)
+	ReportContainerLogs("zkevm-prover", 100)
 	for i := 0; i < len(dacIndices); i++ {
 		idx := dacIndices[i]
 		nodeName := fmt.Sprintf("cdk-data-availability-%d", idx)
-		cmd = exec.Command("docker", "logs", "--tail", "1000", nodeName)
-
-		out, _ = cmd.CombinedOutput()
-		log.Debug(fmt.Sprintf("DOCKER LOGS DAN-%d: ", idx), string(out))
+		ReportContainerLogs(nodeName, 100)
 	}
+}
+
+func ReportContainerLogs(name string, max uint32) {
+	args := []string{"logs"}
+	if max > 0 {
+		args = append(args, "--tail", fmt.Sprintf("%d", max))
+	}
+	args = append(args, name)
+
+	cmd := exec.Command("docker", args...)
+	out, _ := cmd.CombinedOutput()
+	log.Debugf("CONTAINER LOG %s:\n%s", name, string(out))
 }
 
 func ShowRunningDockerContainers() {
