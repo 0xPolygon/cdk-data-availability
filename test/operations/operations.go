@@ -401,7 +401,7 @@ func CollectDockerLogs(dacIndices []int) {
 	}
 }
 
-func ReportContainerLogs(name string, max uint32) {
+func ReportContainerLogs(name string, max int) {
 	args := []string{"logs"}
 	if max > 0 {
 		args = append(args, "--tail", fmt.Sprintf("%d", max))
