@@ -179,7 +179,7 @@ func TestDataCommittee(t *testing.T) {
 	// Wait for verification
 	// FIXME: Confirmation level should be higher here, but somehow the zkevm-node container is currently
 	// having issues sync'ing during github CI. Increase the confirmation level when this is solved.
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.TrustedConfirmationLevel)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VirtualConfirmationLevel)
 	if err != nil {
 		operations.CollectDockerLogs(startedIndices)
 	}

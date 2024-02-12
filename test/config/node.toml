@@ -81,7 +81,7 @@ EnableL2SuggestedGasPricePolling = true
 SyncInterval = "1s"
 SyncChunkSize = 100
 TrustedSequencerURL = "" # If it is empty or not specified, then the value is read from the smc.
-L1SynchronizationMode = "parallel"
+L1SynchronizationMode = "sequential"
 	[Synchronizer.L1ParallelSynchronization]
 		MaxClients = 10
 		MaxPendingNoProcessedBlocks = 25
@@ -110,11 +110,12 @@ StateConsistencyCheckInterval = "5s"
 		ForcedBatchesCheckInterval = "10s"
 		L1InfoTreeL1BlockConfirmations = 0
 		L1InfoTreeCheckInterval = "10s"
-		BatchMaxDeltaTimestamp = "10s"
-		L2BlockMaxDeltaTimestamp = "2s"
+		BatchMaxDeltaTimestamp = "20s"
+		L2BlockMaxDeltaTimestamp = "4s"
 		ResourceExhaustedMarginPct = 10
 		HaltOnBatchNumber = 0
 		SequentialBatchSanityCheck = false
+		SequentialProcessL2Block = true
 
 [SequenceSender]
 WaitPeriodSendSequence = "15s"
@@ -134,6 +135,11 @@ ProofStatePollingInterval = "5s"
 SenderAddress = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
 CleanupLockedProofsInterval = "2m"
 GeneratingProofCleanupThreshold = "10m"
+UpgradeEtrogBatchNumber = 0
+SettlementBackend = "l1"
+AggLayerTxTimeout = "5m"
+AggLayerURL = ""
+SequencerPrivateKey = {}
 
 [EthTxManager]
 ForcedGas = 0

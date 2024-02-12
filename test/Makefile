@@ -1,4 +1,4 @@
-STOP := docker compose down
+STOP := docker compose down --remove-orphans
 
 .PHONY: run
 run: stop ## Runs a full node for e2e
