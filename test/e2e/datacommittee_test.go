@@ -61,6 +61,9 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, err)
 	err = operations.Setup()
+	if err != nil {
+		operations.CollectDockerLogs(nil)
+	}
 	require.NoError(t, err)
 	time.Sleep(5 * time.Second)
 	authL2, err := operations.GetAuth(operations.DefaultSequencerPrivateKey, operations.DefaultL2ChainID)
