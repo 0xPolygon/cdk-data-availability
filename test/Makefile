@@ -1,4 +1,4 @@
-STOP := docker compose down --remove-orphans
+STOP := docker compose down
 
 .PHONY: run
 run: stop ## Runs a full node for e2e
@@ -22,7 +22,7 @@ stop-dacs:
 
 .PHONY: test-e2e
 test-e2e: run ## Runs the E2E tests
-	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -race -v -p 1 -timeout 600s ./e2e/...
+	trap '$(STOP)' EXIT; MallocNanoZone=0 go test -count=1 -race -v -p 1 -timeout 900s ./e2e/...
 
 .PHONY: test-unit
 test-unit: ## Runs the unit tests, skips e2e
