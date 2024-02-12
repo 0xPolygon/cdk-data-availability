@@ -393,7 +393,7 @@ func ApplyL2Txs(ctx context.Context, txs []*ethTypes.Transaction, auth *bind.Tra
 func CollectDockerLogs(dacIndices []int) {
 	cmd := exec.Command("docker", "logs", "zkevm-node")
 	out, _ := cmd.CombinedOutput()
-	log.Debug("DOCKER LOGS ZKEVM-NODE: ", string(out))
+	log.Debug("DOCKER LOGS ZKEVM-NODE: \n", string(out))
 
 	for i := 0; i < len(dacIndices); i++ {
 		idx := dacIndices[i]
@@ -403,6 +403,12 @@ func CollectDockerLogs(dacIndices []int) {
 		out, _ = cmd.CombinedOutput()
 		log.Debug(fmt.Sprintf("DOCKER LOGS DAN-%d: ", idx), string(out))
 	}
+}
+
+func ShowRunningDockerContainers() {
+	cmd := exec.Command("docker", "ps")
+	out, _ := cmd.CombinedOutput()
+	log.Debug("CURRENT DOCKER CONTAINERS: \n", string(out))
 }
 
 // WaitL2BlockToBeVirtualized waits until a L2 Block has been virtualized or the given timeout expires.
