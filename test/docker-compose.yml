@@ -135,7 +135,7 @@ services:
 
   zkevm-node:
     container_name: zkevm-node
-    image: 0xpolygon/cdk-validium-node:v0.5.6
+    image: hermeznetwork/cdk-validium-node:v0.5.0-cdk
     ports:
       - 8123:8123
       - 61090:61090
