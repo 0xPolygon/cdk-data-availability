@@ -7,41 +7,10 @@ release:
   prerelease: auto
 
 builds:
-  - id: linux-amd64
-    main: ./cmd/
-    binary: cdk-data-availability
-    goos:
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w
-      - -X github.com/0xPolygon/cdk-data-availability.Version={{ .Version }}
-      - -X github.com/0xPolygon/cdk-data-availability.GitRev={{ .Commit }}
-      - -X github.com/0xPolygon/cdk-data-availability.BuildDate={{ .Date }}
-      - -X github.com/0xPolygon/cdk-data-availability.GitBranch={{ .Branch }}
-
-  - id: linux-arm64
-    main: ./cmd/
-    binary: cdk-data-availability
-    goos:
-      - linux
-    goarch:
-      - arm64
-    env:
-      - CGO_ENABLED=0
-    ldflags:
-      - -s -w
-      - -X github.com/0xPolygon/cdk-data-availability.Version={{ .Version }}
-      - -X github.com/0xPolygon/cdk-data-availability.GitRev={{ .Commit }}
-      - -X github.com/0xPolygon/cdk-data-availability.BuildDate={{ .Date }}
-      - -X github.com/0xPolygon/cdk-data-availability.GitBranch={{ .Branch }}
-
   - main: ./cmd/
     binary: cdk-data-availability
     goos:
+      - linux
       - darwin
     goarch:
       - amd64
