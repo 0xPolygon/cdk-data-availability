@@ -36,8 +36,6 @@ dockers:
     use: buildx
     goos: linux
     goarch: amd64
-    ids:
-      - linux-amd64
     build_flag_templates:
       - --platform=linux/amd64
       - --label=org.opencontainers.image.title={{ .ProjectName }}
@@ -55,8 +53,6 @@ dockers:
     use: buildx
     goos: linux
     goarch: arm64
-    ids:
-      - linux-arm64
     build_flag_templates:
       - --platform=linux/arm64
       - --label=org.opencontainers.image.title={{ .ProjectName }}
