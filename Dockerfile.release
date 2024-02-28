@@ -1,0 +1,12 @@
+FROM alpine:3.16.0
+
+EXPOSE 8444
+
+COPY cdk-data-availability /usr/local/bin
+
+RUN addgroup -S cdk-dac-group \
+    && adduser -S cdk-dac-user -G cdk-dac-group
+
+USER cdk-dac-user
+
+ENTRYPOINT ["cdk-data-availability"]
