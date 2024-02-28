@@ -59,8 +59,11 @@ func TestDataCommittee(t *testing.T) {
 	}()
 	err = operations.Teardown()
 	require.NoError(t, err)
-	require.NoError(t, err)
 	err = operations.Setup()
+	if err != nil {
+		operations.ShowRunningDockerContainers()
+		operations.CollectDockerLogs(nil)
+	}
 	require.NoError(t, err)
 	time.Sleep(5 * time.Second)
 	authL2, err := operations.GetAuth(operations.DefaultSequencerPrivateKey, operations.DefaultL2ChainID)
@@ -179,7 +182,7 @@ func TestDataCommittee(t *testing.T) {
 	// Wait for verification
 	// FIXME: Confirmation level should be higher here, but somehow the zkevm-node container is currently
 	// having issues sync'ing during github CI. Increase the confirmation level when this is solved.
-	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.TrustedConfirmationLevel)
+	_, err = operations.ApplyL2Txs(ctx, txs, authL2, clientL2, operations.VirtualConfirmationLevel)
 	if err != nil {
 		operations.CollectDockerLogs(startedIndices)
 	}

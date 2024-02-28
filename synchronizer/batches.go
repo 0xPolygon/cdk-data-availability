@@ -95,7 +95,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start() {
-	log.Infof("starting number synchronizer, DAC addr: %v", bs.self)
+	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
 	go bs.consumeEvents()
 	go bs.produceEvents()
 	go bs.handleReorgs()
@@ -157,7 +157,7 @@ func (bs *BatchSynchronizer) filterEvents() error {
 	// get the latest block number
 	header, err := bs.client.HeaderByNumber(context.TODO(), nil)
 	if err != nil {
-		log.Errorf("failed to determine latest block number", err)
+		log.Errorf("failed to determine latest block number: %v", err)
 		return err
 	}
 	// we don't want to scan beyond latest block
