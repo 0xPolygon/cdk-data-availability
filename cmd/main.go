@@ -47,6 +47,16 @@ func main() {
 			Action:  start,
 			Flags:   []cli.Flag{&configFileFlag},
 		},
+		{
+			Name:    "version",
+			Aliases: []string{},
+			Usage:   "Show version",
+			Action: func(c *cli.Context) error {
+				dataavailability.PrintVersion(os.Stderr)
+				return nil
+			},
+			Flags: []cli.Flag{&configFileFlag},
+		},
 	}
 
 	err := app.Run(os.Args)
