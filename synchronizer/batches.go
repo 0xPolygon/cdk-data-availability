@@ -96,6 +96,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start() {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
+	go bs.handleUnresolvedBatches()
 	go bs.consumeEvents()
 	go bs.produceEvents()
 	go bs.handleReorgs()
@@ -108,6 +109,7 @@ func (bs *BatchSynchronizer) Stop() {
 }
 
 func (bs *BatchSynchronizer) handleReorgs() {
+	log.Info("starting reorgs handler")
 	for {
 		select {
 		case r := <-bs.reorgs:
@@ -203,12 +205,6 @@ func (bs *BatchSynchronizer) consumeEvents() {
 	}
 }
 
-// batchKey is the pairing of batch number and data hash of a batch
-type batchKey struct {
-	number uint64
-	hash   common.Hash
-}
-
 func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
 	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
 	defer cancel()
@@ -217,45 +213,102 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 	if err != nil {
 		return err
 	}
+
 	txData := tx.Data()
 	keys, err := UnpackTxData(txData)
 	if err != nil {
 		return err
 	}
+
 	// The event has the _last_ batch number & list of hashes. Each hash is
 	// in order, so the batch number can be computed from position in array
-	var batchKeys []batchKey
+	var batchKeys []types.BatchKey
 	for i, j := 0, len(keys)-1; i < len(keys); i, j = i+1, j-1 {
-		batchKeys = append(batchKeys, batchKey{
-			number: event.NumBatch - uint64(i),
-			hash:   keys[j],
+		batchKeys = append(batchKeys, types.BatchKey{
+			Number: event.NumBatch - uint64(i),
+			Hash:   keys[j],
 		})
 	}
-	// Pick out any batches that are missing from storage
-	var missing []batchKey
-	for _, key := range batchKeys {
-		if !exists(bs.db, key.hash) {
-			missing = append(missing, key)
-		}
-	}
-	if len(missing) == 0 {
-		return nil
-	}
-	// Resolve the missing data
-	var data []types.OffChainData
-	for _, key := range missing {
-		var value *types.OffChainData
-		value, err = bs.resolve(key)
-		if err != nil {
-			return err
-		}
-		data = append(data, *value)
-	}
-	// Finally, store the data
-	return store(bs.db, data)
+
+	// Store batch keys. Already handled batch keys are going to be ignored based on the DB logic.
+	return storeUnresolvedBatchKeys(bs.db, batchKeys)
 }
 
-func (bs *BatchSynchronizer) resolve(batch batchKey) (*types.OffChainData, error) {
+// handleUnresolvedBatches handles unresolved batches that were collected by the event consumer
+func (bs *BatchSynchronizer) handleUnresolvedBatches() {
+	log.Info("starting handling unresolved batches")
+	for {
+		delay := time.NewTimer(bs.retry)
+		select {
+		case <-delay.C:
+			// Get unresolved batches
+			batchKeys, err := getUnresolvedBatchKeys(bs.db)
+			if err != nil {
+				log.Errorf("failed to get unresolved batch keys: %v", err)
+				continue
+			}
+
+			if len(batchKeys) == 0 {
+				continue
+			}
+
+			// Resolve the unresolved data
+			// Pick out any batches that are missing from storage
+			var existing []types.BatchKey
+			var unresolved []types.BatchKey
+			for _, key := range batchKeys {
+				if exists(bs.db, key.Hash) {
+					existing = append(existing, key)
+				} else {
+					unresolved = append(unresolved, key)
+				}
+			}
+
+			// Delete existing keys from unresolved batches
+			if len(existing) > 0 {
+				if err = deleteUnresolvedBatchKeys(bs.db, existing); err != nil {
+					log.Errorf("failed to delete unresolved batch keys: %v", err)
+				}
+			}
+
+			// Break the process if there are no unresolved batches
+			if len(unresolved) == 0 {
+				continue
+			}
+
+			// Resolve the missing data
+			var data []types.OffChainData
+			var resolved []types.BatchKey
+			for _, key := range unresolved {
+				var value *types.OffChainData
+				if value, err = bs.resolve(key); err != nil {
+					log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
+					continue
+				}
+
+				resolved = append(resolved, key)
+				data = append(data, *value)
+			}
+
+			// Finally, store the data
+			if err = storeOffchainData(bs.db, data); err != nil {
+				log.Errorf("failed to store offchain data: %v", err)
+				continue
+			}
+
+			// Delete keys from unresolved batches
+			if len(resolved) > 0 {
+				if err = deleteUnresolvedBatchKeys(bs.db, resolved); err != nil {
+					log.Errorf("failed to delete successfully resolved batch keys: %v", err)
+				}
+			}
+		case <-bs.stop:
+			return
+		}
+	}
+}
+
+func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData, error) {
 	// First try to get the data from the trusted sequencer
 	data := bs.trySequencer(batch)
 	if data != nil {
@@ -284,7 +337,7 @@ func (bs *BatchSynchronizer) resolve(batch batchKey) (*types.OffChainData, error
 			delete(bs.committee, member.Addr)
 			continue // malformed committee, skip what is known to be wrong
 		}
-		value, err := bs.resolveWithMember(batch.hash, member)
+		value, err := bs.resolveWithMember(batch.Hash, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
 			delete(bs.committee, member.Addr)
@@ -293,24 +346,24 @@ func (bs *BatchSynchronizer) resolve(batch batchKey) (*types.OffChainData, error
 
 		return value, nil
 	}
-	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for number %d, key %v", batch.number, batch.hash.Hex())
+	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for number %d, key %v", batch.Number, batch.Hash.Hex())
 }
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
-func (bs *BatchSynchronizer) trySequencer(batch batchKey) *types.OffChainData {
-	seqBatch, err := bs.sequencer.GetSequenceBatch(batch.number)
+func (bs *BatchSynchronizer) trySequencer(batch types.BatchKey) *types.OffChainData {
+	seqBatch, err := bs.sequencer.GetSequenceBatch(batch.Number)
 	if err != nil {
 		log.Warnf("failed to get data from sequencer: %v", err)
 		return nil
 	}
 
 	expectKey := crypto.Keccak256Hash(seqBatch.BatchL2Data)
-	if batch.hash != expectKey {
-		log.Warnf("number %d: sequencer gave wrong data for key: %s", batch.number, batch.hash.Hex())
+	if batch.Hash != expectKey {
+		log.Warnf("number %d: sequencer gave wrong data for key: %s", batch.Number, batch.Hash.Hex())
 		return nil
 	}
 	return &types.OffChainData{
-		Key:   batch.hash,
+		Key:   batch.Hash,
 		Value: seqBatch.BatchL2Data,
 	}
 }

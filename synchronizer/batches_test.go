@@ -91,9 +91,9 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 	}
 
 	data := common.HexToHash("0xFFFF").Bytes()
-	batchKey := batchKey{
-		number: 1,
-		hash:   crypto.Keccak256Hash(data),
+	batchKey := types.BatchKey{
+		Number: 1,
+		Hash:   crypto.Keccak256Hash(data),
 	}
 
 	testFn := func(config testConfig) {
@@ -139,7 +139,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 			}
 		} else {
 			require.NoError(t, err)
-			require.Equal(t, batchKey.hash, offChainData.Key)
+			require.Equal(t, batchKey.Hash, offChainData.Key)
 			require.Equal(t, data, offChainData.Value)
 		}
 
@@ -153,9 +153,9 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getSequenceBatchArgs: []interface{}{batchKey.number},
+			getSequenceBatchArgs: []interface{}{batchKey.Number},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
-				Number:      types.ArgUint64(batchKey.number),
+				Number:      types.ArgUint64(batchKey.Number),
 				BatchL2Data: types.ArgBytes(data),
 			}, nil},
 		})
@@ -179,9 +179,9 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 
 		testFn(testConfig{
 			isErrorExpected:                false,
-			getOffChainDataArgs:            [][]interface{}{{mock.Anything, batchKey.hash}},
+			getOffChainDataArgs:            [][]interface{}{{mock.Anything, batchKey.Hash}},
 			getOffChainDataReturns:         [][]interface{}{{data, nil}},
-			getSequenceBatchArgs:           []interface{}{batchKey.number},
+			getSequenceBatchArgs:           []interface{}{batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 			newArgs:                        [][]interface{}{{committee.Members[0].URL}},
@@ -205,15 +205,15 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 		}
 
 		testFn(testConfig{
-			getSequenceBatchArgs:           []interface{}{batchKey.number},
+			getSequenceBatchArgs:           []interface{}{batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 			newArgs: [][]interface{}{
 				{committee.Members[0].URL},
 				{committee.Members[1].URL}},
 			getOffChainDataArgs: [][]interface{}{
-				{mock.Anything, batchKey.hash},
-				{mock.Anything, batchKey.hash},
+				{mock.Anything, batchKey.Hash},
+				{mock.Anything, batchKey.Hash},
 			},
 			getOffChainDataReturns: [][]interface{}{
 				{nil, errors.New("error")}, // member doesn't have batch
@@ -247,14 +247,14 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 				{committee.Members[0].URL},
 				{committee.Members[1].URL}},
 			getOffChainDataArgs: [][]interface{}{
-				{mock.Anything, batchKey.hash},
-				{mock.Anything, batchKey.hash},
+				{mock.Anything, batchKey.Hash},
+				{mock.Anything, batchKey.Hash},
 			},
 			getOffChainDataReturns: [][]interface{}{
 				{[]byte{0, 0, 0, 1}, nil}, // member doesn't have batch
 				{[]byte{0, 0, 0, 1}, nil}, // member doesn't have batch
 			},
-			getSequenceBatchArgs:           []interface{}{batchKey.number},
+			getSequenceBatchArgs:           []interface{}{batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 		})

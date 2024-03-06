@@ -233,7 +233,7 @@ func Test_store(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := store(testDB, tt.data); tt.wantErr {
+			if err := storeOffchainData(testDB, tt.data); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
