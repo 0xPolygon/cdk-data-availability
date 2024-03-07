@@ -37,9 +37,14 @@ func InitStartBlock(db db.DB, ethClientFactory types.EthClientFactory, l1 config
 		return err
 	}
 
-	startBlock, err := findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.PolygonValidiumAddress))
-	if err != nil {
-		return err
+	startBlock := new(big.Int)
+	if l1.GenesisBlock != 0 {
+		startBlock.SetUint64(l1.GenesisBlock)
+	} else {
+		startBlock, err = findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.PolygonValidiumAddress))
+		if err != nil {
+			return err
+		}
 	}
 
 	return setStartBlock(db, startBlock.Uint64())

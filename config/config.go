@@ -39,6 +39,9 @@ type L1Config struct {
 	Timeout                types.Duration `mapstructure:"Timeout"`
 	RetryPeriod            types.Duration `mapstructure:"RetryPeriod"`
 	BlockBatchSize         uint           `mapstructure:"BlockBatchSize"`
+
+	// GenesisBlock represents the block number where PolygonValidium contract is deployed on L1
+	GenesisBlock uint64 `mapstructure:"GenesisBlock"`
 }
 
 // Load loads the configuration baseed on the cli context
