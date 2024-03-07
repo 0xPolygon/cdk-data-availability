@@ -275,9 +275,6 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		storeUnresolvedBatchKeysReturns []interface{}
 		commitReturns                   []interface{}
 		rollbackArgs                    []interface{}
-		// sequencer mocks
-		getSequenceBatchArgs    []interface{}
-		getSequenceBatchReturns []interface{}
 
 		isErrorExpected bool
 	}
@@ -317,11 +314,10 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			Data:     append(methodDefinition.ID, data...),
 		})
 
-	testFn := func(config testConfig) {
+	testFn := func(t *testing.T, config testConfig) {
 		dbMock := mocks.NewDB(t)
 		txMock := mocks.NewTx(t)
 		ethermanMock := mocks.NewEtherman(t)
-		sequencerMock := mocks.NewSequencerTracker(t)
 
 		if config.getTxArgs != nil && config.getTxReturns != nil {
 			ethermanMock.On("GetTx", config.getTxArgs...).Return(
@@ -355,9 +351,8 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		}
 
 		batchSynronizer := &BatchSynchronizer{
-			db:        dbMock,
-			client:    ethermanMock,
-			sequencer: sequencerMock,
+			db:     dbMock,
+			client: ethermanMock,
 		}
 
 		err := batchSynronizer.handleEvent(event)
@@ -370,13 +365,12 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		dbMock.AssertExpectations(t)
 		txMock.AssertExpectations(t)
 		ethermanMock.AssertExpectations(t)
-		sequencerMock.AssertExpectations(t)
 	}
 
 	t.Run("Could not get tx data", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			getTxArgs:       []interface{}{mock.Anything, event.Raw.TxHash},
 			getTxReturns:    []interface{}{nil, false, errors.New("error")},
 			isErrorExpected: true,
@@ -384,6 +378,317 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	})
 
 	t.Run("Invalid tx data", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getTxArgs: []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns: []interface{}{ethTypes.NewTx(
+				&ethTypes.LegacyTx{
+					Nonce:    0,
+					GasPrice: big.NewInt(10_000),
+					Gas:      21_000,
+					To:       &to,
+					Value:    ethgo.Ether(1),
+					Data:     []byte{0, 1, 3, 4, 5, 6, 7}, //some invalid data
+				},
+			), true, nil},
+			isErrorExpected: true,
+		})
+	})
+
+	t.Run("doesn't have batch in storage - successfully stored", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getTxArgs:                 []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:              []interface{}{tx, true, nil},
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			storeUnresolvedBatchKeysArgs: []interface{}{
+				mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			storeUnresolvedBatchKeysReturns: []interface{}{nil},
+			commitReturns:                   []interface{}{nil},
+			isErrorExpected:                 false,
+		})
+	})
+
+	t.Run("doesn't have batch in storage - begin state transaction fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			isErrorExpected:              true,
+			beginStateTransactionArgs:    []interface{}{mock.Anything},
+			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
+			getTxArgs:                    []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:                 []interface{}{tx, true, nil},
+		})
+	})
+
+	t.Run("doesn't have batch in storage - store fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			isErrorExpected: true,
+			storeUnresolvedBatchKeysArgs: []interface{}{
+				mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			storeUnresolvedBatchKeysReturns: []interface{}{errors.New("error")},
+			beginStateTransactionArgs:       []interface{}{mock.Anything},
+			rollbackArgs:                    []interface{}{mock.Anything},
+			getTxArgs:                       []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:                    []interface{}{tx, true, nil},
+		})
+	})
+
+	t.Run("doesn't have batch in storage - commit fails", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			isErrorExpected:           true,
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			storeUnresolvedBatchKeysArgs: []interface{}{
+				mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			storeUnresolvedBatchKeysReturns: []interface{}{nil},
+			commitReturns:                   []interface{}{errors.New("error")},
+			getTxArgs:                       []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:                    []interface{}{tx, true, nil},
+		})
+	})
+}
+
+func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
+	t.Parallel()
+
+	type testConfig struct {
+		// db mock
+		getUnresolvedBatchKeysArgs         []interface{}
+		getUnresolvedBatchKeysReturns      []interface{}
+		existsArgs                         []interface{}
+		existsReturns                      []interface{}
+		storeBeginStateTransactionArgs     []interface{}
+		storeBeginStateTransactionReturns  []interface{}
+		storeOffChainDataArgs              []interface{}
+		storeOffChainDataReturns           []interface{}
+		storeCommitReturns                 []interface{}
+		storeRollbackArgs                  []interface{}
+		deleteBeginStateTransactionArgs    []interface{}
+		deleteBeginStateTransactionReturns []interface{}
+		deleteUnresolvedBatchKeysArgs      []interface{}
+		deleteUnresolvedBatchKeysReturns   []interface{}
+		deleteCommitReturns                []interface{}
+		deleteRollbackArgs                 []interface{}
+		// sequencer mocks
+		getSequenceBatchArgs    []interface{}
+		getSequenceBatchReturns []interface{}
+
+		isErrorExpected bool
+	}
+
+	batchL2Data := []byte{1, 2, 3, 4, 5, 6}
+	txHash := crypto.Keccak256Hash(batchL2Data)
+
+	testFn := func(t *testing.T, config testConfig) {
+		dbMock := mocks.NewDB(t)
+		storeTxMock := mocks.NewTx(t)
+		deleteTxMock := mocks.NewTx(t)
+		ethermanMock := mocks.NewEtherman(t)
+		sequencerMock := mocks.NewSequencerTracker(t)
+
+		if config.getUnresolvedBatchKeysArgs != nil && config.getUnresolvedBatchKeysReturns != nil {
+			dbMock.On("GetUnresolvedBatchKeys", config.getUnresolvedBatchKeysArgs...).Return(
+				config.getUnresolvedBatchKeysReturns...).Once()
+		}
+
+		if config.existsArgs != nil && config.existsReturns != nil {
+			dbMock.On("Exists", config.existsArgs...).Return(
+				config.existsReturns...).Once()
+		}
+
+		if config.storeBeginStateTransactionArgs != nil {
+			var returnArgs []interface{}
+			if config.storeBeginStateTransactionReturns != nil {
+				returnArgs = config.storeBeginStateTransactionArgs
+			} else {
+				returnArgs = append(returnArgs, storeTxMock, nil)
+			}
+
+			dbMock.On("BeginStateTransaction", config.storeBeginStateTransactionArgs...).Return(
+				returnArgs...).Once()
+		}
+
+		if config.storeOffChainDataArgs != nil && config.storeOffChainDataReturns != nil {
+			dbMock.On("StoreOffChainData", config.storeOffChainDataArgs...).Return(
+				config.storeOffChainDataReturns...).Once()
+		}
+
+		if config.storeCommitReturns != nil {
+			storeTxMock.On("Commit", mock.Anything).Return(
+				config.storeCommitReturns...).Once()
+		}
+
+		if config.storeRollbackArgs != nil {
+			storeTxMock.On("Rollback", config.storeRollbackArgs...).Return(nil).Once()
+		}
+
+		if config.deleteBeginStateTransactionArgs != nil {
+			var returnArgs []interface{}
+			if config.deleteBeginStateTransactionReturns != nil {
+				returnArgs = config.deleteBeginStateTransactionArgs
+			} else {
+				returnArgs = append(returnArgs, deleteTxMock, nil)
+			}
+
+			dbMock.On("BeginStateTransaction", config.deleteBeginStateTransactionArgs...).Return(
+				returnArgs...).Once()
+		}
+
+		if config.deleteUnresolvedBatchKeysArgs != nil && config.deleteUnresolvedBatchKeysReturns != nil {
+			dbMock.On("DeleteUnresolvedBatchKeys", config.deleteUnresolvedBatchKeysArgs...).Return(
+				config.deleteUnresolvedBatchKeysReturns...).Once()
+		}
+
+		if config.deleteCommitReturns != nil {
+			deleteTxMock.On("Commit", mock.Anything).Return(
+				config.deleteCommitReturns...).Once()
+		}
+
+		if config.deleteRollbackArgs != nil {
+			deleteTxMock.On("Rollback", config.deleteRollbackArgs...).Return(nil).Once()
+		}
+
+		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
+			sequencerMock.On("GetSequenceBatch", config.getSequenceBatchArgs...).Return(
+				config.getSequenceBatchReturns...).Once()
+		}
+
+		batchSynronizer := &BatchSynchronizer{
+			db:        dbMock,
+			client:    ethermanMock,
+			sequencer: sequencerMock,
+		}
+
+		err := batchSynronizer.handleUnresolvedBatches()
+		if config.isErrorExpected {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+
+		dbMock.AssertExpectations(t)
+		storeTxMock.AssertExpectations(t)
+		deleteTxMock.AssertExpectations(t)
+		ethermanMock.AssertExpectations(t)
+		sequencerMock.AssertExpectations(t)
+	}
+
+	t.Run("Could not get unresolved batch keys", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything},
+			getUnresolvedBatchKeysReturns: []interface{}{nil, errors.New("error")},
+			isErrorExpected:               true,
+		})
+	})
+
+	t.Run("No unresolved batch keys found", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything},
+			getUnresolvedBatchKeysReturns: []interface{}{nil, nil},
+			isErrorExpected:               false,
+		})
+	})
+
+	t.Run("Unresolved batch key already resolved", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything},
+			getUnresolvedBatchKeysReturns: []interface{}{
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				nil,
+			},
+			existsArgs:                      []interface{}{mock.Anything, txHash},
+			existsReturns:                   []interface{}{true},
+			deleteBeginStateTransactionArgs: []interface{}{mock.Anything},
+			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
+			deleteCommitReturns:              []interface{}{nil},
+			isErrorExpected:                  false,
+		})
+	})
+
+	t.Run("Unresolved batch key found", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything},
+			getUnresolvedBatchKeysReturns: []interface{}{
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				nil,
+			},
+			existsArgs:                     []interface{}{mock.Anything, txHash},
+			existsReturns:                  []interface{}{false},
+			storeBeginStateTransactionArgs: []interface{}{mock.Anything},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+				mock.Anything,
+			},
+			storeOffChainDataReturns:        []interface{}{nil},
+			storeCommitReturns:              []interface{}{nil},
+			deleteBeginStateTransactionArgs: []interface{}{mock.Anything},
+			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
+			deleteCommitReturns:              []interface{}{nil},
+			getSequenceBatchArgs:             []interface{}{uint64(10)},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      types.ArgUint64(10),
+				BatchL2Data: types.ArgBytes(batchL2Data),
+			}, nil},
+			isErrorExpected: false,
+		})
+	})
+
+	/*t.Run("Invalid tx data", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
@@ -492,7 +797,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			getTxArgs:    []interface{}{mock.Anything, event.Raw.TxHash},
 			getTxReturns: []interface{}{tx, true, nil},
 		})
-	})
+	})*/
 }
 
 func TestBatchSyncronizer_HandleReorgs(t *testing.T) {

@@ -96,7 +96,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start() {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
-	go bs.handleUnresolvedBatches()
+	go bs.handleUnresolvedBatchesMonitor()
 	go bs.consumeEvents()
 	go bs.produceEvents()
 	go bs.handleReorgs()
@@ -234,60 +234,66 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 	return storeUnresolvedBatchKeys(bs.db, batchKeys)
 }
 
-// handleUnresolvedBatches handles unresolved batches that were collected by the event consumer
-func (bs *BatchSynchronizer) handleUnresolvedBatches() {
+func (bs *BatchSynchronizer) handleUnresolvedBatchesMonitor() {
 	log.Info("starting handling unresolved batches")
 	for {
 		delay := time.NewTimer(bs.retry)
 		select {
 		case <-delay.C:
-			// Get unresolved batches
-			batchKeys, err := getUnresolvedBatchKeys(bs.db)
-			if err != nil {
-				log.Errorf("failed to get unresolved batch keys: %v", err)
-				continue
-			}
-
-			if len(batchKeys) == 0 {
-				continue
-			}
-
-			// Resolve the unresolved data
-			var data []types.OffChainData
-			var resolved []types.BatchKey
-			for _, key := range batchKeys {
-				if exists(bs.db, key.Hash) {
-					resolved = append(resolved, key)
-				} else {
-					var value *types.OffChainData
-					if value, err = bs.resolve(key); err != nil {
-						log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
-						continue
-					}
-
-					resolved = append(resolved, key)
-					data = append(data, *value)
-				}
-			}
-
-			// Store data of the batches to the DB
-			if len(data) > 0 {
-				if err = storeOffchainData(bs.db, data); err != nil {
-					log.Errorf("failed to store offchain data: %v", err)
-					continue
-				}
-			}
-
-			// Mark batches as resolved
-			if len(resolved) > 0 {
-				if err = deleteUnresolvedBatchKeys(bs.db, resolved); err != nil {
-					log.Errorf("failed to delete successfully resolved batch keys: %v", err)
-				}
+			if err := bs.handleUnresolvedBatches(); err != nil {
+				log.Error(err)
 			}
 		case <-bs.stop:
 			return
 		}
 	}
+}
+
+// handleUnresolvedBatches handles unresolved batches that were collected by the event consumer
+func (bs *BatchSynchronizer) handleUnresolvedBatches() error {
+	// Get unresolved batches
+	batchKeys, err := getUnresolvedBatchKeys(bs.db)
+	if err != nil {
+		return fmt.Errorf("failed to get unresolved batch keys: %v", err)
+	}
+
+	if len(batchKeys) == 0 {
+		return nil
+	}
+
+	// Resolve the unresolved data
+	var data []types.OffChainData
+	var resolved []types.BatchKey
+	for _, key := range batchKeys {
+		if exists(bs.db, key.Hash) {
+			resolved = append(resolved, key)
+		} else {
+			var value *types.OffChainData
+			if value, err = bs.resolve(key); err != nil {
+				log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
+				continue
+			}
+
+			resolved = append(resolved, key)
+			data = append(data, *value)
+		}
+	}
+
+	// Store data of the batches to the DB
+	if len(data) > 0 {
+		if err = storeOffchainData(bs.db, data); err != nil {
+			return fmt.Errorf("failed to store offchain data: %v", err)
+		}
+	}
+
+	// Mark batches as resolved
+	if len(resolved) > 0 {
+		if err = deleteUnresolvedBatchKeys(bs.db, resolved); err != nil {
+			return fmt.Errorf("failed to delete successfully resolved batch keys: %v", err)
+		}
+	}
+
+	return nil
 }
 
 func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData, error) {
