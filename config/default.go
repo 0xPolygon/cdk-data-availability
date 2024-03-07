@@ -19,6 +19,7 @@ DataCommitteeAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 Timeout = "1m"
 RetryPeriod = "5s"
 BlockBatchSize = "64"
+GenesisBlock = "0"
 
 [Log]
 Environment = "development" # "production" or "development"
