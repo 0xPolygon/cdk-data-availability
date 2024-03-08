@@ -113,12 +113,27 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context) ([]types.BatchKey, error) {
 	const getUnresolvedBatchKeysSQL = "SELECT num, hash FROM data_node.unresolved_batches;"
 
-	var (
-		bks []types.BatchKey
-	)
-
-	if err := db.pg.SelectContext(ctx, &bks, getUnresolvedBatchKeysSQL); err != nil {
+	rows, err := db.pg.QueryxContext(ctx, getUnresolvedBatchKeysSQL)
+	if err != nil {
 		return nil, err
+	}
+
+	defer rows.Close()
+
+	var bks []types.BatchKey
+	for rows.Next() {
+		bk := struct {
+			Number uint64 `db:"num"`
+			Hash   string `db:"hash"`
+		}{}
+		if err = rows.StructScan(&bk); err != nil {
+			return nil, err
+		}
+
+		bks = append(bks, types.BatchKey{
+			Number: bk.Number,
+			Hash:   common.HexToHash(bk.Hash),
+		})
 	}
 
 	return bks, nil

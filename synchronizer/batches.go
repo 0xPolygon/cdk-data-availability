@@ -96,7 +96,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start() {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
-	go bs.handleUnresolvedBatchesMonitor()
+	go bs.startUnresolvedBatchesProcessor()
 	go bs.consumeEvents()
 	go bs.produceEvents()
 	go bs.handleReorgs()
@@ -234,7 +234,7 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 	return storeUnresolvedBatchKeys(bs.db, batchKeys)
 }
 
-func (bs *BatchSynchronizer) handleUnresolvedBatchesMonitor() {
+func (bs *BatchSynchronizer) startUnresolvedBatchesProcessor() {
 	log.Info("starting handling unresolved batches")
 	for {
 		delay := time.NewTimer(bs.retry)
