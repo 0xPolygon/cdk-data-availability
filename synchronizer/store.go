@@ -59,7 +59,64 @@ func exists(db dbTypes.DB, key common.Hash) bool {
 	return db.Exists(ctx, key)
 }
 
-func store(db dbTypes.DB, data []types.OffChainData) error {
+func storeUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var (
+		dbTx dbTypes.Tx
+		err  error
+	)
+
+	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
+		return err
+	}
+
+	if err = db.StoreUnresolvedBatchKeys(ctx, keys, dbTx); err != nil {
+		rollback(err, dbTx)
+		return err
+	}
+
+	if err = dbTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getUnresolvedBatchKeys(db dbTypes.DB) ([]types.BatchKey, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	return db.GetUnresolvedBatchKeys(ctx)
+}
+
+func deleteUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	var (
+		dbTx dbTypes.Tx
+		err  error
+	)
+
+	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
+		return err
+	}
+
+	if err = db.DeleteUnresolvedBatchKeys(ctx, keys, dbTx); err != nil {
+		rollback(err, dbTx)
+		return err
+	}
+
+	if err = dbTx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func storeOffchainData(db dbTypes.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 

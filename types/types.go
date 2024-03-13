@@ -15,6 +15,12 @@ const (
 	hexBitSize64 = 64
 )
 
+// BatchKey is the pairing of batch number and data hash of a batch
+type BatchKey struct {
+	Number uint64
+	Hash   common.Hash
+}
+
 // OffChainData represents some data that is not stored on chain and should be preserved
 type OffChainData struct {
 	Key   common.Hash
