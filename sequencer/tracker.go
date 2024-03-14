@@ -83,6 +83,7 @@ func (st *Tracker) setUrl(url string) {
 func (st *Tracker) Start(ctx context.Context) {
 	st.startOnce.Do(func() {
 		if !st.trackChanges {
+			log.Info("sequencer tracking disabled")
 			return
 		}
 
