@@ -14,25 +14,25 @@ import (
 // APIDAC  is the namespace of the status service
 const APIDAC = "dac"
 
-// StatusEndpoints contains implementations for the "status" RPC endpoints
+type Status struct {
+	Uptime           string
+	Version          string
+	KeyCount         uint64
+	BackfillProgress uint64
+}
+
+// DacEndpoints contains implementations for the "status" RPC endpoints
 type DacEndpoints struct {
 	db        db.DB
 	startTime time.Time
 }
 
-// NewStatusEndpoints returns StatusEndpoints
+// NewDacEndpoints returns StatusEndpoints
 func NewDacEndpoints(db db.DB) *DacEndpoints {
 	return &DacEndpoints{
 		db:        db,
 		startTime: time.Now(),
 	}
-}
-
-type status struct {
-	Uptime           string
-	Version          string
-	KeyCount         uint64
-	BackfillProgress uint64
 }
 
 // GetStatus returns the status of the service
@@ -53,7 +53,7 @@ func (s *DacEndpoints) GetStatus() (interface{}, rpc.Error) {
 		log.Errorf("failed to get last block processed by the synchronizer: %v", err)
 	}
 
-	status := status{
+	status := Status{
 		Version:          dataavailability.Version,
 		Uptime:           uptime,
 		KeyCount:         rowCount,

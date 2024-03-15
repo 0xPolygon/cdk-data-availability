@@ -1,29 +1,33 @@
 package dac
 
 import (
-	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 )
 
 func TestStatusEndpoints_GetStatus(t *testing.T) {
 	tests := []struct {
-		name             string
-		dbErr            error
-		backfillProgress uint64
-		expectedUptime   string
-		expectedVersion  string
-		expectedKeyCount uint64
-		expectedError    error
+		name                     string
+		getRowCountErr           error
+		getLastProcessedBlockErr error
+		backfillProgress         uint64
+		expectedUptime           string
+		expectedVersion          string
+		expectedKeyCount         uint64
+		expectedError            error
 	}{
 		{
-			name:             "successfully get status",
-			backfillProgress: 1000,
-			expectedUptime:   "1h30m",
-			expectedVersion:  "1.0.0",
-			expectedKeyCount: 100,
-			dbErr:            nil,
+			name:                     "successfully get status",
+			backfillProgress:         1000,
+			expectedVersion:          "v1.0.0",
+			expectedKeyCount:         100,
+			getRowCountErr:           nil,
+			getLastProcessedBlockErr: nil,
 		},
 		// {
 		// 	name:          "database error",
@@ -44,11 +48,34 @@ func TestStatusEndpoints_GetStatus(t *testing.T) {
 			t.Parallel()
 
 			dbMock := mocks.NewDB(t)
-			fmt.Println(dbMock)
 
-			k := status{}
-			dbMock.On("GetStatus").
-				Return(k, tt.dbErr)
+			dbMock.On("GetRowCount", mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					require.Len(t, args, 3)
+
+					rowCount := args[1].(*uint64)
+					*rowCount = tt.expectedKeyCount
+				}).
+				Return(tt.getRowCountErr)
+
+			dbMock.On("GetLastProcessedBlock", mock.Anything, mock.Anything).
+				Return(tt.backfillProgress, tt.getLastProcessedBlockErr)
+
+			dacEndpoints := NewDacEndpoints(dbMock)
+
+			actual, err := dacEndpoints.GetStatus()
+
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.expectedError.Error())
+			} else {
+				require.NoError(t, err)
+
+				require.NotEmpty(t, actual.(Status).Uptime)
+				require.Equal(t, "v0.1.0", actual.(Status).Version)
+				require.Equal(t, tt.expectedKeyCount, actual.(Status).KeyCount)
+				require.Equal(t, tt.backfillProgress, actual.(Status).BackfillProgress)
+			}
 
 			// dbMock.On("GetRowCount", "SELECT COUNT(*) FROM data_node.offchain_data;", (*uint64)(nil), context.Background()).
 			// 	Return(tt.dbErr)
