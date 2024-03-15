@@ -813,10 +813,10 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 		dbMock := mocks.NewDB(t)
 		txMock := mocks.NewTx(t)
 
-		dbMock.On("GetLastProcessedBlock", mock.Anything, l1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
+		dbMock.On("GetLastProcessedBlock", mock.Anything, L1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
 		if config.commitReturns != nil {
 			dbMock.On("BeginStateTransaction", mock.Anything).Return(txMock, nil).Once()
-			dbMock.On("StoreLastProcessedBlock", mock.Anything, l1SyncTask, mock.Anything, txMock).Return(nil).Once()
+			dbMock.On("StoreLastProcessedBlock", mock.Anything, L1SyncTask, mock.Anything, txMock).Return(nil).Once()
 			txMock.On("Commit").Return(config.commitReturns...).Once()
 		}
 

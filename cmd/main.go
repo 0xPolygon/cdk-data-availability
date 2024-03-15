@@ -16,6 +16,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
+	"github.com/0xPolygon/cdk-data-availability/services/status"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -151,6 +152,10 @@ func start(cliCtx *cli.Context) error {
 					pk,
 					sequencerTracker,
 				),
+			},
+			{
+				Name:    status.APIDAC,
+				Service: status.NewDacEndpoints(storage),
 			},
 		},
 	)

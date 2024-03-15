@@ -30,6 +30,8 @@ type DB interface {
 	Exists(ctx context.Context, key common.Hash) bool
 	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+
+	GetRowCount(query string, count *uint64, ctx context.Context) error
 }
 
 // Tx is the interface that defines functions a db tx has to implement
@@ -232,4 +234,12 @@ func (db *pgDB) querier(dbTx sqlx.QueryerContext) sqlx.QueryerContext {
 	}
 
 	return db.pg
+}
+
+// GetRowCount returns the count of rows in the table
+func (db *pgDB) GetRowCount(query string, count *uint64, ctx context.Context) error {
+	if err := db.pg.QueryRowContext(ctx, query).Scan(count); err != nil {
+		return err
+	}
+	return nil
 }
