@@ -214,19 +214,6 @@ func TestDataCommittee(t *testing.T) {
 
 			// Each member (including m0) should have all the keys
 			for _, expected := range expectedKeys {
-				fmt.Println("offchainData[expected]:", offchainData[expected])
-
-				actual, err := getOffchainDataKeys(m, expected)
-				require.NoError(t, err)
-				require.Equal(t, expected, actual)
-			}
-
-			continue
-
-			require.Len(t, offchainData, len(expectedKeys))
-
-			// Each member (including m0) should have all the keys
-			for _, expected := range expectedKeys {
 				require.Equal(t, expected, offchainData[expected])
 			}
 		}

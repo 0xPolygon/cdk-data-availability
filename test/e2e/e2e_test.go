@@ -142,10 +142,6 @@ func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence,
 			fmt.Println("actualData: ", actualData)
 		}
 
-		return
-
-		assert.Len(t, actualData, len(expectedOffchainData))
-
 		for _, od := range expectedOffchainData {
 			assert.Equal(t, od.Value, actualData[od.Key])
 		}
