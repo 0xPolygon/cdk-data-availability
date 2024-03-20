@@ -204,6 +204,15 @@ func TestDataCommittee(t *testing.T) {
 		expectedKeys, err := getSequenceBatchesKeys(clientL1, iter.Event)
 		require.NoError(t, err)
 		for _, m := range membs {
+			// Each member (including m0) should have all the keys
+			for _, expected := range expectedKeys {
+				actual, err := getOffchainDataKeys(m, expected)
+				require.NoError(t, err)
+				require.Equal(t, expected, actual)
+			}
+
+			continue
+
 			offchainData, err := listOffchainDataKeys(m, expectedKeys)
 			require.NoError(t, err)
 			require.Len(t, offchainData, len(expectedKeys))
@@ -239,6 +248,18 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *polygonvalidium.P
 	txData := tx.Data()
 	keys, err := synchronizer.UnpackTxData(txData)
 	return keys, err
+}
+
+func getOffchainDataKeys(m member, tx common.Hash) (common.Hash, error) {
+	testUrl := fmt.Sprintf("http://127.0.0.1:420%d", m.i)
+	mc := newTestClient(testUrl, m.addr)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	data, err := mc.client.GetOffChainData(ctx, tx)
+	if err != nil {
+		return common.Hash{}, err
+	}
+	return crypto.Keccak256Hash(data), nil
 }
 
 func listOffchainDataKeys(m member, txes []common.Hash) (map[common.Hash]common.Hash, error) {

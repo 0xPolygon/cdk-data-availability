@@ -50,7 +50,7 @@ func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.E
 		list, err := z.db.ListOffChainData(ctx, keys, dbTx)
 		if err != nil {
 			log.Errorf("failed to list the requested data from the DB: %v", err)
-			return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
+			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
 		}
 
 		return list, nil
