@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"testing"
 
@@ -466,6 +467,102 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			dbPG := New(wdb)
 
 			data, err := dbPG.GetOffChainData(context.Background(), tt.key, wdb)
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, data)
+			}
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func Test_DB_ListOffChainData(t *testing.T) {
+	testTable := []struct {
+		name      string
+		od        []types.OffChainData
+		keys      []common.Hash
+		expected  map[common.Hash]types.ArgBytes
+		returnErr error
+	}{
+		{
+			name: "successfully selected value",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			keys: []common.Hash{
+				common.BytesToHash([]byte("key1")),
+			},
+			expected: map[common.Hash]types.ArgBytes{
+				common.BytesToHash([]byte("key1")): []byte("value1"),
+			},
+		},
+		{
+			name: "error returned",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			keys: []common.Hash{
+				common.BytesToHash([]byte("key1")),
+			},
+			returnErr: errors.New("test error"),
+		},
+		{
+			name: "no rows",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			keys: []common.Hash{
+				common.BytesToHash([]byte("underfined")),
+			},
+			returnErr: ErrStateNotSynchronized,
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			// Seed data
+			seedOffchainData(t, wdb, mock, tt.od)
+
+			preparedKeys := make([]driver.Value, len(tt.keys))
+			for i, key := range tt.keys {
+				preparedKeys[i] = key.Hex()
+			}
+
+			expected := mock.ExpectQuery(`SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`).
+				WithArgs(preparedKeys...)
+
+			if tt.returnErr != nil {
+				expected = expected.WillReturnError(tt.returnErr)
+			} else {
+				returnData := sqlmock.NewRows([]string{"key", "value"})
+
+				for key, val := range tt.expected {
+					returnData = returnData.AddRow(key.Hex(), common.Bytes2Hex(val))
+				}
+
+				expected = expected.WillReturnRows(returnData)
+			}
+
+			dbPG := New(wdb)
+
+			data, err := dbPG.ListOffChainData(context.Background(), tt.keys, wdb)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
