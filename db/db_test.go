@@ -549,7 +549,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 				WithArgs(preparedKeys...)
 
 			if tt.returnErr != nil {
-				expected = expected.WillReturnError(tt.returnErr)
+				expected.WillReturnError(tt.returnErr)
 			} else {
 				returnData := sqlmock.NewRows([]string{"key", "value"})
 
@@ -557,7 +557,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 					returnData = returnData.AddRow(key.Hex(), common.Bytes2Hex(val))
 				}
 
-				expected = expected.WillReturnRows(returnData)
+				expected.WillReturnRows(returnData)
 			}
 
 			dbPG := New(wdb)

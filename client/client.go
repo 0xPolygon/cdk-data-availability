@@ -17,7 +17,8 @@ type Factory interface {
 
 // Client is the interface that defines the implementation of all the endpoints
 type Client interface {
-	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
+	GetOffChainData(ctx context.Context, hash common.Hash) (types.ArgBytes, error)
+	ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash]types.ArgBytes, error)
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
@@ -67,7 +68,7 @@ func (c *client) SignSequence(signedSequence types.SignedSequence) ([]byte, erro
 }
 
 // GetOffChainData returns data based on it's hash
-func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
+func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) (types.ArgBytes, error) {
 	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_getOffChainData", hash)
 	if err != nil {
 		return nil, err
@@ -78,6 +79,26 @@ func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte,
 	}
 
 	var result types.ArgBytes
+	if err = json.Unmarshal(response.Result, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// ListOffChainData returns data based on the given hashes
+func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash]types.ArgBytes, error) {
+	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_listOffChainData", hashes)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.Error != nil {
+		return nil, fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
+	}
+
+	result := make(map[common.Hash]types.ArgBytes)
+	fmt.Println(string(response.Result))
 	if err = json.Unmarshal(response.Result, &result); err != nil {
 		return nil, err
 	}

@@ -3,12 +3,11 @@ package sync
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // APISYNC  is the namespace of the sync service

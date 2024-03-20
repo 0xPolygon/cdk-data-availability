@@ -26,23 +26,23 @@ func (_m *Client) EXPECT() *Client_Expecter {
 }
 
 // GetOffChainData provides a mock function with given fields: ctx, hash
-func (_m *Client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
+func (_m *Client) GetOffChainData(ctx context.Context, hash common.Hash) (types.ArgBytes, error) {
 	ret := _m.Called(ctx, hash)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOffChainData")
 	}
 
-	var r0 []byte
+	var r0 types.ArgBytes
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) ([]byte, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (types.ArgBytes, error)); ok {
 		return rf(ctx, hash)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) []byte); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) types.ArgBytes); ok {
 		r0 = rf(ctx, hash)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
+			r0 = ret.Get(0).(types.ArgBytes)
 		}
 	}
 
@@ -74,12 +74,71 @@ func (_c *Client_GetOffChainData_Call) Run(run func(ctx context.Context, hash co
 	return _c
 }
 
-func (_c *Client_GetOffChainData_Call) Return(_a0 []byte, _a1 error) *Client_GetOffChainData_Call {
+func (_c *Client_GetOffChainData_Call) Return(_a0 types.ArgBytes, _a1 error) *Client_GetOffChainData_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Client_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash) ([]byte, error)) *Client_GetOffChainData_Call {
+func (_c *Client_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash) (types.ArgBytes, error)) *Client_GetOffChainData_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListOffChainData provides a mock function with given fields: ctx, hashes
+func (_m *Client) ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash]types.ArgBytes, error) {
+	ret := _m.Called(ctx, hashes)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOffChainData")
+	}
+
+	var r0 map[common.Hash]types.ArgBytes
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash) (map[common.Hash]types.ArgBytes, error)); ok {
+		return rf(ctx, hashes)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash) map[common.Hash]types.ArgBytes); ok {
+		r0 = rf(ctx, hashes)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[common.Hash]types.ArgBytes)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []common.Hash) error); ok {
+		r1 = rf(ctx, hashes)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_ListOffChainData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOffChainData'
+type Client_ListOffChainData_Call struct {
+	*mock.Call
+}
+
+// ListOffChainData is a helper method to define mock.On call
+//   - ctx context.Context
+//   - hashes []common.Hash
+func (_e *Client_Expecter) ListOffChainData(ctx interface{}, hashes interface{}) *Client_ListOffChainData_Call {
+	return &Client_ListOffChainData_Call{Call: _e.mock.On("ListOffChainData", ctx, hashes)}
+}
+
+func (_c *Client_ListOffChainData_Call) Run(run func(ctx context.Context, hashes []common.Hash)) *Client_ListOffChainData_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]common.Hash))
+	})
+	return _c
+}
+
+func (_c *Client_ListOffChainData_Call) Return(_a0 map[common.Hash]types.ArgBytes, _a1 error) *Client_ListOffChainData_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_ListOffChainData_Call) RunAndReturn(run func(context.Context, []common.Hash) (map[common.Hash]types.ArgBytes, error)) *Client_ListOffChainData_Call {
 	_c.Call.Return(run)
 	return _c
 }
