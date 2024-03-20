@@ -221,6 +221,10 @@ func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.
 
 // ListOffChainData returns values identified by the given keys
 func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
 	const listOffchainDataSQL = `
 		SELECT key, value
 		FROM data_node.offchain_data 

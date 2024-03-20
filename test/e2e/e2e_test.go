@@ -133,12 +133,15 @@ func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence,
 		for i, od := range expectedOffchainData {
 			hashes[i] = od.Key
 		}
-		fmt.Println("hashes: ", hashes)
-
-		return
 
 		actualData, err := tc.client.ListOffChainData(context.Background(), hashes)
 		require.NoError(t, err)
+
+		fmt.Println("hashes: ", hashes)
+		fmt.Println("actualData: ", actualData)
+
+		return
+
 		assert.Len(t, actualData, len(expectedOffchainData))
 
 		for _, od := range expectedOffchainData {
