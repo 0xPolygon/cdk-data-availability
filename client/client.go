@@ -107,9 +107,5 @@ func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (ma
 		preparedResult[key] = val
 	}
 
-	fmt.Println("hashes:", hashes)
-	fmt.Println("response.Result:", string(response.Result))
-	fmt.Printf("preparedResult: %v\n", preparedResult)
-
 	return preparedResult, nil
 }

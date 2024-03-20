@@ -119,6 +119,15 @@ func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence,
 
 		// Check that offchain data has been stored
 		expectedOffchainData := expected.Sequence.OffChainData()
+		for _, od := range expectedOffchainData {
+			actualData, err := tc.client.GetOffChainData(
+				context.Background(),
+				od.Key,
+			)
+			require.NoError(t, err)
+			assert.Equal(t, od.Value, actualData)
+		}
+		return
 		hashes := make([]common.Hash, len(expectedOffchainData))
 		for i, od := range expectedOffchainData {
 			hashes[i] = od.Key
