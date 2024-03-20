@@ -17,8 +17,8 @@ type Factory interface {
 
 // Client is the interface that defines the implementation of all the endpoints
 type Client interface {
-	GetOffChainData(ctx context.Context, hash common.Hash) (types.ArgBytes, error)
-	ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash]types.ArgBytes, error)
+	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
+	ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash][]byte, error)
 	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
 }
 
@@ -68,7 +68,7 @@ func (c *client) SignSequence(signedSequence types.SignedSequence) ([]byte, erro
 }
 
 // GetOffChainData returns data based on it's hash
-func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) (types.ArgBytes, error) {
+func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
 	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_getOffChainData", hash)
 	if err != nil {
 		return nil, err
@@ -87,7 +87,7 @@ func (c *client) GetOffChainData(ctx context.Context, hash common.Hash) (types.A
 }
 
 // ListOffChainData returns data based on the given hashes
-func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash]types.ArgBytes, error) {
+func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash][]byte, error) {
 	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "sync_listOffChainData", hashes)
 	if err != nil {
 		return nil, err
@@ -102,9 +102,14 @@ func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (ma
 		return nil, err
 	}
 
-	fmt.Println("hashes:", hashes)
-	fmt.Println("result:", string(response.Result))
-	fmt.Printf("result: %v\n", result)
+	preparedResult := make(map[common.Hash][]byte)
+	for key, val := range result {
+		preparedResult[key] = val
+	}
 
-	return result, nil
+	fmt.Println("hashes:", hashes)
+	fmt.Println("response.Result:", string(response.Result))
+	fmt.Printf("preparedResult: %v\n", preparedResult)
+
+	return preparedResult, nil
 }
