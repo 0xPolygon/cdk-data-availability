@@ -98,10 +98,12 @@ func (c *client) ListOffChainData(ctx context.Context, hashes []common.Hash) (ma
 	}
 
 	result := make(map[common.Hash]types.ArgBytes)
-	fmt.Println(string(response.Result))
 	if err = json.Unmarshal(response.Result, &result); err != nil {
 		return nil, err
 	}
+
+	fmt.Println("result:", string(response.Result))
+	fmt.Printf("result: %v\n", result)
 
 	return result, nil
 }
