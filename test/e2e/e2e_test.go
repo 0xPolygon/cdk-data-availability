@@ -137,8 +137,10 @@ func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence,
 		actualData, err := tc.client.ListOffChainData(context.Background(), hashes)
 		require.NoError(t, err)
 
-		fmt.Println("hashes: ", hashes)
-		fmt.Println("actualData: ", actualData)
+		if len(actualData) != len(expectedOffchainData) {
+			fmt.Println("hashes: ", hashes)
+			fmt.Println("actualData: ", actualData)
+		}
 
 		return
 
