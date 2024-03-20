@@ -70,6 +70,7 @@ func (st *Tracker) setAddr(addr common.Address) {
 // GetUrl returns the last known URL of the Sequencer
 func (st *Tracker) GetUrl() string {
 	st.lock.Lock()
+	defer st.lock.Unlock()
 	return st.url
 }
 
