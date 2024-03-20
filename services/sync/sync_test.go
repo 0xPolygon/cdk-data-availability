@@ -94,14 +94,14 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 			name:   "successfully got offchain data",
 			hashes: []types.ArgHash{},
 			data: map[common.Hash]types.ArgBytes{
-				common.Hash{}: types.ArgBytes("offchaindata"),
+				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
 			},
 		},
 		{
 			name:   "db returns error",
 			hashes: []types.ArgHash{},
 			data: map[common.Hash]types.ArgBytes{
-				common.Hash{}: types.ArgBytes("offchaindata"),
+				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
 			},
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to list the requested data"),
@@ -110,7 +110,7 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 			name:   "tx returns error",
 			hashes: []types.ArgHash{},
 			data: map[common.Hash]types.ArgBytes{
-				common.Hash{}: types.ArgBytes("offchaindata"),
+				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
 			},
 			txErr: errors.New("test error"),
 			err:   errors.New("failed to connect to the state"),
