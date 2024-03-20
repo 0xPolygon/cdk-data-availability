@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/client"
@@ -136,11 +135,6 @@ func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence,
 
 		actualData, err := tc.client.ListOffChainData(context.Background(), hashes)
 		require.NoError(t, err)
-
-		if len(actualData) != len(expectedOffchainData) {
-			fmt.Println("hashes: ", hashes)
-			fmt.Println("actualData: ", actualData)
-		}
 
 		for _, od := range expectedOffchainData {
 			assert.Equal(t, od.Value, actualData[od.Key])
