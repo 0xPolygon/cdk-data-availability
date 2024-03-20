@@ -104,7 +104,7 @@ func TestClient_GetOffChainData(t *testing.T) {
 		name       string
 		hash       common.Hash
 		result     string
-		data       types.ArgBytes
+		data       []byte
 		statusCode int
 		err        error
 	}{
@@ -112,7 +112,7 @@ func TestClient_GetOffChainData(t *testing.T) {
 			name:   "successfully got offhcain data",
 			hash:   common.BytesToHash([]byte("hash")),
 			result: fmt.Sprintf(`{"result":"%s"}`, hex.EncodeToString([]byte("offchaindata"))),
-			data:   types.ArgBytes("offchaindata"),
+			data:   []byte("offchaindata"),
 		},
 		{
 			name:   "error returned by server",
@@ -175,7 +175,7 @@ func TestClient_ListOffChainData(t *testing.T) {
 		name       string
 		hashes     []common.Hash
 		result     string
-		data       map[common.Hash]types.ArgBytes
+		data       map[common.Hash][]byte
 		statusCode int
 		err        error
 	}{
@@ -184,7 +184,7 @@ func TestClient_ListOffChainData(t *testing.T) {
 			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
 			result: fmt.Sprintf(`{"result":{"%s":"%s"}}`,
 				common.BytesToHash([]byte("hash")).Hex(), hex.EncodeToString([]byte("offchaindata"))),
-			data: map[common.Hash]types.ArgBytes{
+			data: map[common.Hash][]byte{
 				common.BytesToHash([]byte("hash")): []byte("offchaindata"),
 			},
 		},
@@ -199,7 +199,7 @@ func TestClient_ListOffChainData(t *testing.T) {
 			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
 			result: fmt.Sprintf(`{"result":{"%s":"invalid-signature"}}`,
 				common.BytesToHash([]byte("hash")).Hex()),
-			data: map[common.Hash]types.ArgBytes{
+			data: map[common.Hash][]byte{
 				common.BytesToHash([]byte("hash")): nil,
 			},
 		},
