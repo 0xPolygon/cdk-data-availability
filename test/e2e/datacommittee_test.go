@@ -204,6 +204,12 @@ func TestDataCommittee(t *testing.T) {
 		expectedKeys, err := getSequenceBatchesKeys(clientL1, iter.Event)
 		require.NoError(t, err)
 		for _, m := range membs {
+			offchainData, err := listOffchainDataKeys(m, expectedKeys)
+			require.NoError(t, err)
+
+			fmt.Println("expectedKeys:", expectedKeys)
+			fmt.Println("offchainData:", offchainData)
+
 			// Each member (including m0) should have all the keys
 			for _, expected := range expectedKeys {
 				actual, err := getOffchainDataKeys(m, expected)
@@ -213,8 +219,6 @@ func TestDataCommittee(t *testing.T) {
 
 			continue
 
-			offchainData, err := listOffchainDataKeys(m, expectedKeys)
-			require.NoError(t, err)
 			require.Len(t, offchainData, len(expectedKeys))
 
 			// Each member (including m0) should have all the keys
