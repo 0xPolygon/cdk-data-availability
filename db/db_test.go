@@ -485,10 +485,11 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		od        []types.OffChainData
 		keys      []common.Hash
 		expected  map[common.Hash]types.ArgBytes
+		sql       string
 		returnErr error
 	}{
 		{
-			name: "successfully selected value",
+			name: "successfully selected one value",
 			od: []types.OffChainData{{
 				Key:   common.HexToHash("key1"),
 				Value: []byte("value1"),
@@ -499,6 +500,26 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			expected: map[common.Hash]types.ArgBytes{
 				common.BytesToHash([]byte("key1")): []byte("value1"),
 			},
+			sql: `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
+		},
+		{
+			name: "successfully selected two values",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}, {
+				Key:   common.HexToHash("key2"),
+				Value: []byte("value2"),
+			}},
+			keys: []common.Hash{
+				common.BytesToHash([]byte("key1")),
+				common.BytesToHash([]byte("key2")),
+			},
+			expected: map[common.Hash]types.ArgBytes{
+				common.BytesToHash([]byte("key1")): []byte("value1"),
+				common.BytesToHash([]byte("key2")): []byte("value2"),
+			},
+			sql: `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\, \$2\)`,
 		},
 		{
 			name: "error returned",
@@ -509,6 +530,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			keys: []common.Hash{
 				common.BytesToHash([]byte("key1")),
 			},
+			sql:       `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 			returnErr: errors.New("test error"),
 		},
 		{
@@ -520,6 +542,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			keys: []common.Hash{
 				common.BytesToHash([]byte("underfined")),
 			},
+			sql:       `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 			returnErr: ErrStateNotSynchronized,
 		},
 	}
@@ -545,7 +568,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 				preparedKeys[i] = key.Hex()
 			}
 
-			expected := mock.ExpectQuery(`SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`).
+			expected := mock.ExpectQuery(tt.sql).
 				WithArgs(preparedKeys...)
 
 			if tt.returnErr != nil {
