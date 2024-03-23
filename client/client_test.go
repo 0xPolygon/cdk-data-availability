@@ -169,3 +169,81 @@ func TestClient_GetOffChainData(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_ListOffChainData(t *testing.T) {
+	tests := []struct {
+		name       string
+		hashes     []common.Hash
+		result     string
+		data       map[common.Hash][]byte
+		statusCode int
+		err        error
+	}{
+		{
+			name:   "successfully got offhcain data",
+			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
+			result: fmt.Sprintf(`{"result":{"%s":"%s"}}`,
+				common.BytesToHash([]byte("hash")).Hex(), hex.EncodeToString([]byte("offchaindata"))),
+			data: map[common.Hash][]byte{
+				common.BytesToHash([]byte("hash")): []byte("offchaindata"),
+			},
+		},
+		{
+			name:   "error returned by server",
+			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
+			result: `{"error":{"code":123,"message":"test error"}}`,
+			err:    errors.New("123 test error"),
+		},
+		{
+			name:   "invalid offchain data returned by server",
+			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
+			result: fmt.Sprintf(`{"result":{"%s":"invalid-signature"}}`,
+				common.BytesToHash([]byte("hash")).Hex()),
+			data: map[common.Hash][]byte{
+				common.BytesToHash([]byte("hash")): nil,
+			},
+		},
+		{
+			name:       "unsuccessful status code returned by server",
+			hashes:     []common.Hash{common.BytesToHash([]byte("hash"))},
+			statusCode: http.StatusUnauthorized,
+			err:        errors.New("invalid status code, expected: 200, found: 401"),
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			svr := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var res rpc.Request
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&res))
+				require.Equal(t, "sync_listOffChainData", res.Method)
+
+				var params [][]common.Hash
+				require.NoError(t, json.Unmarshal(res.Params, &params))
+				require.Equal(t, tt.hashes, params[0])
+
+				if tt.statusCode > 0 {
+					w.WriteHeader(tt.statusCode)
+				}
+
+				_, err := fmt.Fprint(w, tt.result)
+				require.NoError(t, err)
+			}))
+			defer svr.Close()
+
+			c := &client{url: svr.URL}
+
+			got, err := c.ListOffChainData(context.Background(), tt.hashes)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.EqualError(t, tt.err, err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.data, got)
+			}
+		})
+	}
+}
