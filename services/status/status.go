@@ -41,8 +41,8 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 	ctx := context.Background()
 	uptime := time.Since(s.startTime).String()
 
-	var rowCount uint64
-	if err := s.db.GetOffchainDataRowCount(ctx, &rowCount); err != nil {
+	rowCount, err := s.db.CountOffchainData(ctx)
+	if err != nil {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
 	}
 
