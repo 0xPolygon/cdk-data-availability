@@ -107,7 +107,7 @@ func newTestClient(url string, addr common.Address) *testClient {
 }
 
 func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence, expectedErr error) {
-	if signature, err := tc.client.SignSequence(*expected); err != nil {
+	if signature, err := tc.client.SignSequence(context.Background(), *expected); err != nil {
 		assert.Equal(t, expectedErr.Error(), err.Error())
 	} else {
 		// Verify signature

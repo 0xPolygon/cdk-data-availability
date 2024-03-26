@@ -31,6 +31,8 @@ type DB interface {
 	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
 	ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+
+	CountOffchainData(ctx context.Context) (uint64, error)
 }
 
 // Tx is the interface that defines functions a db tx has to implement
@@ -265,6 +267,18 @@ func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx s
 	}
 
 	return list, nil
+}
+
+// CountOffchainData returns the count of rows in the offchain_data table
+func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
+	const countQuery = "SELECT COUNT(*) FROM data_node.offchain_data;"
+
+	var count uint64
+	if err := db.pg.QueryRowContext(ctx, countQuery).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (db *pgDB) execer(dbTx sqlx.ExecerContext) sqlx.ExecerContext {
