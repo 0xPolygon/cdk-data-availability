@@ -5,7 +5,6 @@ import (
 	"runtime"
 
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
-
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 )
 
