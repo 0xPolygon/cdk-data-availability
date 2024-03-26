@@ -7,8 +7,6 @@ services:
 
   cdk-data-availability:
     container_name: cdk-data-availability
-    build:
-      context: ../
     restart: unless-stopped
     depends_on:
       cdk-data-availability-db:
