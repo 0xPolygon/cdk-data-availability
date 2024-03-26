@@ -16,6 +16,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
+	"github.com/0xPolygon/cdk-data-availability/services/status"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -141,16 +142,16 @@ func start(cliCtx *cli.Context) error {
 		c.RPC,
 		[]rpc.Service{
 			{
+				Name:    status.APISTATUS,
+				Service: status.NewEndpoints(storage),
+			},
+			{
 				Name:    sync.APISYNC,
 				Service: sync.NewEndpoints(storage),
 			},
 			{
-				Name: datacom.APIDATACOM,
-				Service: datacom.NewEndpoints(
-					storage,
-					pk,
-					sequencerTracker,
-				),
+				Name:    datacom.APIDATACOM,
+				Service: datacom.NewEndpoints(storage, pk, sequencerTracker),
 			},
 		},
 	)

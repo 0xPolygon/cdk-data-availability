@@ -121,7 +121,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(1), errors.New("can't get last processed block")},
 			isErrorExpected:              true,
 		})
@@ -131,7 +131,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(10), nil},
 			isErrorExpected:              false,
 		})
@@ -141,7 +141,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
 			createEthClientArgs:          []interface{}{mock.Anything, l1Config.RpcURL},
 			createEthClientReturns:       []interface{}{nil, errors.New("error")},
@@ -153,7 +153,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
 			createEthClientArgs:          []interface{}{mock.Anything, l1Config.RpcURL},
 			blockByNumberArgs:            []interface{}{mock.Anything, mock.Anything},
@@ -170,7 +170,7 @@ func Test_InitStartBlock(t *testing.T) {
 		})
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
 			beginStateTransactionArgs:    []interface{}{mock.Anything},
 			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
@@ -189,10 +189,10 @@ func Test_InitStartBlock(t *testing.T) {
 		})
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
 			beginStateTransactionArgs:      []interface{}{mock.Anything},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask, uint64(0), mock.Anything},
+			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{errors.New("error")},
 			createEthClientArgs:            []interface{}{mock.Anything, l1Config.RpcURL},
 			blockByNumberArgs:              []interface{}{mock.Anything, mock.Anything},
@@ -210,9 +210,9 @@ func Test_InitStartBlock(t *testing.T) {
 				Number: big.NewInt(0),
 			}), nil},
 			createEthClientArgs:            []interface{}{mock.Anything, l1Config.RpcURL},
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask, uint64(0), mock.Anything},
+			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{nil},
 			beginStateTransactionArgs:      []interface{}{mock.Anything},
 			commitReturns:                  []interface{}{errors.New("error")},
@@ -225,10 +225,10 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, l1SyncTask},
+			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
 			beginStateTransactionArgs:      []interface{}{mock.Anything},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, l1SyncTask, uint64(2), mock.Anything},
+			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(2), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{nil},
 			commitReturns:                  []interface{}{nil},
 			createEthClientArgs:            []interface{}{mock.Anything, l1Config.RpcURL},

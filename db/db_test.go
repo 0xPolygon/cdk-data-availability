@@ -677,6 +677,77 @@ func Test_DB_Exist(t *testing.T) {
 	}
 }
 
+func Test_DB_CountOffchainData(t *testing.T) {
+	testTable := []struct {
+		name      string
+		od        []types.OffChainData
+		count     uint64
+		returnErr error
+	}{
+		{
+			name: "two values found",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}, {
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value2"),
+			}},
+			count: 2,
+		},
+		{
+			name:  "no values found",
+			count: 0,
+		},
+		{
+			name: "error returned",
+			od: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			returnErr: errors.New("test error"),
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			// Seed data
+			seedOffchainData(t, wdb, mock, tt.od)
+
+			expected := mock.ExpectQuery(`SELECT COUNT\(\*\) FROM data_node\.offchain_data`)
+
+			if tt.returnErr != nil {
+				expected.WillReturnError(tt.returnErr)
+			} else {
+				expected.WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(tt.count))
+			}
+
+			dbPG := New(wdb)
+
+			actual, err := dbPG.CountOffchainData(context.Background())
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.count, actual)
+			}
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func seedOffchainData(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
 	t.Helper()
 
