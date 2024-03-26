@@ -7,7 +7,8 @@ import (
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
+	elderberryValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/elderberry/polygonvalidium"
+	etrogValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -280,7 +281,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	}
 
 	to := common.HexToAddress("0xFFFF")
-	event := &polygonvalidium.PolygonvalidiumSequenceBatches{
+	event := &etrogValidium.PolygonvalidiumSequenceBatches{
 		Raw: ethTypes.Log{
 			TxHash: common.BytesToHash([]byte{0, 1, 2, 3}),
 		},
@@ -289,13 +290,13 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	batchL2Data := []byte{1, 2, 3, 4, 5, 6}
 	txHash := crypto.Keccak256Hash(batchL2Data)
 
-	batchData := []polygonvalidium.PolygonValidiumEtrogValidiumBatchData{
+	batchData := []etrogValidium.PolygonValidiumEtrogValidiumBatchData{
 		{
 			TransactionsHash: txHash,
 		},
 	}
 
-	a, err := abi.JSON(strings.NewReader(polygonvalidium.PolygonvalidiumABI))
+	a, err := abi.JSON(strings.NewReader(etrogValidium.PolygonvalidiumABI))
 	require.NoError(t, err)
 
 	methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
@@ -367,7 +368,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		ethermanMock.AssertExpectations(t)
 	}
 
-	t.Run("Could not get tx data", func(t *testing.T) {
+	t.Run("could not get tx data", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
@@ -377,7 +378,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 	})
 
-	t.Run("Invalid tx data", func(t *testing.T) {
+	t.Run("invalid tx data", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
@@ -396,7 +397,47 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 	})
 
-	t.Run("doesn't have batch in storage - successfully stored", func(t *testing.T) {
+	t.Run("doesn't have batch in storage - successfully stored (Elderberry fork)", func(t *testing.T) {
+		t.Parallel()
+
+		a, err := abi.JSON(strings.NewReader(elderberryValidium.PolygonvalidiumABI))
+		require.NoError(t, err)
+
+		methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
+		require.True(t, ok)
+
+		data, err := methodDefinition.Inputs.Pack(batchData, uint64(10), uint64(20), common.HexToAddress("0xABCD"), []byte{22, 23, 24})
+		require.NoError(t, err)
+
+		localTx := ethTypes.NewTx(
+			&ethTypes.LegacyTx{
+				Nonce:    0,
+				GasPrice: big.NewInt(10_000),
+				Gas:      21_000,
+				To:       &to,
+				Value:    ethgo.Ether(1),
+				Data:     append(methodDefinition.ID, data...),
+			})
+
+		testFn(t, testConfig{
+			getTxArgs:                 []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:              []interface{}{localTx, true, nil},
+			beginStateTransactionArgs: []interface{}{mock.Anything},
+			storeUnresolvedBatchKeysArgs: []interface{}{
+				mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			storeUnresolvedBatchKeysReturns: []interface{}{nil},
+			commitReturns:                   []interface{}{nil},
+			isErrorExpected:                 false,
+		})
+	})
+
+	t.Run("doesn't have batch in storage - successfully stored (Etrog fork)", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
