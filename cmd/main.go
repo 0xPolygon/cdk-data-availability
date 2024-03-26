@@ -154,8 +154,8 @@ func start(cliCtx *cli.Context) error {
 				),
 			},
 			{
-				Name:    status.APIDAC,
-				Service: status.NewDacEndpoints(storage),
+				Name:    status.APISTATUS,
+				Service: status.NewStatusEndpoints(storage),
 			},
 		},
 	)

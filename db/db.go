@@ -31,7 +31,7 @@ type DB interface {
 	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
 
-	GetRowCount(query string, count *uint64, ctx context.Context) error
+	GetOffchainDataRowCount(ctx context.Context, count *uint64) error
 }
 
 // Tx is the interface that defines functions a db tx has to implement
@@ -236,9 +236,10 @@ func (db *pgDB) querier(dbTx sqlx.QueryerContext) sqlx.QueryerContext {
 	return db.pg
 }
 
-// GetRowCount returns the count of rows in the table
-func (db *pgDB) GetRowCount(query string, count *uint64, ctx context.Context) error {
-	if err := db.pg.QueryRowContext(ctx, query).Scan(count); err != nil {
+// GetOffchainDataRowCount returns the count of rows in the offchain_data table
+func (db *pgDB) GetOffchainDataRowCount(ctx context.Context, count *uint64) error {
+	const countQuery = "SELECT COUNT(*) FROM data_node.offchain_data;"
+	if err := db.pg.QueryRowContext(ctx, countQuery).Scan(count); err != nil {
 		return err
 	}
 	return nil

@@ -299,17 +299,17 @@ func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common
 	return _c
 }
 
-// GetRowCount provides a mock function with given fields: query, count, ctx
-func (_m *DB) GetRowCount(query string, count *uint64, ctx context.Context) error {
-	ret := _m.Called(query, count, ctx)
+// GetOffchainDataRowCount provides a mock function with given fields: ctx, count
+func (_m *DB) GetOffchainDataRowCount(ctx context.Context, count *uint64) error {
+	ret := _m.Called(ctx, count)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetRowCount")
+		panic("no return value specified for GetOffchainDataRowCount")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, *uint64, context.Context) error); ok {
-		r0 = rf(query, count, ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, *uint64) error); ok {
+		r0 = rf(ctx, count)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -317,32 +317,31 @@ func (_m *DB) GetRowCount(query string, count *uint64, ctx context.Context) erro
 	return r0
 }
 
-// DB_GetRowCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRowCount'
-type DB_GetRowCount_Call struct {
+// DB_GetOffchainDataRowCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOffchainDataRowCount'
+type DB_GetOffchainDataRowCount_Call struct {
 	*mock.Call
 }
 
-// GetRowCount is a helper method to define mock.On call
-//   - query string
-//   - count *uint64
+// GetOffchainDataRowCount is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *DB_Expecter) GetRowCount(query interface{}, count interface{}, ctx interface{}) *DB_GetRowCount_Call {
-	return &DB_GetRowCount_Call{Call: _e.mock.On("GetRowCount", query, count, ctx)}
+//   - count *uint64
+func (_e *DB_Expecter) GetOffchainDataRowCount(ctx interface{}, count interface{}) *DB_GetOffchainDataRowCount_Call {
+	return &DB_GetOffchainDataRowCount_Call{Call: _e.mock.On("GetOffchainDataRowCount", ctx, count)}
 }
 
-func (_c *DB_GetRowCount_Call) Run(run func(query string, count *uint64, ctx context.Context)) *DB_GetRowCount_Call {
+func (_c *DB_GetOffchainDataRowCount_Call) Run(run func(ctx context.Context, count *uint64)) *DB_GetOffchainDataRowCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(*uint64), args[2].(context.Context))
+		run(args[0].(context.Context), args[1].(*uint64))
 	})
 	return _c
 }
 
-func (_c *DB_GetRowCount_Call) Return(_a0 error) *DB_GetRowCount_Call {
+func (_c *DB_GetOffchainDataRowCount_Call) Return(_a0 error) *DB_GetOffchainDataRowCount_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_GetRowCount_Call) RunAndReturn(run func(string, *uint64, context.Context) error) *DB_GetRowCount_Call {
+func (_c *DB_GetOffchainDataRowCount_Call) RunAndReturn(run func(context.Context, *uint64) error) *DB_GetOffchainDataRowCount_Call {
 	_c.Call.Return(run)
 	return _c
 }

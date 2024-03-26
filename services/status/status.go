@@ -1,4 +1,4 @@
-package dac
+package status
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 )
 
-// APIDAC  is the namespace of the status service
-const APIDAC = "dac"
+// APISTATUS is the namespace of the status service
+const APISTATUS = "status"
 
 type Status struct {
 	Uptime           string
@@ -21,29 +21,27 @@ type Status struct {
 	BackfillProgress uint64
 }
 
-// DacEndpoints contains implementations for the "status" RPC endpoints
-type DacEndpoints struct {
+// StatusEndpoints contains implementations for the "status" RPC endpoints
+type StatusEndpoints struct {
 	db        db.DB
 	startTime time.Time
 }
 
-// NewDacEndpoints returns StatusEndpoints
-func NewDacEndpoints(db db.DB) *DacEndpoints {
-	return &DacEndpoints{
+// NewStatusEndpoints returns StatusEndpoints
+func NewStatusEndpoints(db db.DB) *StatusEndpoints {
+	return &StatusEndpoints{
 		db:        db,
 		startTime: time.Now(),
 	}
 }
 
 // GetStatus returns the status of the service
-func (s *DacEndpoints) GetStatus() (interface{}, rpc.Error) {
+func (s *StatusEndpoints) GetStatus() (interface{}, rpc.Error) {
 	ctx := context.Background()
 	uptime := time.Since(s.startTime).String()
 
-	const countQuery = "SELECT COUNT(*) FROM data_node.offchain_data;"
-
 	var rowCount uint64
-	err := s.db.GetRowCount(countQuery, &rowCount, ctx)
+	err := s.db.GetOffchainDataRowCount(ctx, &rowCount)
 	if err != nil {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
 	}
