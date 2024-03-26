@@ -7,7 +7,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"

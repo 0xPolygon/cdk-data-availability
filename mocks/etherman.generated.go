@@ -16,7 +16,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	polygonvalidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
+	polygonvalidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 
 	types "github.com/ethereum/go-ethereum/core/types"
 )
