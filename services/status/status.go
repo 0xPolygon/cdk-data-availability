@@ -9,6 +9,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
+	"github.com/0xPolygon/cdk-data-availability/types"
 )
 
 // APISTATUS is the namespace of the status service
@@ -21,28 +22,27 @@ type Status struct {
 	BackfillProgress uint64
 }
 
-// StatusEndpoints contains implementations for the "status" RPC endpoints
-type StatusEndpoints struct {
+// Endpoints contains implementations for the "status" RPC endpoints
+type Endpoints struct {
 	db        db.DB
 	startTime time.Time
 }
 
-// NewStatusEndpoints returns StatusEndpoints
-func NewStatusEndpoints(db db.DB) *StatusEndpoints {
-	return &StatusEndpoints{
+// NewEndpoints returns Endpoints
+func NewEndpoints(db db.DB) *Endpoints {
+	return &Endpoints{
 		db:        db,
 		startTime: time.Now(),
 	}
 }
 
 // GetStatus returns the status of the service
-func (s *StatusEndpoints) GetStatus() (interface{}, rpc.Error) {
+func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 	ctx := context.Background()
 	uptime := time.Since(s.startTime).String()
 
 	var rowCount uint64
-	err := s.db.GetOffchainDataRowCount(ctx, &rowCount)
-	if err != nil {
+	if err := s.db.GetOffchainDataRowCount(ctx, &rowCount); err != nil {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
 	}
 
@@ -51,12 +51,10 @@ func (s *StatusEndpoints) GetStatus() (interface{}, rpc.Error) {
 		log.Errorf("failed to get last block processed by the synchronizer: %v", err)
 	}
 
-	status := Status{
+	return types.DACStatus{
 		Version:          dataavailability.Version,
 		Uptime:           uptime,
 		KeyCount:         rowCount,
 		BackfillProgress: backfillProgress,
-	}
-
-	return status, nil
+	}, nil
 }

@@ -3,14 +3,13 @@ package status
 import (
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
-	"github.com/stretchr/testify/require"
-
 	"github.com/0xPolygon/cdk-data-availability/mocks"
+	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestStatusEndpoints_GetStatus(t *testing.T) {
+func TestEndpoints_GetStatus(t *testing.T) {
 	tests := []struct {
 		name                       string
 		getOffchainDataRowCountErr error
@@ -51,7 +50,7 @@ func TestStatusEndpoints_GetStatus(t *testing.T) {
 			dbMock.On("GetLastProcessedBlock", mock.Anything, mock.Anything).
 				Return(tt.backfillProgress, tt.getLastProcessedBlockErr)
 
-			statusEndpoints := NewStatusEndpoints(dbMock)
+			statusEndpoints := NewEndpoints(dbMock)
 
 			actual, err := statusEndpoints.GetStatus()
 
@@ -61,12 +60,11 @@ func TestStatusEndpoints_GetStatus(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				require.NotEmpty(t, actual.(Status).Uptime)
-				require.Equal(t, "v0.1.0", actual.(Status).Version)
-				require.Equal(t, tt.expectedKeyCount, actual.(Status).KeyCount)
-				require.Equal(t, tt.backfillProgress, actual.(Status).BackfillProgress)
+				require.NotEmpty(t, actual.(types.DACStatus).Uptime)
+				require.Equal(t, "v0.1.0", actual.(types.DACStatus).Version)
+				require.Equal(t, tt.expectedKeyCount, actual.(types.DACStatus).KeyCount)
+				require.Equal(t, tt.backfillProgress, actual.(types.DACStatus).BackfillProgress)
 			}
-
 		})
 	}
 }

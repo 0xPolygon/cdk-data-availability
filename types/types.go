@@ -15,6 +15,14 @@ const (
 	hexBitSize64 = 64
 )
 
+// DACStatus contains DAC status info
+type DACStatus struct {
+	Uptime           string
+	Version          string
+	KeyCount         uint64
+	BackfillProgress uint64
+}
+
 // BatchKey is the pairing of batch number and data hash of a batch
 type BatchKey struct {
 	Number uint64

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSyncEndpoints_GetOffChainData(t *testing.T) {
+func TestEndpoints_GetOffChainData(t *testing.T) {
 	tests := []struct {
 		name  string
 		hash  types.ArgHash
