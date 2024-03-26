@@ -16,6 +16,64 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestClient_ClientVersion(t *testing.T) {
+	tests := []struct {
+		name       string
+		result     string
+		version    string
+		statusCode int
+		err        error
+	}{
+		{
+			name:    "successfully got client version",
+			result:  `{"result":"version"}`,
+			version: "version",
+		},
+		{
+			name:   "error returned by server",
+			result: `{"error":{"code":123,"message":"test error"}}`,
+			err:    errors.New("123 test error"),
+		},
+		{
+			name:       "unsuccessful status code returned by server",
+			statusCode: http.StatusInternalServerError,
+			err:        errors.New("invalid status code, expected: 200, found: 500"),
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				var res rpc.Request
+				require.NoError(t, json.NewDecoder(r.Body).Decode(&res))
+				require.Equal(t, "web3_clientVersion", res.Method)
+
+				if tt.statusCode > 0 {
+					w.WriteHeader(tt.statusCode)
+				}
+
+				_, err := fmt.Fprint(w, tt.result)
+				require.NoError(t, err)
+			}))
+			defer srv.Close()
+
+			client := New(srv.URL)
+
+			got, err := client.ClientVersion(context.Background())
+			if tt.err != nil {
+				require.Error(t, err)
+				require.EqualError(t, tt.err, err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.version, got)
+			}
+		})
+	}
+}
+
 func TestClient_SignSequence(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -87,7 +145,7 @@ func TestClient_SignSequence(t *testing.T) {
 
 			client := New(srv.URL)
 
-			got, err := client.SignSequence(tt.ss)
+			got, err := client.SignSequence(context.Background(), tt.ss)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, tt.err, err.Error())

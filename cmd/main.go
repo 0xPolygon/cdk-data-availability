@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/0xPolygon/cdk-data-availability/services/web3"
+
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
 	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
@@ -140,6 +142,10 @@ func start(cliCtx *cli.Context) error {
 	server := rpc.NewServer(
 		c.RPC,
 		[]rpc.Service{
+			{
+				Name:    web3.APIWEB3,
+				Service: web3.NewEndpoints(),
+			},
 			{
 				Name:    sync.APISYNC,
 				Service: sync.NewEndpoints(storage),

@@ -17,9 +17,10 @@ type Factory interface {
 
 // Client is the interface that defines the implementation of all the endpoints
 type Client interface {
+	ClientVersion(ctx context.Context) (string, error)
 	GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error)
 	ListOffChainData(ctx context.Context, hashes []common.Hash) (map[common.Hash][]byte, error)
-	SignSequence(signedSequence types.SignedSequence) ([]byte, error)
+	SignSequence(ctx context.Context, signedSequence types.SignedSequence) ([]byte, error)
 }
 
 // factory is the implementation of the data committee client factory
@@ -47,10 +48,29 @@ func New(url string) Client {
 	}
 }
 
+// ClientVersion returns DAC version
+func (c *client) ClientVersion(ctx context.Context) (string, error) {
+	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "web3_clientVersion")
+	if err != nil {
+		return "", err
+	}
+
+	if response.Error != nil {
+		return "", fmt.Errorf("%v %v", response.Error.Code, response.Error.Message)
+	}
+
+	var result string
+	if err = json.Unmarshal(response.Result, &result); err != nil {
+		return "", err
+	}
+
+	return result, nil
+}
+
 // SignSequence sends a request to sign the given sequence by the data committee member
 // if successful returns the signature. The signature should be validated after using this method!
-func (c *client) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
-	response, err := rpc.JSONRPCCall(c.url, "datacom_signSequence", signedSequence)
+func (c *client) SignSequence(ctx context.Context, signedSequence types.SignedSequence) ([]byte, error) {
+	response, err := rpc.JSONRPCCallWithContext(ctx, c.url, "datacom_signSequence", signedSequence)
 	if err != nil {
 		return nil, err
 	}
