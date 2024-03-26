@@ -7,8 +7,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/0xPolygon/cdk-data-availability/services/web3"
-
 	dataavailability "github.com/0xPolygon/cdk-data-availability"
 	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
@@ -19,6 +17,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/services/datacom"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
+	"github.com/0xPolygon/cdk-data-availability/services/web3"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/crypto"
