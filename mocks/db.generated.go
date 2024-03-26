@@ -404,6 +404,66 @@ func (_c *DB_GetUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context)
 	return _c
 }
 
+// ListOffChainData provides a mock function with given fields: ctx, keys, dbTx
+func (_m *DB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error) {
+	ret := _m.Called(ctx, keys, dbTx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListOffChainData")
+	}
+
+	var r0 map[common.Hash]types.ArgBytes
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash, sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)); ok {
+		return rf(ctx, keys, dbTx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash, sqlx.QueryerContext) map[common.Hash]types.ArgBytes); ok {
+		r0 = rf(ctx, keys, dbTx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[common.Hash]types.ArgBytes)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []common.Hash, sqlx.QueryerContext) error); ok {
+		r1 = rf(ctx, keys, dbTx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_ListOffChainData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListOffChainData'
+type DB_ListOffChainData_Call struct {
+	*mock.Call
+}
+
+// ListOffChainData is a helper method to define mock.On call
+//   - ctx context.Context
+//   - keys []common.Hash
+//   - dbTx sqlx.QueryerContext
+func (_e *DB_Expecter) ListOffChainData(ctx interface{}, keys interface{}, dbTx interface{}) *DB_ListOffChainData_Call {
+	return &DB_ListOffChainData_Call{Call: _e.mock.On("ListOffChainData", ctx, keys, dbTx)}
+}
+
+func (_c *DB_ListOffChainData_Call) Run(run func(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext)) *DB_ListOffChainData_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]common.Hash), args[2].(sqlx.QueryerContext))
+	})
+	return _c
+}
+
+func (_c *DB_ListOffChainData_Call) Return(_a0 map[common.Hash]types.ArgBytes, _a1 error) *DB_ListOffChainData_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_ListOffChainData_Call) RunAndReturn(run func(context.Context, []common.Hash, sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)) *DB_ListOffChainData_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreLastProcessedBlock provides a mock function with given fields: ctx, task, block, dbTx
 func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
 	ret := _m.Called(ctx, task, block, dbTx)

@@ -4,9 +4,13 @@ set -e
 
 gen() {
     local package=$1
+    local forkName=$2
 
-    abigen --bin bin/${package}.bin --abi abi/${package}.abi --pkg=${package} --out=${package}/${package}.go
+    abigen --bin ${forkName}/bin/${package}.bin --abi ${forkName}/abi/${package}.abi --pkg=${package} --out=${forkName}/${package}/${package}.go
 }
 
-gen polygonvalidium
-gen polygondatacommittee
+gen polygonvalidium etrog
+gen polygondatacommittee etrog
+
+gen polygonvalidium elderberry
+gen polygondatacommittee elderberry

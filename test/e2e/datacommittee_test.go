@@ -17,8 +17,8 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygondatacommittee"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygondatacommittee"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
@@ -204,11 +204,12 @@ func TestDataCommittee(t *testing.T) {
 		expectedKeys, err := getSequenceBatchesKeys(clientL1, iter.Event)
 		require.NoError(t, err)
 		for _, m := range membs {
+			offchainData, err := listOffchainDataKeys(m, expectedKeys)
+			require.NoError(t, err)
+
 			// Each member (including m0) should have all the keys
 			for _, expected := range expectedKeys {
-				actual, err := getOffchainDataKeys(m, expected)
-				require.NoError(t, err)
-				require.Equal(t, expected, actual)
+				require.Equal(t, expected, offchainData[expected])
 			}
 		}
 	}
@@ -239,16 +240,24 @@ func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *polygonvalidium.P
 	return keys, err
 }
 
-func getOffchainDataKeys(m member, tx common.Hash) (common.Hash, error) {
+func listOffchainDataKeys(m member, txes []common.Hash) (map[common.Hash]common.Hash, error) {
 	testUrl := fmt.Sprintf("http://127.0.0.1:420%d", m.i)
 	mc := newTestClient(testUrl, m.addr)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
-	data, err := mc.client.GetOffChainData(ctx, tx)
+
+	data, err := mc.client.ListOffChainData(ctx, txes)
 	if err != nil {
-		return common.Hash{}, err
+		return nil, err
 	}
-	return crypto.Keccak256Hash(data), nil
+
+	preparedData := make(map[common.Hash]common.Hash)
+	for hash, val := range data {
+		preparedData[hash] = crypto.Keccak256Hash(val)
+	}
+
+	return preparedData, nil
 }
 
 type member struct {

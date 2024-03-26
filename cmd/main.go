@@ -143,11 +143,11 @@ func start(cliCtx *cli.Context) error {
 		[]rpc.Service{
 			{
 				Name:    sync.APISYNC,
-				Service: sync.NewSyncEndpoints(storage),
+				Service: sync.NewEndpoints(storage),
 			},
 			{
 				Name: datacom.APIDATACOM,
-				Service: datacom.NewDataComEndpoints(
+				Service: datacom.NewEndpoints(
 					storage,
 					pk,
 					sequencerTracker,

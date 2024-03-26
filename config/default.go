@@ -20,6 +20,7 @@ Timeout = "1m"
 RetryPeriod = "5s"
 BlockBatchSize = "64"
 GenesisBlock = "0"
+TrackSequencer = true
 
 [Log]
 Environment = "development" # "production" or "development"
