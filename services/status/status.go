@@ -15,13 +15,6 @@ import (
 // APISTATUS is the namespace of the status service
 const APISTATUS = "status"
 
-type Status struct {
-	Uptime           string
-	Version          string
-	KeyCount         uint64
-	BackfillProgress uint64
-}
-
 // Endpoints contains implementations for the "status" RPC endpoints
 type Endpoints struct {
 	db        db.DB

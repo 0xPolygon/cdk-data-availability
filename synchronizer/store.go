@@ -12,6 +12,7 @@ import (
 
 const dbTimeout = 2 * time.Second
 
+// L1SyncTask is the name of the L1 sync task
 const L1SyncTask = "L1"
 
 func getStartBlock(db dbTypes.DB) (uint64, error) {
