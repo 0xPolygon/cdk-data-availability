@@ -25,6 +25,62 @@ func (_m *Client) EXPECT() *Client_Expecter {
 	return &Client_Expecter{mock: &_m.Mock}
 }
 
+// ClientVersion provides a mock function with given fields: ctx
+func (_m *Client) ClientVersion(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClientVersion")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Client_ClientVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClientVersion'
+type Client_ClientVersion_Call struct {
+	*mock.Call
+}
+
+// ClientVersion is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Client_Expecter) ClientVersion(ctx interface{}) *Client_ClientVersion_Call {
+	return &Client_ClientVersion_Call{Call: _e.mock.On("ClientVersion", ctx)}
+}
+
+func (_c *Client_ClientVersion_Call) Run(run func(ctx context.Context)) *Client_ClientVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Client_ClientVersion_Call) Return(_a0 string, _a1 error) *Client_ClientVersion_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Client_ClientVersion_Call) RunAndReturn(run func(context.Context) (string, error)) *Client_ClientVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOffChainData provides a mock function with given fields: ctx, hash
 func (_m *Client) GetOffChainData(ctx context.Context, hash common.Hash) ([]byte, error) {
 	ret := _m.Called(ctx, hash)
@@ -143,9 +199,9 @@ func (_c *Client_ListOffChainData_Call) RunAndReturn(run func(context.Context, [
 	return _c
 }
 
-// SignSequence provides a mock function with given fields: signedSequence
-func (_m *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, error) {
-	ret := _m.Called(signedSequence)
+// SignSequence provides a mock function with given fields: ctx, signedSequence
+func (_m *Client) SignSequence(ctx context.Context, signedSequence types.SignedSequence) ([]byte, error) {
+	ret := _m.Called(ctx, signedSequence)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SignSequence")
@@ -153,19 +209,19 @@ func (_m *Client) SignSequence(signedSequence types.SignedSequence) ([]byte, err
 
 	var r0 []byte
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.SignedSequence) ([]byte, error)); ok {
-		return rf(signedSequence)
+	if rf, ok := ret.Get(0).(func(context.Context, types.SignedSequence) ([]byte, error)); ok {
+		return rf(ctx, signedSequence)
 	}
-	if rf, ok := ret.Get(0).(func(types.SignedSequence) []byte); ok {
-		r0 = rf(signedSequence)
+	if rf, ok := ret.Get(0).(func(context.Context, types.SignedSequence) []byte); ok {
+		r0 = rf(ctx, signedSequence)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]byte)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(types.SignedSequence) error); ok {
-		r1 = rf(signedSequence)
+	if rf, ok := ret.Get(1).(func(context.Context, types.SignedSequence) error); ok {
+		r1 = rf(ctx, signedSequence)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -179,14 +235,15 @@ type Client_SignSequence_Call struct {
 }
 
 // SignSequence is a helper method to define mock.On call
+//   - ctx context.Context
 //   - signedSequence types.SignedSequence
-func (_e *Client_Expecter) SignSequence(signedSequence interface{}) *Client_SignSequence_Call {
-	return &Client_SignSequence_Call{Call: _e.mock.On("SignSequence", signedSequence)}
+func (_e *Client_Expecter) SignSequence(ctx interface{}, signedSequence interface{}) *Client_SignSequence_Call {
+	return &Client_SignSequence_Call{Call: _e.mock.On("SignSequence", ctx, signedSequence)}
 }
 
-func (_c *Client_SignSequence_Call) Run(run func(signedSequence types.SignedSequence)) *Client_SignSequence_Call {
+func (_c *Client_SignSequence_Call) Run(run func(ctx context.Context, signedSequence types.SignedSequence)) *Client_SignSequence_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.SignedSequence))
+		run(args[0].(context.Context), args[1].(types.SignedSequence))
 	})
 	return _c
 }
@@ -196,7 +253,7 @@ func (_c *Client_SignSequence_Call) Return(_a0 []byte, _a1 error) *Client_SignSe
 	return _c
 }
 
-func (_c *Client_SignSequence_Call) RunAndReturn(run func(types.SignedSequence) ([]byte, error)) *Client_SignSequence_Call {
+func (_c *Client_SignSequence_Call) RunAndReturn(run func(context.Context, types.SignedSequence) ([]byte, error)) *Client_SignSequence_Call {
 	_c.Call.Return(run)
 	return _c
 }
