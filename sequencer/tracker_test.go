@@ -8,7 +8,7 @@ import (
 
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/config/types"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/polygonvalidium"
+	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/ethereum/go-ethereum/common"
@@ -84,77 +84,111 @@ func Test_NewTracker(t *testing.T) {
 }
 
 func TestTracker(t *testing.T) {
-	var (
-		addressesChan chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
-		urlsChan      chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL
-	)
+	t.Run("with enabled tracker", func(t *testing.T) {
+		var (
+			addressesChan chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
+			urlsChan      chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL
+		)
 
-	ctx := context.Background()
+		ctx := context.Background()
 
-	etherman := mocks.NewEtherman(t)
-	defer etherman.AssertExpectations(t)
+		etherman := mocks.NewEtherman(t)
+		defer etherman.AssertExpectations(t)
 
-	etherman.On("TrustedSequencer").Return(common.Address{}, nil)
-	etherman.On("TrustedSequencerURL").Return("127.0.0.1:8585", nil)
+		etherman.On("TrustedSequencer").Return(common.Address{}, nil)
+		etherman.On("TrustedSequencerURL").Return("127.0.0.1:8585", nil)
 
-	addressesSubscription := mocks.NewSubscription(t)
-	defer addressesSubscription.AssertExpectations(t)
+		addressesSubscription := mocks.NewSubscription(t)
+		defer addressesSubscription.AssertExpectations(t)
 
-	addressesSubscription.On("Err").Return(make(<-chan error))
-	addressesSubscription.On("Unsubscribe").Return()
+		addressesSubscription.On("Err").Return(make(<-chan error))
+		addressesSubscription.On("Unsubscribe").Return()
 
-	etherman.On("WatchSetTrustedSequencer", mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) {
-			var ok bool
-			addressesChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
-			require.True(t, ok)
-		}).
-		Return(addressesSubscription, nil)
+		etherman.On("WatchSetTrustedSequencer", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				var ok bool
+				addressesChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
+				require.True(t, ok)
+			}).
+			Return(addressesSubscription, nil)
 
-	urlsSubscription := mocks.NewSubscription(t)
-	defer urlsSubscription.AssertExpectations(t)
+		urlsSubscription := mocks.NewSubscription(t)
+		defer urlsSubscription.AssertExpectations(t)
 
-	urlsSubscription.On("Err").Return(make(<-chan error))
-	urlsSubscription.On("Unsubscribe").Return()
+		urlsSubscription.On("Err").Return(make(<-chan error))
+		urlsSubscription.On("Unsubscribe").Return()
 
-	etherman.On("WatchSetTrustedSequencerURL", mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) {
-			var ok bool
-			urlsChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
-			require.True(t, ok)
-		}).
-		Return(urlsSubscription, nil)
+		etherman.On("WatchSetTrustedSequencerURL", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				var ok bool
+				urlsChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
+				require.True(t, ok)
+			}).
+			Return(urlsSubscription, nil)
 
-	tracker, err := sequencer.NewTracker(config.L1Config{
-		Timeout:     types.NewDuration(time.Second * 10),
-		RetryPeriod: types.NewDuration(time.Millisecond),
-	}, etherman)
-	require.NoError(t, err)
+		tracker, err := sequencer.NewTracker(config.L1Config{
+			Timeout:        types.NewDuration(time.Second * 10),
+			RetryPeriod:    types.NewDuration(time.Millisecond),
+			TrackSequencer: true,
+		}, etherman)
+		require.NoError(t, err)
 
-	tracker.Start(ctx)
+		require.Equal(t, common.Address{}, tracker.GetAddr())
+		require.Equal(t, "127.0.0.1:8585", tracker.GetUrl())
 
-	var (
-		updatedAddress = common.BytesToAddress([]byte("updated"))
-		updatedURL     = "127.0.0.1:9585"
-	)
+		tracker.Start(ctx)
 
-	eventually(t, 10, func() bool {
-		return addressesChan != nil && urlsChan != nil
+		var (
+			updatedAddress = common.BytesToAddress([]byte("updated"))
+			updatedURL     = "127.0.0.1:9585"
+		)
+
+		eventually(t, 10, func() bool {
+			return addressesChan != nil && urlsChan != nil
+		})
+
+		addressesChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencer{
+			NewTrustedSequencer: updatedAddress,
+		}
+
+		urlsChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencerURL{
+			NewTrustedSequencerURL: updatedURL,
+		}
+
+		tracker.Stop()
+
+		// Wait for values to be updated
+		eventually(t, 10, func() bool {
+			return tracker.GetAddr() == updatedAddress && tracker.GetUrl() == updatedURL
+		})
 	})
 
-	addressesChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencer{
-		NewTrustedSequencer: updatedAddress,
-	}
+	t.Run("with disabled tracker", func(t *testing.T) {
+		ctx := context.Background()
 
-	urlsChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencerURL{
-		NewTrustedSequencerURL: updatedURL,
-	}
+		etherman := mocks.NewEtherman(t)
+		defer etherman.AssertExpectations(t)
 
-	tracker.Stop()
+		etherman.On("TrustedSequencer").Return(common.Address{}, nil)
+		etherman.On("TrustedSequencerURL").Return("127.0.0.1:8585", nil)
 
-	// Wait for values to be updated
-	eventually(t, 10, func() bool {
-		return tracker.GetAddr() == updatedAddress && tracker.GetUrl() == updatedURL
+		tracker, err := sequencer.NewTracker(config.L1Config{
+			Timeout:     types.NewDuration(time.Second * 10),
+			RetryPeriod: types.NewDuration(time.Millisecond),
+		}, etherman)
+		require.NoError(t, err)
+
+		require.Equal(t, common.Address{}, tracker.GetAddr())
+		require.Equal(t, "127.0.0.1:8585", tracker.GetUrl())
+
+		tracker.Start(ctx)
+
+		time.Sleep(time.Second)
+
+		tracker.Stop()
+
+		require.Equal(t, common.Address{}, tracker.GetAddr())
+		require.Equal(t, "127.0.0.1:8585", tracker.GetUrl())
 	})
 }
 

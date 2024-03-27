@@ -29,7 +29,10 @@ type DB interface {
 
 	Exists(ctx context.Context, key common.Hash) bool
 	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
+	ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+
+	CountOffchainData(ctx context.Context) (uint64, error)
 }
 
 // Tx is the interface that defines functions a db tx has to implement
@@ -216,6 +219,66 @@ func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.
 	}
 
 	return common.FromHex(hexValue), nil
+}
+
+// ListOffChainData returns values identified by the given keys
+func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error) {
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	const listOffchainDataSQL = `
+		SELECT key, value
+		FROM data_node.offchain_data 
+		WHERE key IN (?);
+	`
+
+	preparedKeys := make([]string, len(keys))
+	for i, key := range keys {
+		preparedKeys[i] = key.Hex()
+	}
+
+	query, args, err := sqlx.In(listOffchainDataSQL, preparedKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	// sqlx.In returns queries with the `?` bindvar, we can rebind it for our backend
+	query = db.pg.Rebind(query)
+
+	rows, err := db.querier(dbTx).QueryxContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	list := make(map[common.Hash]types.ArgBytes)
+	for rows.Next() {
+		data := struct {
+			Key   string `db:"key"`
+			Value string `db:"value"`
+		}{}
+		if err = rows.StructScan(&data); err != nil {
+			return nil, err
+		}
+
+		list[common.HexToHash(data.Key)] = common.FromHex(data.Value)
+	}
+
+	return list, nil
+}
+
+// CountOffchainData returns the count of rows in the offchain_data table
+func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
+	const countQuery = "SELECT COUNT(*) FROM data_node.offchain_data;"
+
+	var count uint64
+	if err := db.pg.QueryRowContext(ctx, countQuery).Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
 
 func (db *pgDB) execer(dbTx sqlx.ExecerContext) sqlx.ExecerContext {
