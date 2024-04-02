@@ -16,6 +16,13 @@ import (
 )
 
 func TestTracker(t *testing.T) {
+	var (
+		initialAddress = common.BytesToAddress([]byte("initial"))
+		initialURL     = "127.0.0.1:8585"
+		updatedAddress = common.BytesToAddress([]byte("updated"))
+		updatedURL     = "127.0.0.1:9585"
+	)
+
 	t.Run("with enabled tracker", func(t *testing.T) {
 		var (
 			addressesChan chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
@@ -26,8 +33,8 @@ func TestTracker(t *testing.T) {
 
 		etherman := mocks.NewEtherman(t)
 
-		etherman.On("TrustedSequencer", mock.Anything).Return(common.Address{}, nil)
-		etherman.On("TrustedSequencerURL", mock.Anything).Return("127.0.0.1:8585", nil)
+		etherman.On("TrustedSequencer", mock.Anything).Return(initialAddress, nil)
+		etherman.On("TrustedSequencerURL", mock.Anything).Return(initialURL, nil)
 
 		addressesSubscription := mocks.NewSubscription(t)
 
@@ -66,10 +73,8 @@ func TestTracker(t *testing.T) {
 
 		tracker.Start(ctx)
 
-		var (
-			updatedAddress = common.BytesToAddress([]byte("updated"))
-			updatedURL     = "127.0.0.1:9585"
-		)
+		require.Equal(t, initialAddress, tracker.GetAddr())
+		require.Equal(t, initialURL, tracker.GetUrl())
 
 		eventually(t, 10, func() bool {
 			return addressesChan != nil && urlsChan != nil
@@ -100,8 +105,8 @@ func TestTracker(t *testing.T) {
 
 		etherman := mocks.NewEtherman(t)
 
-		etherman.On("TrustedSequencer", mock.Anything).Return(common.Address{}, nil)
-		etherman.On("TrustedSequencerURL", mock.Anything).Return("127.0.0.1:8585", nil)
+		etherman.On("TrustedSequencer", mock.Anything).Return(initialAddress, nil)
+		etherman.On("TrustedSequencerURL", mock.Anything).Return(initialURL, nil)
 
 		tracker := sequencer.NewTracker(config.L1Config{
 			Timeout:     types.NewDuration(time.Second * 10),
@@ -113,12 +118,10 @@ func TestTracker(t *testing.T) {
 
 		tracker.Start(ctx)
 
-		time.Sleep(time.Second)
+		require.Equal(t, initialAddress, tracker.GetAddr())
+		require.Equal(t, initialURL, tracker.GetUrl())
 
 		tracker.Stop()
-
-		require.Equal(t, common.Address{}, tracker.GetAddr())
-		require.Equal(t, "127.0.0.1:8585", tracker.GetUrl())
 
 		etherman.AssertExpectations(t)
 	})
