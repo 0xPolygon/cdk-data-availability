@@ -14,6 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+const (
+	// maxConnectionRetries is the maximum number of retries to connect to the RPC node before failing.
+	maxConnectionRetries = 5
+)
+
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
 	client       etherman.Etherman
@@ -110,7 +115,7 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 			}
 
 			return err
-		}, 5, st.retry); err != nil {
+		}, maxConnectionRetries, st.retry); err != nil {
 			log.Fatalf("failed subscribing to trusted sequencer event: %v. Check ws(s) availability.", err)
 		}
 	}
@@ -151,7 +156,7 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 			}
 
 			return err
-		}, 5, st.retry); err != nil {
+		}, maxConnectionRetries, st.retry); err != nil {
 			log.Fatalf("failed subscribing to trusted sequencer URL event: %v. Check ws(s) availability.", err)
 		}
 	}
