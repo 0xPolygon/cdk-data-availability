@@ -110,10 +110,7 @@ func start(cliCtx *cli.Context) error {
 
 	var cancelFuncs []context.CancelFunc
 
-	sequencerTracker, err := sequencer.NewTracker(c.L1, etm)
-	if err != nil {
-		log.Fatal(err)
-	}
+	sequencerTracker := sequencer.NewTracker(c.L1, etm)
 	go sequencerTracker.Start(cliCtx.Context)
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
@@ -122,8 +119,7 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	err = detector.Start()
-	if err != nil {
+	if err = detector.Start(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -157,7 +153,7 @@ func start(cliCtx *cli.Context) error {
 	)
 
 	// Run!
-	if err := server.Start(); err != nil {
+	if err = server.Start(); err != nil {
 		log.Fatal(err)
 	}
 

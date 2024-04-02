@@ -34,12 +34,12 @@ type Etherman interface {
 	GetCurrentDataCommittee() (*DataCommittee, error)
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
 	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
-	TrustedSequencer() (common.Address, error)
+	TrustedSequencer(ctx context.Context) (common.Address, error)
 	WatchSetTrustedSequencer(
 		ctx context.Context,
 		events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer,
 	) (event.Subscription, error)
-	TrustedSequencerURL() (string, error)
+	TrustedSequencerURL(ctx context.Context) (string, error)
 	WatchSetTrustedSequencerURL(
 		ctx context.Context,
 		events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL,
@@ -98,8 +98,11 @@ func (e *etherman) GetTx(ctx context.Context, txHash common.Hash) (*types.Transa
 }
 
 // TrustedSequencer gets trusted sequencer address
-func (e *etherman) TrustedSequencer() (common.Address, error) {
-	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{Pending: false})
+func (e *etherman) TrustedSequencer(ctx context.Context) (common.Address, error) {
+	return e.CDKValidium.TrustedSequencer(&bind.CallOpts{
+		Context: ctx,
+		Pending: false,
+	})
 }
 
 // WatchSetTrustedSequencer watches trusted sequencer address
@@ -111,8 +114,11 @@ func (e *etherman) WatchSetTrustedSequencer(
 }
 
 // TrustedSequencerURL gets trusted sequencer's RPC url
-func (e *etherman) TrustedSequencerURL() (string, error) {
-	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{Pending: false})
+func (e *etherman) TrustedSequencerURL(ctx context.Context) (string, error) {
+	return e.CDKValidium.TrustedSequencerURL(&bind.CallOpts{
+		Context: ctx,
+		Pending: false,
+	})
 }
 
 // WatchSetTrustedSequencerURL watches trusted sequencer's RPC url

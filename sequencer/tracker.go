@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xPolygon/cdk-data-availability/pkg/backoff"
+
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
@@ -27,31 +29,14 @@ type Tracker struct {
 }
 
 // NewTracker creates a new Tracker
-func NewTracker(cfg config.L1Config, ethClient etherman.Etherman) (*Tracker, error) {
-	log.Info("starting sequencer address tracker")
-	addr, err := ethClient.TrustedSequencer()
-	if err != nil {
-		return nil, err
-	}
-
-	log.Infof("current sequencer addr: %s", addr.Hex())
-	url, err := ethClient.TrustedSequencerURL()
-	if err != nil {
-		return nil, err
-	}
-
-	log.Infof("current sequencer url: %s", url)
-	w := &Tracker{
+func NewTracker(cfg config.L1Config, ethClient etherman.Etherman) *Tracker {
+	return &Tracker{
 		client:       ethClient,
 		stop:         make(chan struct{}),
 		timeout:      cfg.Timeout.Duration,
 		retry:        cfg.RetryPeriod.Duration,
-		addr:         addr,
-		url:          url,
 		trackChanges: cfg.TrackSequencer,
 	}
-
-	return w, nil
 }
 
 // GetAddr returns the last known address of the Sequencer
@@ -81,15 +66,35 @@ func (st *Tracker) setUrl(url string) {
 }
 
 // Start starts the SequencerTracker
-func (st *Tracker) Start(ctx context.Context) {
+func (st *Tracker) Start(parentCtx context.Context) {
 	st.startOnce.Do(func() {
-		if !st.trackChanges {
-			log.Info("sequencer tracking disabled")
+		ctx, cancel := context.WithTimeout(parentCtx, st.timeout)
+		defer cancel()
+
+		addr, err := st.client.TrustedSequencer(ctx)
+		if err != nil {
+			log.Fatalf("failed to get sequencer addr: %v", err)
 			return
 		}
 
-		go st.trackAddrChanges(ctx)
-		go st.trackUrlChanges(ctx)
+		log.Infof("current sequencer addr: %s", addr.Hex())
+		st.setAddr(addr)
+
+		url, err := st.client.TrustedSequencerURL(ctx)
+		if err != nil {
+			log.Fatalf("failed to get sequencer addr: %v", err)
+			return
+		}
+
+		log.Infof("current sequencer url: %s", url)
+		st.setUrl(url)
+
+		if st.trackChanges {
+			log.Info("sequencer tracking enabled")
+
+			go st.trackAddrChanges(parentCtx)
+			go st.trackUrlChanges(parentCtx)
+		}
 	})
 }
 
@@ -97,19 +102,17 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
 	defer close(events)
 
-	ctx, cancel := context.WithTimeout(ctx, st.timeout)
-	defer cancel()
-
 	var sub event.Subscription
 
 	initSubscription := func() {
-		var err error
-		for sub, err = st.client.WatchSetTrustedSequencer(ctx, events); err != nil; {
-			<-time.After(st.retry)
-
+		if err := backoff.Exponential(func() (err error) {
 			if sub, err = st.client.WatchSetTrustedSequencer(ctx, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
+
+			return err
+		}, 5, st.retry); err != nil {
+			log.Fatalf("failed subscribing to trusted sequencer event: %v. Check ws(s) availability.", err)
 		}
 	}
 
@@ -140,19 +143,17 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
 	defer close(events)
 
-	ctx, cancel := context.WithTimeout(ctx, st.timeout)
-	defer cancel()
-
 	var sub event.Subscription
 
 	initSubscription := func() {
-		var err error
-		for sub, err = st.client.WatchSetTrustedSequencerURL(ctx, events); err != nil; {
-			<-time.After(st.retry)
-
+		if err := backoff.Exponential(func() (err error) {
 			if sub, err = st.client.WatchSetTrustedSequencerURL(ctx, events); err != nil {
-				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
+				log.Errorf("error subscribing to trusted sequencer URL event, retrying: %v", err)
 			}
+
+			return err
+		}, 5, st.retry); err != nil {
+			log.Fatalf("failed subscribing to trusted sequencer URL event: %v. Check ws(s) availability.", err)
 		}
 	}
 

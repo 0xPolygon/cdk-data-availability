@@ -29,8 +29,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	etm, err := etherman.New(ctx.Context, cfg.L1)
 	require.NoError(t, err)
 
-	tracker, err := sequencer.NewTracker(cfg.L1, etm)
-	require.NoError(t, err)
+	tracker := sequencer.NewTracker(cfg.L1, etm)
 
 	go tracker.Start(ctx.Context)
 	defer tracker.Stop()

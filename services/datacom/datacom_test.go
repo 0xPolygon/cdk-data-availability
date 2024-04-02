@@ -66,14 +66,13 @@ func TestDataCom_SignSequence(t *testing.T) {
 
 		ethermanMock := mocks.NewEtherman(t)
 
-		ethermanMock.On("TrustedSequencer").Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
-		ethermanMock.On("TrustedSequencerURL").Return("http://some-url", nil).Once()
+		ethermanMock.On("TrustedSequencer", mock.Anything).Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
+		ethermanMock.On("TrustedSequencerURL", mock.Anything).Return("http://some-url", nil).Once()
 
-		sequencer, err := sequencer.NewTracker(config.L1Config{
+		sequencer := sequencer.NewTracker(config.L1Config{
 			Timeout:     cfgTypes.Duration{Duration: time.Minute},
 			RetryPeriod: cfgTypes.Duration{Duration: time.Second},
 		}, ethermanMock)
-		require.NoError(t, err)
 
 		if cfg.sender != nil {
 			signedSequence, err = sequence.Sign(cfg.sender)
