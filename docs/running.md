@@ -83,6 +83,7 @@ Timeout = "3m"
 RetryPeriod = "5s"
 BlockBatchSize = 32
 TrackSequencer = true
+TrackSequencerPollInterval = "1m"
 
 [Log]
 Environment = "development" # "production" or "development"

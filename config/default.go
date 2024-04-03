@@ -20,6 +20,7 @@ RetryPeriod = "5s"
 BlockBatchSize = "64"
 GenesisBlock = "0"
 TrackSequencer = true
+TrackSequencerPollInterval = "1m"
 
 [Log]
 Environment = "development" # "production" or "development"
