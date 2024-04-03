@@ -32,14 +32,14 @@ type Config struct {
 
 // L1Config is a struct that defines L1 contract and service settings
 type L1Config struct {
-	WsURL                  string         `mapstructure:"WsURL"`
-	RpcURL                 string         `mapstructure:"RpcURL"`
-	PolygonValidiumAddress string         `mapstructure:"PolygonValidiumAddress"`
-	DataCommitteeAddress   string         `mapstructure:"DataCommitteeAddress"`
-	Timeout                types.Duration `mapstructure:"Timeout"`
-	RetryPeriod            types.Duration `mapstructure:"RetryPeriod"`
-	BlockBatchSize         uint           `mapstructure:"BlockBatchSize"`
-	TrackSequencer         bool           `mapstructure:"TrackSequencer"`
+	RpcURL                     string         `mapstructure:"RpcURL"`
+	PolygonValidiumAddress     string         `mapstructure:"PolygonValidiumAddress"`
+	DataCommitteeAddress       string         `mapstructure:"DataCommitteeAddress"`
+	Timeout                    types.Duration `mapstructure:"Timeout"`
+	RetryPeriod                types.Duration `mapstructure:"RetryPeriod"`
+	BlockBatchSize             uint           `mapstructure:"BlockBatchSize"`
+	TrackSequencer             bool           `mapstructure:"TrackSequencer"`
+	TrackSequencerPollInterval types.Duration `mapstructure:"TrackSequencerPollInterval"`
 
 	// GenesisBlock represents the block number where PolygonValidium contract is deployed on L1
 	GenesisBlock uint64 `mapstructure:"GenesisBlock"`

@@ -23,7 +23,7 @@ func TestTracker(t *testing.T) {
 		updatedURL     = "127.0.0.1:9585"
 	)
 
-	t.Run("with enabled tracker", func(t *testing.T) {
+	t.Run("with enabled subscription tracker", func(t *testing.T) {
 		var (
 			addressesChan chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
 			urlsChan      chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL
@@ -88,15 +88,52 @@ func TestTracker(t *testing.T) {
 			NewTrustedSequencerURL: updatedURL,
 		}
 
+		// Wait for values to be updated
+		eventually(t, 10, func() bool {
+			return tracker.GetAddr() == updatedAddress && tracker.GetUrl() == updatedURL
+		})
+
 		tracker.Stop()
+
+		urlsSubscription.AssertExpectations(t)
+		addressesSubscription.AssertExpectations(t)
+		etherman.AssertExpectations(t)
+	})
+
+	t.Run("with enabled polling tracker", func(t *testing.T) {
+		ctx := context.Background()
+
+		etherman := mocks.NewEtherman(t)
+
+		etherman.On("TrustedSequencer", mock.Anything).Return(initialAddress, nil)
+		etherman.On("TrustedSequencerURL", mock.Anything).Return(initialURL, nil)
+
+		etherman.On("TrustedSequencer", mock.Anything).Return(updatedAddress, nil)
+		etherman.On("TrustedSequencerURL", mock.Anything).Return(updatedURL, nil)
+
+		tracker := sequencer.NewTracker(config.L1Config{
+			RpcURL:                     "http://127.0.0.1:8545",
+			Timeout:                    types.NewDuration(time.Second * 10),
+			RetryPeriod:                types.NewDuration(time.Millisecond),
+			TrackSequencerPollInterval: types.NewDuration(time.Second),
+			TrackSequencer:             true,
+		}, etherman)
+
+		require.Equal(t, common.Address{}, tracker.GetAddr())
+		require.Empty(t, tracker.GetUrl())
+
+		tracker.Start(ctx)
+
+		require.Equal(t, initialAddress, tracker.GetAddr())
+		require.Equal(t, initialURL, tracker.GetUrl())
 
 		// Wait for values to be updated
 		eventually(t, 10, func() bool {
 			return tracker.GetAddr() == updatedAddress && tracker.GetUrl() == updatedURL
 		})
 
-		urlsSubscription.AssertExpectations(t)
-		addressesSubscription.AssertExpectations(t)
+		tracker.Stop()
+
 		etherman.AssertExpectations(t)
 	})
 
