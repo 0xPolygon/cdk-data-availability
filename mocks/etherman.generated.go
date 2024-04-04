@@ -332,9 +332,9 @@ func (_c *Etherman_HeaderByNumber_Call) RunAndReturn(run func(context.Context, *
 	return _c
 }
 
-// TrustedSequencer provides a mock function with given fields:
-func (_m *Etherman) TrustedSequencer() (common.Address, error) {
-	ret := _m.Called()
+// TrustedSequencer provides a mock function with given fields: ctx
+func (_m *Etherman) TrustedSequencer(ctx context.Context) (common.Address, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TrustedSequencer")
@@ -342,19 +342,19 @@ func (_m *Etherman) TrustedSequencer() (common.Address, error) {
 
 	var r0 common.Address
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (common.Address, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (common.Address, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() common.Address); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) common.Address); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(common.Address)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -368,13 +368,14 @@ type Etherman_TrustedSequencer_Call struct {
 }
 
 // TrustedSequencer is a helper method to define mock.On call
-func (_e *Etherman_Expecter) TrustedSequencer() *Etherman_TrustedSequencer_Call {
-	return &Etherman_TrustedSequencer_Call{Call: _e.mock.On("TrustedSequencer")}
+//   - ctx context.Context
+func (_e *Etherman_Expecter) TrustedSequencer(ctx interface{}) *Etherman_TrustedSequencer_Call {
+	return &Etherman_TrustedSequencer_Call{Call: _e.mock.On("TrustedSequencer", ctx)}
 }
 
-func (_c *Etherman_TrustedSequencer_Call) Run(run func()) *Etherman_TrustedSequencer_Call {
+func (_c *Etherman_TrustedSequencer_Call) Run(run func(ctx context.Context)) *Etherman_TrustedSequencer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -384,14 +385,14 @@ func (_c *Etherman_TrustedSequencer_Call) Return(_a0 common.Address, _a1 error) 
 	return _c
 }
 
-func (_c *Etherman_TrustedSequencer_Call) RunAndReturn(run func() (common.Address, error)) *Etherman_TrustedSequencer_Call {
+func (_c *Etherman_TrustedSequencer_Call) RunAndReturn(run func(context.Context) (common.Address, error)) *Etherman_TrustedSequencer_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// TrustedSequencerURL provides a mock function with given fields:
-func (_m *Etherman) TrustedSequencerURL() (string, error) {
-	ret := _m.Called()
+// TrustedSequencerURL provides a mock function with given fields: ctx
+func (_m *Etherman) TrustedSequencerURL(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TrustedSequencerURL")
@@ -399,17 +400,17 @@ func (_m *Etherman) TrustedSequencerURL() (string, error) {
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (string, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (string, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -423,13 +424,14 @@ type Etherman_TrustedSequencerURL_Call struct {
 }
 
 // TrustedSequencerURL is a helper method to define mock.On call
-func (_e *Etherman_Expecter) TrustedSequencerURL() *Etherman_TrustedSequencerURL_Call {
-	return &Etherman_TrustedSequencerURL_Call{Call: _e.mock.On("TrustedSequencerURL")}
+//   - ctx context.Context
+func (_e *Etherman_Expecter) TrustedSequencerURL(ctx interface{}) *Etherman_TrustedSequencerURL_Call {
+	return &Etherman_TrustedSequencerURL_Call{Call: _e.mock.On("TrustedSequencerURL", ctx)}
 }
 
-func (_c *Etherman_TrustedSequencerURL_Call) Run(run func()) *Etherman_TrustedSequencerURL_Call {
+func (_c *Etherman_TrustedSequencerURL_Call) Run(run func(ctx context.Context)) *Etherman_TrustedSequencerURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -439,7 +441,7 @@ func (_c *Etherman_TrustedSequencerURL_Call) Return(_a0 string, _a1 error) *Ethe
 	return _c
 }
 
-func (_c *Etherman_TrustedSequencerURL_Call) RunAndReturn(run func() (string, error)) *Etherman_TrustedSequencerURL_Call {
+func (_c *Etherman_TrustedSequencerURL_Call) RunAndReturn(run func(context.Context) (string, error)) *Etherman_TrustedSequencerURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

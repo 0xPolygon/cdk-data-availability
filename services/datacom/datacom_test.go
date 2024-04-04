@@ -1,6 +1,7 @@
 package datacom
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"errors"
 	"testing"
@@ -41,7 +42,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	otherPrivateKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
 
-	testFn := func(cfg testConfig) {
+	testFn := func(t *testing.T, cfg testConfig) {
 		var (
 			signer         = privateKey
 			signedSequence *types.SignedSequence
@@ -66,14 +67,15 @@ func TestDataCom_SignSequence(t *testing.T) {
 
 		ethermanMock := mocks.NewEtherman(t)
 
-		ethermanMock.On("TrustedSequencer").Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
-		ethermanMock.On("TrustedSequencerURL").Return("http://some-url", nil).Once()
+		ethermanMock.On("TrustedSequencer", mock.Anything).Return(crypto.PubkeyToAddress(otherPrivateKey.PublicKey), nil).Once()
+		ethermanMock.On("TrustedSequencerURL", mock.Anything).Return("http://some-url", nil).Once()
 
-		sequencer, err := sequencer.NewTracker(config.L1Config{
+		sqr := sequencer.NewTracker(config.L1Config{
 			Timeout:     cfgTypes.Duration{Duration: time.Minute},
 			RetryPeriod: cfgTypes.Duration{Duration: time.Second},
 		}, ethermanMock)
-		require.NoError(t, err)
+
+		sqr.Start(context.Background())
 
 		if cfg.sender != nil {
 			signedSequence, err = sequence.Sign(cfg.sender)
@@ -89,7 +91,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 			signer = cfg.signer
 		}
 
-		dce := NewEndpoints(dbMock, signer, sequencer)
+		dce := NewEndpoints(dbMock, signer, sqr)
 
 		sig, err := dce.SignSequence(*signedSequence)
 		if cfg.expectedError != "" {
@@ -99,6 +101,8 @@ func TestDataCom_SignSequence(t *testing.T) {
 			require.NotEmpty(t, sig)
 		}
 
+		sqr.Stop()
+
 		txMock.AssertExpectations(t)
 		dbMock.AssertExpectations(t)
 		ethermanMock.AssertExpectations(t)
@@ -107,7 +111,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Failed to verify sender", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			expectedError: "failed to verify sender",
 		})
 	})
@@ -115,7 +119,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Unauthorized sender", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:        privateKey,
 			expectedError: "unauthorized",
 		})
@@ -124,7 +128,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Unauthorized sender", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:        privateKey,
 			expectedError: "unauthorized",
 		})
@@ -133,7 +137,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Fail to begin state transaction", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                       otherPrivateKey,
 			expectedError:                "failed to connect to the state",
 			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
@@ -143,7 +147,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Fail to store off chain data - rollback fails", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			expectedError:            "failed to rollback db transaction",
 			storeOffChainDataReturns: []interface{}{errors.New("error")},
@@ -154,7 +158,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Fail to store off chain data", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			expectedError:            "failed to store offchain data",
 			storeOffChainDataReturns: []interface{}{errors.New("error")},
@@ -165,7 +169,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Fail to commit tx", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			expectedError:            "failed to commit db transaction",
 			storeOffChainDataReturns: []interface{}{nil},
@@ -181,7 +185,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 
 		key.D = common.Big0 // alter the key so that signing does not pass
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			signer:                   key,
 			storeOffChainDataReturns: []interface{}{nil},
@@ -193,7 +197,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Run("Happy path - sequence signed", func(t *testing.T) {
 		t.Parallel()
 
-		testFn(testConfig{
+		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			storeOffChainDataReturns: []interface{}{nil},
 			commitReturns:            []interface{}{nil},
