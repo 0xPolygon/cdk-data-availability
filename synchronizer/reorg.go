@@ -48,8 +48,7 @@ func (rd *ReorgDetector) Start() error {
 	rd.cancel = cancel
 
 	blocks := make(chan *ethgo.Block)
-	err := rd.trackBlocks(ctx, blocks)
-	if err != nil {
+	if err := rd.trackBlocks(ctx, blocks); err != nil {
 		return err
 	}
 

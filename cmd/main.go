@@ -19,7 +19,7 @@ import (
 	"github.com/0xPolygon/cdk-data-availability/services/status"
 	"github.com/0xPolygon/cdk-data-availability/services/sync"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
-	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	_ "github.com/lib/pq"
 	"github.com/urfave/cli/v2"
@@ -99,11 +99,13 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	// derive address
-	selfAddr := crypto.PubkeyToAddress(pk.PublicKey)
-
 	// ensure synchro/reorg start block is set
-	err = synchronizer.InitStartBlock(storage, types.NewEthClientFactory(), c.L1)
+	err = synchronizer.InitStartBlock(
+		storage,
+		etm,
+		c.L1.GenesisBlock,
+		common.HexToAddress(c.L1.PolygonValidiumAddress),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,7 +116,7 @@ func start(cliCtx *cli.Context) error {
 	go sequencerTracker.Start(cliCtx.Context)
 	cancelFuncs = append(cancelFuncs, sequencerTracker.Stop)
 
-	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, 1*time.Second)
+	detector, err := synchronizer.NewReorgDetector(c.L1.RpcURL, time.Second)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,8 +127,15 @@ func start(cliCtx *cli.Context) error {
 
 	cancelFuncs = append(cancelFuncs, detector.Stop)
 
-	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(c.L1, selfAddr,
-		storage, detector.Subscribe(), etm, sequencerTracker, client.NewFactory())
+	batchSynchronizer, err := synchronizer.NewBatchSynchronizer(
+		c.L1,
+		crypto.PubkeyToAddress(pk.PublicKey),
+		storage,
+		detector.Subscribe(),
+		etm,
+		sequencerTracker,
+		client.NewFactory(),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

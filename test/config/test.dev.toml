@@ -1,13 +1,13 @@
 PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "wss://rootchain.hardfork.dev/ws"
-RpcURL = "https://rootchain.hardfork.dev/"
+RpcURL = "wss://rootchain.hardfork.dev/ws"
 PolygonValidiumAddress = "0x0775AAFB6dD38417581F7C583053Fa3B78FD4FD1"
 DataCommitteeAddress = "0xE660928f13F51bEbb553063A1317EDC0e7038949"
 Timeout = "1m"
 RetryPeriod = "5s"
 TrackSequencer = true
+TrackSequencerPollInterval = "1m"
 
 [Log]
 Environment = "development" # "production" or "development"

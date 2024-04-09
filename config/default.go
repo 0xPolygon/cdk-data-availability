@@ -12,8 +12,7 @@ const DefaultValues = `
 PrivateKey = {Path = "/pk/test-member.keystore", Password = "testonly"}
 
 [L1]
-WsURL = "ws://127.0.0.1:8546"
-RpcURL = "http://127.0.0.1:8545"
+RpcURL = "ws://127.0.0.1:8546"
 PolygonValidiumAddress = "0x8dAF17A20c9DBA35f005b6324F493785D239719d"
 DataCommitteeAddress = "0x68B1D87F95878fE05B998F19b66F4baba5De1aed"
 Timeout = "1m"
@@ -21,6 +20,7 @@ RetryPeriod = "5s"
 BlockBatchSize = "64"
 GenesisBlock = "0"
 TrackSequencer = true
+TrackSequencerPollInterval = "1m"
 
 [Log]
 Environment = "development" # "production" or "development"
