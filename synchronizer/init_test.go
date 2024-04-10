@@ -78,7 +78,7 @@ func Test_InitStartBlock(t *testing.T) {
 		}
 
 		if config.blockByNumberArgs != nil && config.blockByNumberReturns != nil {
-			emMock.On("BlockByNumber", config.blockByNumberArgs...).Return(
+			emMock.On("HeaderByNumber", config.blockByNumberArgs...).Return(
 				config.blockByNumberReturns...).Once()
 		}
 
