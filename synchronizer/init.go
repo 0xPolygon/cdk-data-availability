@@ -45,11 +45,11 @@ func InitStartBlock(db db.DB, em etherman.Etherman, genesisBlock uint64, validiu
 }
 
 func findContractDeploymentBlock(ctx context.Context, em etherman.Etherman, contract common.Address) (*big.Int, error) {
-	latestBlock, err := em.BlockByNumber(ctx, nil)
+	latestHeader, err := em.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	firstBlock := findCode(ctx, em, contract, 0, latestBlock.Number().Int64())
+	firstBlock := findCode(ctx, em, contract, 0, latestHeader.Number.Int64())
 	return big.NewInt(firstBlock), nil
 }
 
