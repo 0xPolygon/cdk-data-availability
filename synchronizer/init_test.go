@@ -28,10 +28,10 @@ func Test_InitStartBlock(t *testing.T) {
 		storeLastProcessedBlockReturns []interface{}
 		commitReturns                  []interface{}
 		// eth client mocks
-		blockByNumberArgs    []interface{}
-		blockByNumberReturns []interface{}
-		codeAtArgs           [][]interface{}
-		codeAtReturns        [][]interface{}
+		headerByNumberArgs    []interface{}
+		headerByNumberReturns []interface{}
+		codeAtArgs            [][]interface{}
+		codeAtReturns         [][]interface{}
 
 		isErrorExpected bool
 	}
@@ -77,9 +77,9 @@ func Test_InitStartBlock(t *testing.T) {
 				returnArgs...).Once()
 		}
 
-		if config.blockByNumberArgs != nil && config.blockByNumberReturns != nil {
-			emMock.On("BlockByNumber", config.blockByNumberArgs...).Return(
-				config.blockByNumberReturns...).Once()
+		if config.headerByNumberArgs != nil && config.headerByNumberReturns != nil {
+			emMock.On("HeaderByNumber", config.headerByNumberArgs...).Return(
+				config.headerByNumberReturns...).Once()
 		}
 
 		if config.codeAtArgs != nil && config.codeAtReturns != nil {
@@ -131,8 +131,8 @@ func Test_InitStartBlock(t *testing.T) {
 		testFn(t, testConfig{
 			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
-			blockByNumberArgs:            []interface{}{mock.Anything, mock.Anything},
-			blockByNumberReturns:         []interface{}{nil, errors.New("error")},
+			headerByNumberArgs:           []interface{}{mock.Anything, mock.Anything},
+			headerByNumberReturns:        []interface{}{nil, errors.New("error")},
 			isErrorExpected:              true,
 		})
 	})
@@ -140,27 +140,21 @@ func Test_InitStartBlock(t *testing.T) {
 	t.Run("BeginStateTransaction fails", func(t *testing.T) {
 		t.Parallel()
 
-		block := ethTypes.NewBlockWithHeader(&ethTypes.Header{
-			Number: big.NewInt(0),
-		})
-
 		testFn(t, testConfig{
 			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
 			beginStateTransactionArgs:    []interface{}{mock.Anything},
 			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
-			blockByNumberArgs:            []interface{}{mock.Anything, mock.Anything},
-			blockByNumberReturns:         []interface{}{block, nil},
-			isErrorExpected:              true,
+			headerByNumberArgs:           []interface{}{mock.Anything, mock.Anything},
+			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
+				Number: big.NewInt(0),
+			}).Header(), nil},
+			isErrorExpected: true,
 		})
 	})
 
 	t.Run("Store off-chain data fails", func(t *testing.T) {
 		t.Parallel()
-
-		block := ethTypes.NewBlockWithHeader(&ethTypes.Header{
-			Number: big.NewInt(0),
-		})
 
 		testFn(t, testConfig{
 			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
@@ -168,9 +162,11 @@ func Test_InitStartBlock(t *testing.T) {
 			beginStateTransactionArgs:      []interface{}{mock.Anything},
 			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{errors.New("error")},
-			blockByNumberArgs:              []interface{}{mock.Anything, mock.Anything},
-			blockByNumberReturns:           []interface{}{block, nil},
-			isErrorExpected:                true,
+			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
+			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
+				Number: big.NewInt(0),
+			}).Header(), nil},
+			isErrorExpected: true,
 		})
 	})
 
@@ -178,10 +174,10 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			blockByNumberArgs: []interface{}{mock.Anything, mock.Anything},
-			blockByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
+			headerByNumberArgs: []interface{}{mock.Anything, mock.Anything},
+			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
 				Number: big.NewInt(0),
-			}), nil},
+			}).Header(), nil},
 			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
 			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
@@ -203,10 +199,10 @@ func Test_InitStartBlock(t *testing.T) {
 			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(2), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{nil},
 			commitReturns:                  []interface{}{nil},
-			blockByNumberArgs:              []interface{}{mock.Anything, mock.Anything},
-			blockByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
+			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
+			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
 				Number: big.NewInt(3),
-			}), nil},
+			}).Header(), nil},
 			codeAtArgs: [][]interface{}{
 				{mock.Anything, common.HexToAddress(l1Config.PolygonValidiumAddress), big.NewInt(1)},
 				{mock.Anything, common.HexToAddress(l1Config.PolygonValidiumAddress), big.NewInt(2)},
