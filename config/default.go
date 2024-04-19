@@ -19,6 +19,7 @@ DataCommitteeAddress = "0x0"
 Timeout = "1m"
 RetryPeriod = "5s"
 BlockBatchSize = "64"
+TrackSequencer = true
 
 [Log]
 Environment = "development" # "production" or "development"

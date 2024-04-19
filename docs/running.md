@@ -83,6 +83,7 @@ DataCommitteeAddress = "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"     # CHANGE
 Timeout = "3m"
 RetryPeriod = "5s"
 BlockBatchSize = 32
+TrackSequencer = true
 
 [Log]
 Environment = "development" # "production" or "development"
