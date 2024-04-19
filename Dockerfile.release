@@ -1,0 +1,12 @@
+FROM alpine:3.18
+
+EXPOSE 8444
+
+COPY cdk-data-availability /app/cdk-data-availability
+
+RUN addgroup -S cdk-dac-group \
+    && adduser -S cdk-dac-user -G cdk-dac-group
+
+USER cdk-dac-user
+
+CMD ["/app/cdk-data-availability"]
