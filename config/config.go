@@ -39,6 +39,7 @@ type L1Config struct {
 	Timeout              types.Duration `mapstructure:"Timeout"`
 	RetryPeriod          types.Duration `mapstructure:"RetryPeriod"`
 	BlockBatchSize       uint           `mapstructure:"BlockBatchSize"`
+	TrackSequencer       bool           `mapstructure:"TrackSequencer"`
 }
 
 // Load loads the configuration baseed on the cli context

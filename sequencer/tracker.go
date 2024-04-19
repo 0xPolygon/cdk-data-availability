@@ -16,13 +16,15 @@ import (
 
 // SequencerTracker watches the contract for relevant changes to the sequencer
 type SequencerTracker struct {
-	client  *etherman.Etherman
-	stop    chan struct{}
-	timeout time.Duration
-	retry   time.Duration
-	addr    common.Address
-	url     string
-	lock    sync.Mutex
+	client       *etherman.Etherman
+	stop         chan struct{}
+	timeout      time.Duration
+	retry        time.Duration
+	addr         common.Address
+	url          string
+	trackChanges bool
+	lock         sync.Mutex
+	startOnce    sync.Once
 }
 
 // NewSequencerTracker creates a new SequencerTracker
@@ -39,12 +41,13 @@ func NewSequencerTracker(cfg config.L1Config, ethClient *etherman.Etherman) (*Se
 	}
 	log.Infof("current sequencer url: %s", url)
 	w := &SequencerTracker{
-		client:  ethClient,
-		stop:    make(chan struct{}),
-		timeout: cfg.Timeout.Duration,
-		retry:   cfg.RetryPeriod.Duration,
-		addr:    addr,
-		url:     url,
+		client:       ethClient,
+		stop:         make(chan struct{}),
+		timeout:      cfg.Timeout.Duration,
+		retry:        cfg.RetryPeriod.Duration,
+		addr:         addr,
+		url:          url,
+		trackChanges: cfg.TrackSequencer,
 	}
 	return w, nil
 }
@@ -77,6 +80,10 @@ func (st *SequencerTracker) setUrl(url string) {
 
 // Start starts the SequencerTracker
 func (st *SequencerTracker) Start() {
+	if !st.trackChanges {
+		log.Info("sequencer tracking disabled")
+		return
+	}
 	go st.trackAddrChanges()
 	go st.trackUrlChanges()
 }
