@@ -80,12 +80,15 @@ func (st *SequencerTracker) setUrl(url string) {
 
 // Start starts the SequencerTracker
 func (st *SequencerTracker) Start() {
-	if !st.trackChanges {
-		log.Info("sequencer tracking disabled")
-		return
-	}
-	go st.trackAddrChanges()
-	go st.trackUrlChanges()
+	st.startOnce.Do(func() {
+		if !st.trackChanges {
+			log.Info("sequencer tracking disabled")
+			return
+		}
+
+		go st.trackAddrChanges()
+		go st.trackUrlChanges()
+	})
 }
 
 func (st *SequencerTracker) trackAddrChanges() {
