@@ -60,7 +60,7 @@ services:
     ports:
       - 5434:5432
     environment:
-      - POSTGRES_USER=committee_user            # CHANGE THIS: use your prefered user name
+      - POSTGRES_USER=committee_user            # CHANGE THIS: use your preferred user name
       - POSTGRES_PASSWORD=committee_password    # CHANGE THIS: use a safe and strong password
       - POSTGRES_DB=committee_db
     command:
