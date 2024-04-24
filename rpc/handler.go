@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -236,7 +237,7 @@ func (h *Handler) getFnHandler(req Request) (*serviceData, *funcData, Error) {
 
 func validateFunc(funcName string, fv reflect.Value, isMethod bool) (inNum int, reqt []reflect.Type, err error) {
 	if funcName == "" {
-		err = fmt.Errorf("getBlockNumByArg cannot be empty")
+		err = errors.New("getBlockNumByArg cannot be empty")
 		return
 	}
 

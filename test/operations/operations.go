@@ -62,7 +62,7 @@ const (
 var (
 	// ErrTimeoutReached is thrown when the timeout is reached and
 	// because the condition is not matched
-	ErrTimeoutReached = fmt.Errorf("timeout has been reached")
+	ErrTimeoutReached = errors.New("timeout has been reached")
 )
 
 // Poll retries the given condition with the given interval until it succeeds

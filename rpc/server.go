@@ -54,7 +54,7 @@ func (s *Server) Start() error {
 // startHTTP starts a server to respond http requests
 func (s *Server) startHTTP() error {
 	if s.srv != nil {
-		return fmt.Errorf("server already started")
+		return errors.New("server already started")
 	}
 
 	address := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)

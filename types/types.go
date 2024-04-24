@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -103,7 +104,7 @@ type ArgHash common.Hash
 // UnmarshalText unmarshals from text
 func (arg *ArgHash) UnmarshalText(input []byte) error {
 	if !IsHexValid(string(input)) {
-		return fmt.Errorf("invalid hash, it needs to be a hexadecimal value")
+		return errors.New("invalid hash, it needs to be a hexadecimal value")
 	}
 
 	str := strings.TrimPrefix(string(input), "0x")
