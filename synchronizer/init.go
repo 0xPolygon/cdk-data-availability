@@ -5,10 +5,9 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/log"
-	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,7 +17,7 @@ const (
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
-func InitStartBlock(db db.DB, ethClientFactory types.EthClientFactory, l1 config.L1Config) error {
+func InitStartBlock(db db.DB, em etherman.Etherman, genesisBlock uint64, validiumAddr common.Address) error {
 	ctx, cancel := context.WithTimeout(context.Background(), initBlockTimeout)
 	defer cancel()
 
@@ -30,18 +29,13 @@ func InitStartBlock(db db.DB, ethClientFactory types.EthClientFactory, l1 config
 		// no need to resolve start block, it's already been set
 		return nil
 	}
-	log.Info("starting search for start block of contract ", l1.PolygonValidiumAddress)
-
-	ethClient, err := ethClientFactory.CreateEthClient(ctx, l1.RpcURL)
-	if err != nil {
-		return err
-	}
+	log.Info("starting search for start block of contract ", validiumAddr)
 
 	startBlock := new(big.Int)
-	if l1.GenesisBlock != 0 {
-		startBlock.SetUint64(l1.GenesisBlock)
+	if genesisBlock != 0 {
+		startBlock.SetUint64(genesisBlock)
 	} else {
-		startBlock, err = findContractDeploymentBlock(ctx, ethClient, common.HexToAddress(l1.PolygonValidiumAddress))
+		startBlock, err = findContractDeploymentBlock(ctx, em, validiumAddr)
 		if err != nil {
 			return err
 		}
@@ -50,30 +44,30 @@ func InitStartBlock(db db.DB, ethClientFactory types.EthClientFactory, l1 config
 	return setStartBlock(db, startBlock.Uint64())
 }
 
-func findContractDeploymentBlock(ctx context.Context, eth types.EthClient, contract common.Address) (*big.Int, error) {
-	latestBlock, err := eth.BlockByNumber(ctx, nil)
+func findContractDeploymentBlock(ctx context.Context, em etherman.Etherman, contract common.Address) (*big.Int, error) {
+	latestHeader, err := em.HeaderByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
-	firstBlock := findCode(ctx, eth, contract, 0, latestBlock.Number().Int64())
+	firstBlock := findCode(ctx, em, contract, 0, latestHeader.Number.Int64())
 	return big.NewInt(firstBlock), nil
 }
 
 // findCode is an O(log(n)) search for the inception block of a contract at the given address
-func findCode(ctx context.Context, eth types.EthClient, address common.Address, startBlock, endBlock int64) int64 {
+func findCode(ctx context.Context, em etherman.Etherman, address common.Address, startBlock, endBlock int64) int64 {
 	if startBlock == endBlock {
 		return startBlock
 	}
 	midBlock := (startBlock + endBlock) / 2 //nolint:gomnd
-	if codeLen := codeLen(ctx, eth, address, midBlock); codeLen > minCodeLen {
-		return findCode(ctx, eth, address, startBlock, midBlock)
+	if codeLen := codeLen(ctx, em, address, midBlock); codeLen > minCodeLen {
+		return findCode(ctx, em, address, startBlock, midBlock)
 	} else {
-		return findCode(ctx, eth, address, midBlock+1, endBlock)
+		return findCode(ctx, em, address, midBlock+1, endBlock)
 	}
 }
 
-func codeLen(ctx context.Context, eth types.EthClient, address common.Address, blockNumber int64) int64 {
-	data, err := eth.CodeAt(ctx, address, big.NewInt(blockNumber))
+func codeLen(ctx context.Context, em etherman.Etherman, address common.Address, blockNumber int64) int64 {
+	data, err := em.CodeAt(ctx, address, big.NewInt(blockNumber))
 	if err != nil {
 		return 0
 	}

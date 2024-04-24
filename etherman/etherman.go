@@ -31,9 +31,13 @@ type DataCommittee struct {
 
 // Etherman defines functions that should be implemented by Etherman
 type Etherman interface {
+	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error)
+
 	GetCurrentDataCommittee() (*DataCommittee, error)
 	GetCurrentDataCommitteeMembers() ([]DataCommitteeMember, error)
-	GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error)
 	TrustedSequencer(ctx context.Context) (common.Address, error)
 	WatchSetTrustedSequencer(
 		ctx context.Context,
@@ -44,7 +48,6 @@ type Etherman interface {
 		ctx context.Context,
 		events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL,
 	) (event.Subscription, error)
-	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
 	FilterSequenceBatches(
 		opts *bind.FilterOpts,
 		numBatch []uint64,
@@ -63,9 +66,9 @@ func New(ctx context.Context, cfg config.L1Config) (Etherman, error) {
 	ctx, cancel := context.WithTimeout(ctx, cfg.Timeout.Duration)
 	defer cancel()
 
-	ethClient, err := ethclient.DialContext(ctx, cfg.WsURL)
+	ethClient, err := ethclient.DialContext(ctx, cfg.RpcURL)
 	if err != nil {
-		log.Errorf("error connecting to %s: %+v", cfg.WsURL, err)
+		log.Errorf("error connecting to %s: %+v", cfg.RpcURL, err)
 		return nil, err
 	}
 
@@ -95,6 +98,21 @@ func New(ctx context.Context, cfg config.L1Config) (Etherman, error) {
 // GetTx function get ethereum tx
 func (e *etherman) GetTx(ctx context.Context, txHash common.Hash) (*types.Transaction, bool, error) {
 	return e.EthClient.TransactionByHash(ctx, txHash)
+}
+
+// HeaderByNumber returns header by number from the eth client
+func (e *etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
+	return e.EthClient.HeaderByNumber(ctx, number)
+}
+
+// BlockByNumber returns a block by the given number
+func (e *etherman) BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error) {
+	return e.EthClient.BlockByNumber(ctx, number)
+}
+
+// CodeAt returns the contract code of the given account.
+func (e *etherman) CodeAt(ctx context.Context, account common.Address, blockNumber *big.Int) ([]byte, error) {
+	return e.EthClient.CodeAt(ctx, account, blockNumber)
 }
 
 // TrustedSequencer gets trusted sequencer address
@@ -127,11 +145,6 @@ func (e *etherman) WatchSetTrustedSequencerURL(
 	events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL,
 ) (event.Subscription, error) {
 	return e.CDKValidium.WatchSetTrustedSequencerURL(&bind.WatchOpts{Context: ctx}, events)
-}
-
-// HeaderByNumber returns header by number from the eth client
-func (e *etherman) HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error) {
-	return e.EthClient.HeaderByNumber(ctx, number)
 }
 
 // FilterSequenceBatches retrieves filtered batches on CDK validium

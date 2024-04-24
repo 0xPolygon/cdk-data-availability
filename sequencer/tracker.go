@@ -2,6 +2,7 @@ package sequencer
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,25 +22,35 @@ const (
 
 // Tracker watches the contract for relevant changes to the sequencer
 type Tracker struct {
-	client       etherman.Etherman
+	em           etherman.Etherman
 	stop         chan struct{}
 	timeout      time.Duration
 	retry        time.Duration
 	addr         common.Address
 	url          string
 	trackChanges bool
+	usePolling   bool
+	pollInterval time.Duration
+	wg           sync.WaitGroup
 	lock         sync.Mutex
 	startOnce    sync.Once
 }
 
 // NewTracker creates a new Tracker
-func NewTracker(cfg config.L1Config, ethClient etherman.Etherman) *Tracker {
+func NewTracker(cfg config.L1Config, em etherman.Etherman) *Tracker {
+	pollInterval := time.Minute
+	if cfg.TrackSequencerPollInterval.Seconds() > 0 {
+		pollInterval = cfg.TrackSequencerPollInterval.Duration
+	}
+
 	return &Tracker{
-		client:       ethClient,
+		em:           em,
 		stop:         make(chan struct{}),
 		timeout:      cfg.Timeout.Duration,
 		retry:        cfg.RetryPeriod.Duration,
 		trackChanges: cfg.TrackSequencer,
+		usePolling:   strings.HasPrefix(cfg.RpcURL, "http"), // If http(s), use polling instead of sockets
+		pollInterval: pollInterval,
 	}
 }
 
@@ -52,8 +63,8 @@ func (st *Tracker) GetAddr() common.Address {
 
 func (st *Tracker) setAddr(addr common.Address) {
 	st.lock.Lock()
-	defer st.lock.Unlock()
 	st.addr = addr
+	st.lock.Unlock()
 }
 
 // GetUrl returns the last known URL of the Sequencer
@@ -65,8 +76,8 @@ func (st *Tracker) GetUrl() string {
 
 func (st *Tracker) setUrl(url string) {
 	st.lock.Lock()
-	defer st.lock.Unlock()
 	st.url = url
+	st.lock.Unlock()
 }
 
 // Start starts the SequencerTracker
@@ -75,7 +86,7 @@ func (st *Tracker) Start(parentCtx context.Context) {
 		ctx, cancel := context.WithTimeout(parentCtx, st.timeout)
 		defer cancel()
 
-		addr, err := st.client.TrustedSequencer(ctx)
+		addr, err := st.em.TrustedSequencer(ctx)
 		if err != nil {
 			log.Fatalf("failed to get sequencer addr: %v", err)
 			return
@@ -84,7 +95,7 @@ func (st *Tracker) Start(parentCtx context.Context) {
 		log.Infof("current sequencer addr: %s", addr.Hex())
 		st.setAddr(addr)
 
-		url, err := st.client.TrustedSequencerURL(ctx)
+		url, err := st.em.TrustedSequencerURL(ctx)
 		if err != nil {
 			log.Fatalf("failed to get sequencer addr: %v", err)
 			return
@@ -103,6 +114,35 @@ func (st *Tracker) Start(parentCtx context.Context) {
 }
 
 func (st *Tracker) trackAddrChanges(ctx context.Context) {
+	addrChan := make(chan common.Address, 1)
+
+	if st.usePolling {
+		go st.pollAddrChanges(ctx, addrChan)
+	} else {
+		go st.subscribeOnAddrChanges(ctx, addrChan)
+	}
+
+	for {
+		select {
+		case addr := <-addrChan:
+			if st.GetAddr().Cmp(addr) != 0 {
+				log.Infof("new trusted sequencer address: %v", addr)
+				st.setAddr(addr)
+			}
+		case <-ctx.Done():
+			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
+				log.Warnf("context cancelled: %v", ctx.Err())
+			}
+		case <-st.stop:
+			return
+		}
+	}
+}
+
+func (st *Tracker) subscribeOnAddrChanges(ctx context.Context, addrChan chan<- common.Address) {
+	st.wg.Add(1)
+	defer st.wg.Done()
+
 	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
 	defer close(events)
 
@@ -110,7 +150,7 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 
 	initSubscription := func() {
 		if err := backoff.Exponential(func() (err error) {
-			if sub, err = st.client.WatchSetTrustedSequencer(ctx, events); err != nil {
+			if sub, err = st.em.WatchSetTrustedSequencer(ctx, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer event, retrying: %v", err)
 			}
 
@@ -125,12 +165,9 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 	for {
 		select {
 		case e := <-events:
-			log.Infof("new trusted sequencer address: %v", e.NewTrustedSequencer)
-			st.setAddr(e.NewTrustedSequencer)
+			addrChan <- e.NewTrustedSequencer
 		case <-ctx.Done():
-			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
-				log.Warnf("context cancelled: %v", ctx.Err())
-			}
+			return
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 			initSubscription()
@@ -143,7 +180,63 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 	}
 }
 
+func (st *Tracker) pollAddrChanges(ctx context.Context, addrChan chan<- common.Address) {
+	st.wg.Add(1)
+	defer st.wg.Done()
+
+	ticker := time.NewTicker(st.pollInterval)
+	for {
+		select {
+		case <-ticker.C:
+			addr, err := st.em.TrustedSequencer(ctx)
+			if err != nil {
+				log.Errorf("failed to get sequencer addr: %v", err)
+				break
+			}
+
+			if st.GetAddr().Cmp(addr) != 0 {
+				addrChan <- addr
+			}
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		case <-st.stop:
+			ticker.Stop()
+			return
+		}
+	}
+}
+
 func (st *Tracker) trackUrlChanges(ctx context.Context) {
+	urlChan := make(chan string, 1)
+
+	if st.usePolling {
+		go st.pollUrlChanges(ctx, urlChan)
+	} else {
+		go st.subscribeOnUrlChanges(ctx, urlChan)
+	}
+
+	for {
+		select {
+		case url := <-urlChan:
+			if st.GetUrl() != url {
+				log.Infof("new trusted sequencer url: %v", url)
+				st.setUrl(url)
+			}
+		case <-ctx.Done():
+			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
+				log.Warnf("context cancelled: %v", ctx.Err())
+			}
+		case <-st.stop:
+			return
+		}
+	}
+}
+
+func (st *Tracker) subscribeOnUrlChanges(ctx context.Context, urlChan chan<- string) {
+	st.wg.Add(1)
+	defer st.wg.Done()
+
 	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
 	defer close(events)
 
@@ -151,7 +244,7 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 
 	initSubscription := func() {
 		if err := backoff.Exponential(func() (err error) {
-			if sub, err = st.client.WatchSetTrustedSequencerURL(ctx, events); err != nil {
+			if sub, err = st.em.WatchSetTrustedSequencerURL(ctx, events); err != nil {
 				log.Errorf("error subscribing to trusted sequencer URL event, retrying: %v", err)
 			}
 
@@ -166,12 +259,9 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 	for {
 		select {
 		case e := <-events:
-			log.Infof("new trusted sequencer url: %v", e.NewTrustedSequencerURL)
-			st.setUrl(e.NewTrustedSequencerURL)
+			urlChan <- e.NewTrustedSequencerURL
 		case <-ctx.Done():
-			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
-				log.Warnf("context cancelled: %v", ctx.Err())
-			}
+			return
 		case err := <-sub.Err():
 			log.Warnf("subscription error, resubscribing: %v", err)
 			initSubscription()
@@ -179,6 +269,33 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 			if sub != nil {
 				sub.Unsubscribe()
 			}
+			return
+		}
+	}
+}
+
+func (st *Tracker) pollUrlChanges(ctx context.Context, urlChan chan<- string) {
+	st.wg.Add(1)
+	defer st.wg.Done()
+
+	ticker := time.NewTicker(st.pollInterval)
+	for {
+		select {
+		case <-ticker.C:
+			url, err := st.em.TrustedSequencerURL(ctx)
+			if err != nil {
+				log.Errorf("failed to get sequencer URL: %v", err)
+				break
+			}
+
+			if st.GetUrl() != url {
+				urlChan <- url
+			}
+		case <-ctx.Done():
+			ticker.Stop()
+			return
+		case <-st.stop:
+			ticker.Stop()
 			return
 		}
 	}
@@ -192,4 +309,5 @@ func (st *Tracker) GetSequenceBatch(batchNum uint64) (*SeqBatch, error) {
 // Stop stops the SequencerTracker
 func (st *Tracker) Stop() {
 	close(st.stop)
+	st.wg.Wait()
 }

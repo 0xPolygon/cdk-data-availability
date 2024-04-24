@@ -36,12 +36,3 @@ packages:
       SequencerTracker:
         config:
           filename: sequencer_tracker.generated.go
-  github.com/0xPolygon/cdk-data-availability/types:
-    config:
-    interfaces:
-      EthClient:
-        config:
-          filename: eth_client.generated.go
-      EthClientFactory:
-        config:
-          filename: eth_client_factory.generated.go
