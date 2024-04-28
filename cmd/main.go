@@ -75,6 +75,9 @@ func start(cliCtx *cli.Context) error {
 	}
 	setupLog(c.Log)
 
+	dataavailability.PrintVersion(os.Stdout)
+	log.Info("Starting application...")
+
 	// Prepare DB
 	pg, err := db.InitContext(cliCtx.Context, c.DB)
 	if err != nil {
