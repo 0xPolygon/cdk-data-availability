@@ -434,7 +434,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 				Key:   common.HexToHash("key1"),
 				Value: []byte("value1"),
 			}},
-			key:       common.BytesToHash([]byte("underfined")),
+			key:       common.BytesToHash([]byte("undefined")),
 			returnErr: ErrStateNotSynchronized,
 		},
 	}
@@ -540,7 +540,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 				Value: []byte("value1"),
 			}},
 			keys: []common.Hash{
-				common.BytesToHash([]byte("underfined")),
+				common.BytesToHash([]byte("undefined")),
 			},
 			sql:       `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 			returnErr: ErrStateNotSynchronized,
