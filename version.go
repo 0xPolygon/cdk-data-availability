@@ -16,10 +16,16 @@ var (
 
 // PrintVersion prints version info into the provided io.Writer.
 func PrintVersion(w io.Writer) {
-	fmt.Fprintf(w, "Version:      %s\n", Version)
-	fmt.Fprintf(w, "Git revision: %s\n", GitRev)
-	fmt.Fprintf(w, "Git branch:   %s\n", GitBranch)
-	fmt.Fprintf(w, "Go version:   %s\n", runtime.Version())
-	fmt.Fprintf(w, "Built:        %s\n", BuildDate)
-	fmt.Fprintf(w, "OS/Arch:      %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	fmt.Fprint(w, GetVersionInfo())
+}
+
+// GetVersionInfo returns version information as a formatted string.
+func GetVersionInfo() string {
+	versionInfo := fmt.Sprintf("Version:      %s\n", Version)
+	versionInfo += fmt.Sprintf("Git revision: %s\n", GitRev)
+	versionInfo += fmt.Sprintf("Git branch:   %s\n", GitBranch)
+	versionInfo += fmt.Sprintf("Go version:   %s\n", runtime.Version())
+	versionInfo += fmt.Sprintf("Built:        %s\n", BuildDate)
+	versionInfo += fmt.Sprintf("OS/Arch:      %s/%s\n", runtime.GOOS, runtime.GOARCH)
+	return versionInfo
 }
