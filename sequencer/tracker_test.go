@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/config/types"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,8 +25,8 @@ func TestTracker(t *testing.T) {
 
 	t.Run("with enabled subscription tracker", func(t *testing.T) {
 		var (
-			addressesChan chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
-			urlsChan      chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL
+			addressesChan chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer
+			urlsChan      chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL
 		)
 
 		ctx := context.Background()
@@ -44,7 +44,7 @@ func TestTracker(t *testing.T) {
 		etherman.On("WatchSetTrustedSequencer", mock.Anything, mock.Anything).
 			Run(func(args mock.Arguments) {
 				var ok bool
-				addressesChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
+				addressesChan, ok = args[1].(chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer)
 				require.True(t, ok)
 			}).
 			Return(addressesSubscription, nil)
@@ -57,7 +57,7 @@ func TestTracker(t *testing.T) {
 		etherman.On("WatchSetTrustedSequencerURL", mock.Anything, mock.Anything).
 			Run(func(args mock.Arguments) {
 				var ok bool
-				urlsChan, ok = args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
+				urlsChan, ok = args[1].(chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL)
 				require.True(t, ok)
 			}).
 			Return(urlsSubscription, nil)
@@ -80,11 +80,11 @@ func TestTracker(t *testing.T) {
 			return addressesChan != nil && urlsChan != nil
 		})
 
-		addressesChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencer{
+		addressesChan <- &polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer{
 			NewTrustedSequencer: updatedAddress,
 		}
 
-		urlsChan <- &polygonvalidium.PolygonvalidiumSetTrustedSequencerURL{
+		urlsChan <- &polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL{
 			NewTrustedSequencerURL: updatedURL,
 		}
 

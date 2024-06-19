@@ -16,7 +16,7 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	polygonvalidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
+	polygonvalidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 
 	types "github.com/ethereum/go-ethereum/core/types"
 )
@@ -154,23 +154,23 @@ func (_c *Etherman_CodeAt_Call) RunAndReturn(run func(context.Context, common.Ad
 }
 
 // FilterSequenceBatches provides a mock function with given fields: opts, numBatch
-func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error) {
+func (_m *Etherman) FilterSequenceBatches(opts *bind.FilterOpts, numBatch []uint64) (*polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator, error) {
 	ret := _m.Called(opts, numBatch)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FilterSequenceBatches")
 	}
 
-	var r0 *polygonvalidium.PolygonvalidiumSequenceBatchesIterator
+	var r0 *polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error)); ok {
+	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) (*polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator, error)); ok {
 		return rf(opts, numBatch)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) *polygonvalidium.PolygonvalidiumSequenceBatchesIterator); ok {
+	if rf, ok := ret.Get(0).(func(*bind.FilterOpts, []uint64) *polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator); ok {
 		r0 = rf(opts, numBatch)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*polygonvalidium.PolygonvalidiumSequenceBatchesIterator)
+			r0 = ret.Get(0).(*polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator)
 		}
 	}
 
@@ -202,12 +202,12 @@ func (_c *Etherman_FilterSequenceBatches_Call) Run(run func(opts *bind.FilterOpt
 	return _c
 }
 
-func (_c *Etherman_FilterSequenceBatches_Call) Return(_a0 *polygonvalidium.PolygonvalidiumSequenceBatchesIterator, _a1 error) *Etherman_FilterSequenceBatches_Call {
+func (_c *Etherman_FilterSequenceBatches_Call) Return(_a0 *polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator, _a1 error) *Etherman_FilterSequenceBatches_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Etherman_FilterSequenceBatches_Call) RunAndReturn(run func(*bind.FilterOpts, []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error)) *Etherman_FilterSequenceBatches_Call {
+func (_c *Etherman_FilterSequenceBatches_Call) RunAndReturn(run func(*bind.FilterOpts, []uint64) (*polygonvalidium.PolygonvalidiumetrogSequenceBatchesIterator, error)) *Etherman_FilterSequenceBatches_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -566,7 +566,7 @@ func (_c *Etherman_TrustedSequencerURL_Call) RunAndReturn(run func(context.Conte
 }
 
 // WatchSetTrustedSequencer provides a mock function with given fields: ctx, events
-func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) (event.Subscription, error) {
+func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer) (event.Subscription, error) {
 	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
@@ -575,10 +575,10 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *p
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) (event.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer) (event.Subscription, error)); ok {
 		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) event.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer) event.Subscription); ok {
 		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
@@ -586,7 +586,7 @@ func (_m *Etherman) WatchSetTrustedSequencer(ctx context.Context, events chan *p
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer) error); ok {
 		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
@@ -602,14 +602,14 @@ type Etherman_WatchSetTrustedSequencer_Call struct {
 
 // WatchSetTrustedSequencer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer
+//   - events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer
 func (_e *Etherman_Expecter) WatchSetTrustedSequencer(ctx interface{}, events interface{}) *Etherman_WatchSetTrustedSequencer_Call {
 	return &Etherman_WatchSetTrustedSequencer_Call{Call: _e.mock.On("WatchSetTrustedSequencer", ctx, events)}
 }
 
-func (_c *Etherman_WatchSetTrustedSequencer_Call) Run(run func(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)) *Etherman_WatchSetTrustedSequencer_Call {
+func (_c *Etherman_WatchSetTrustedSequencer_Call) Run(run func(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer)) *Etherman_WatchSetTrustedSequencer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer))
+		run(args[0].(context.Context), args[1].(chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer))
 	})
 	return _c
 }
@@ -619,13 +619,13 @@ func (_c *Etherman_WatchSetTrustedSequencer_Call) Return(_a0 event.Subscription,
 	return _c
 }
 
-func (_c *Etherman_WatchSetTrustedSequencer_Call) RunAndReturn(run func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencer_Call {
+func (_c *Etherman_WatchSetTrustedSequencer_Call) RunAndReturn(run func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencer) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencer_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // WatchSetTrustedSequencerURL provides a mock function with given fields: ctx, events
-func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) (event.Subscription, error) {
+func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL) (event.Subscription, error) {
 	ret := _m.Called(ctx, events)
 
 	if len(ret) == 0 {
@@ -634,10 +634,10 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan
 
 	var r0 event.Subscription
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) (event.Subscription, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL) (event.Subscription, error)); ok {
 		return rf(ctx, events)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) event.Subscription); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL) event.Subscription); ok {
 		r0 = rf(ctx, events)
 	} else {
 		if ret.Get(0) != nil {
@@ -645,7 +645,7 @@ func (_m *Etherman) WatchSetTrustedSequencerURL(ctx context.Context, events chan
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL) error); ok {
 		r1 = rf(ctx, events)
 	} else {
 		r1 = ret.Error(1)
@@ -661,14 +661,14 @@ type Etherman_WatchSetTrustedSequencerURL_Call struct {
 
 // WatchSetTrustedSequencerURL is a helper method to define mock.On call
 //   - ctx context.Context
-//   - events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL
+//   - events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL
 func (_e *Etherman_Expecter) WatchSetTrustedSequencerURL(ctx interface{}, events interface{}) *Etherman_WatchSetTrustedSequencerURL_Call {
 	return &Etherman_WatchSetTrustedSequencerURL_Call{Call: _e.mock.On("WatchSetTrustedSequencerURL", ctx, events)}
 }
 
-func (_c *Etherman_WatchSetTrustedSequencerURL_Call) Run(run func(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)) *Etherman_WatchSetTrustedSequencerURL_Call {
+func (_c *Etherman_WatchSetTrustedSequencerURL_Call) Run(run func(ctx context.Context, events chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL)) *Etherman_WatchSetTrustedSequencerURL_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL))
+		run(args[0].(context.Context), args[1].(chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL))
 	})
 	return _c
 }
@@ -678,7 +678,7 @@ func (_c *Etherman_WatchSetTrustedSequencerURL_Call) Return(_a0 event.Subscripti
 	return _c
 }
 
-func (_c *Etherman_WatchSetTrustedSequencerURL_Call) RunAndReturn(run func(context.Context, chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencerURL_Call {
+func (_c *Etherman_WatchSetTrustedSequencerURL_Call) RunAndReturn(run func(context.Context, chan *polygonvalidium.PolygonvalidiumetrogSetTrustedSequencerURL) (event.Subscription, error)) *Etherman_WatchSetTrustedSequencerURL_Call {
 	_c.Call.Return(run)
 	return _c
 }

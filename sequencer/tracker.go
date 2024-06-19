@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/pkg/backoff"
 	"github.com/ethereum/go-ethereum/common"
@@ -143,7 +143,7 @@ func (st *Tracker) subscribeOnAddrChanges(ctx context.Context, addrChan chan<- c
 	st.wg.Add(1)
 	defer st.wg.Done()
 
-	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer)
+	events := make(chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer)
 	defer close(events)
 
 	var sub event.Subscription
@@ -237,7 +237,7 @@ func (st *Tracker) subscribeOnUrlChanges(ctx context.Context, urlChan chan<- str
 	st.wg.Add(1)
 	defer st.wg.Done()
 
-	events := make(chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL)
+	events := make(chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL)
 	defer close(events)
 
 	var sub event.Subscription
