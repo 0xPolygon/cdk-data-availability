@@ -40,9 +40,11 @@ func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface
 	if err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to verify sender")
 	}
+
 	if sender != d.sequencerTracker.GetAddr() {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
+
 	// Store off-chain data by hash (hash(L2Data): L2Data)
 	_, err = d.txMan.NewDbTxScope(d.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
 		err := d.db.StoreOffChainData(ctx, signedSequence.Sequence.OffChainData(), dbTx)
@@ -55,11 +57,12 @@ func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface
 	if err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, err.Error())
 	}
+
 	// Sign
 	signedSequenceByMe, err := signedSequence.Sequence.Sign(d.privateKey)
 	if err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
 	}
-	// Return signature
+
 	return signedSequenceByMe.Signature, nil
 }
