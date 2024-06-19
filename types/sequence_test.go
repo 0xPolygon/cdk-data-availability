@@ -43,8 +43,12 @@ func TestSigning(t *testing.T) {
 	}
 	for _, c := range testSequenceCases {
 		for _, pk := range privKeys {
-			signedSequence, err := c.s.Sign(pk)
+			signature, err := c.s.Sign(pk)
 			require.NoError(t, err)
+			signedSequence := &SignedSequence{
+				Sequence:  c.s,
+				Signature: signature,
+			}
 			actualAddr, err := signedSequence.Signer()
 			require.NoError(t, err)
 			expectedAddr := crypto.PubkeyToAddress(pk.PublicKey)

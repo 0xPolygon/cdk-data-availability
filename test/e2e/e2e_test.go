@@ -49,7 +49,7 @@ func TestSignSequence(t *testing.T) {
 
 	unexpectedSenderPrivKey, err := crypto.GenerateKey()
 	require.NoError(t, err)
-	unexpectedSenderSignedSequence, err := expectedSequence.Sign(unexpectedSenderPrivKey)
+	unexpectedSenderSignature, err := expectedSequence.Sign(unexpectedSenderPrivKey)
 	require.NoError(t, err)
 	tSequences := []testSequences{
 		{
@@ -64,7 +64,7 @@ func TestSignSequence(t *testing.T) {
 			name: "signature_not_from_sender",
 			sequence: types.SignedSequence{
 				Sequence:  expectedSequence,
-				Signature: unexpectedSenderSignedSequence.Signature,
+				Signature: unexpectedSenderSignature,
 			},
 			expectedErr: errors.New("-32000 unauthorized"),
 		},
@@ -85,9 +85,12 @@ func TestSignSequence(t *testing.T) {
 	for _, ts := range tSequences {
 		t.Run(ts.name, func(t *testing.T) {
 			if ts.sequence.Signature == nil {
-				signedBatch, err := ts.sequence.Sequence.Sign(pk)
+				signature, err := ts.sequence.Sequence.Sign(pk)
 				require.NoError(t, err)
-				ts.sequence = *signedBatch
+				ts.sequence = types.SignedSequence{
+					Sequence:  ts.sequence.Sequence,
+					Signature: signature,
+				}
 			}
 			tc.signSequence(t, &ts.sequence, ts.expectedErr)
 		})

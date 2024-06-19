@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // APIDATACOM is the namespace of the datacom service
@@ -30,10 +32,21 @@ func NewEndpoints(db db.DB, pk *ecdsa.PrivateKey, st *sequencer.Tracker) *Endpoi
 	}
 }
 
-// SignSequence generates the accumulated input hash aka accInputHash of the sequence and sign it.
+// SignSequence generates the concatenation of hashes of the batch data of the sequence and sign it.
 // After storing the data that will be sent hashed to the contract, it returns the signature.
 // This endpoint is only accessible to the sequencer
 func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface{}, rpc.Error) {
+	return d.signSequence(&signedSequence)
+}
+
+// SignSequenceBanana generates the accumulated input hash aka accInputHash of the sequence and sign it.
+// After storing the data that will be sent hashed to the contract, it returns the signature.
+// This endpoint is only accessible to the sequencer
+func (d *Endpoints) SignSequenceBanana(signedSequence types.SignedSequenceBanana) (interface{}, rpc.Error) {
+	return d.signSequence(&signedSequence)
+}
+
+func (d *Endpoints) signSequence(signedSequence types.SignedSequenceInterface) (interface{}, rpc.Error) {
 	// Verify that the request comes from the sequencer
 	sender, err := signedSequence.Signer()
 	if err != nil {
@@ -45,16 +58,17 @@ func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface
 	}
 
 	// Store off-chain data by hash (hash(L2Data): L2Data)
-	if err = d.db.StoreOffChainData(context.Background(), signedSequence.Sequence.OffChainData()); err != nil {
+	if err = d.db.StoreOffChainData(context.Background(), signedSequence.OffChainData()); err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode,
 			fmt.Errorf("failed to store offchain data. Error: %w", err).Error())
 	}
 
 	// Sign
-	signedSequenceByMe, err := signedSequence.Sequence.Sign(d.privateKey)
+	signature, err := signedSequence.Sign(d.privateKey)
 	if err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
 	}
-
-	return signedSequenceByMe.Signature, nil
+	// Return signature
+	log.Infof("this is the signature: %s", common.Bytes2Hex(signature))
+	return signature, nil
 }
