@@ -14,11 +14,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygondatacommittee"
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	cTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygondatacommittee"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/synchronizer"
@@ -76,7 +76,7 @@ func TestDataCommittee(t *testing.T) {
 	require.NoError(t, err)
 
 	// The default sequencer URL is incorrect, set it to match the docker container
-	validiumContract, err := polygonvalidium.NewPolygonvalidium(
+	validiumContract, err := polygonvalidiumetrog.NewPolygonvalidiumetrog(
 		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
 		clientL1,
 	)
@@ -215,9 +215,9 @@ func TestDataCommittee(t *testing.T) {
 	}
 }
 
-func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error) {
+func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatchesIterator, error) {
 	// Get the expected data keys of the batches from what was submitted to L1
-	cdkValidium, err := polygonvalidium.NewPolygonvalidium(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
+	cdkValidium, err := polygonvalidiumetrog.NewPolygonvalidiumetrog(common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract), clientL1)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,7 @@ func getSequenceBatchesEventIterator(clientL1 *ethclient.Client) (*polygonvalidi
 	return iter, nil
 }
 
-func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *polygonvalidium.PolygonvalidiumSequenceBatches) ([]common.Hash, error) {
+func getSequenceBatchesKeys(clientL1 *ethclient.Client, event *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches) ([]common.Hash, error) {
 	ctx := context.Background()
 	tx, _, err := clientL1.TransactionByHash(ctx, event.Raw.TxHash)
 	if err != nil {
