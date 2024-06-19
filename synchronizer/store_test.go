@@ -310,7 +310,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("GetUnresolvedBatchKeys", mock.Anything).
+				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).
 					Return(nil, testError)
 
 				return mockDB
@@ -322,7 +322,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("GetUnresolvedBatchKeys", mock.Anything).Return(testData, nil)
+				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).Return(testData, nil)
 
 				return mockDB
 			},

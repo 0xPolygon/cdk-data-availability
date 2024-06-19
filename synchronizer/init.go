@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	initBlockTimeout = 15 * time.Second
-	minCodeLen       = 2
+	initBlockTimeout    = 15 * time.Second
+	minCodeLen          = 2
+	maxUnprocessedBatch = 100
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract

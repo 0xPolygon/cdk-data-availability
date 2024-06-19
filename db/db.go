@@ -24,7 +24,7 @@ type DB interface {
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 
 	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
-	GetUnresolvedBatchKeys(ctx context.Context) ([]types.BatchKey, error)
+	GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
 	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
 
 	Exists(ctx context.Context, key common.Hash) bool
@@ -113,10 +113,10 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 }
 
 // GetUnresolvedBatchKeys returns the unresolved batch keys from the database
-func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context) ([]types.BatchKey, error) {
-	const getUnresolvedBatchKeysSQL = "SELECT num, hash FROM data_node.unresolved_batches;"
+func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
+	const getUnresolvedBatchKeysSQL = "SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;"
 
-	rows, err := db.pg.QueryxContext(ctx, getUnresolvedBatchKeysSQL)
+	rows, err := db.pg.QueryxContext(ctx, getUnresolvedBatchKeysSQL, limit)
 	if err != nil {
 		return nil, err
 	}

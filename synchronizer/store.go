@@ -89,7 +89,7 @@ func getUnresolvedBatchKeys(db dbTypes.DB) ([]types.BatchKey, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	return db.GetUnresolvedBatchKeys(ctx)
+	return db.GetUnresolvedBatchKeys(ctx, maxUnprocessedBatch)
 }
 
 func deleteUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {

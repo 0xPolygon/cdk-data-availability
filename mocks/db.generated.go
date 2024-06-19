@@ -355,9 +355,9 @@ func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common
 	return _c
 }
 
-// GetUnresolvedBatchKeys provides a mock function with given fields: ctx
-func (_m *DB) GetUnresolvedBatchKeys(ctx context.Context) ([]types.BatchKey, error) {
-	ret := _m.Called(ctx)
+// GetUnresolvedBatchKeys provides a mock function with given fields: ctx, limit
+func (_m *DB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
+	ret := _m.Called(ctx, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUnresolvedBatchKeys")
@@ -365,19 +365,19 @@ func (_m *DB) GetUnresolvedBatchKeys(ctx context.Context) ([]types.BatchKey, err
 
 	var r0 []types.BatchKey
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]types.BatchKey, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, uint) ([]types.BatchKey, error)); ok {
+		return rf(ctx, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []types.BatchKey); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, uint) []types.BatchKey); ok {
+		r0 = rf(ctx, limit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]types.BatchKey)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, limit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -392,13 +392,14 @@ type DB_GetUnresolvedBatchKeys_Call struct {
 
 // GetUnresolvedBatchKeys is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *DB_Expecter) GetUnresolvedBatchKeys(ctx interface{}) *DB_GetUnresolvedBatchKeys_Call {
-	return &DB_GetUnresolvedBatchKeys_Call{Call: _e.mock.On("GetUnresolvedBatchKeys", ctx)}
+//   - limit uint
+func (_e *DB_Expecter) GetUnresolvedBatchKeys(ctx interface{}, limit interface{}) *DB_GetUnresolvedBatchKeys_Call {
+	return &DB_GetUnresolvedBatchKeys_Call{Call: _e.mock.On("GetUnresolvedBatchKeys", ctx, limit)}
 }
 
-func (_c *DB_GetUnresolvedBatchKeys_Call) Run(run func(ctx context.Context)) *DB_GetUnresolvedBatchKeys_Call {
+func (_c *DB_GetUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, limit uint)) *DB_GetUnresolvedBatchKeys_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(uint))
 	})
 	return _c
 }
@@ -408,7 +409,7 @@ func (_c *DB_GetUnresolvedBatchKeys_Call) Return(_a0 []types.BatchKey, _a1 error
 	return _c
 }
 
-func (_c *DB_GetUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context) ([]types.BatchKey, error)) *DB_GetUnresolvedBatchKeys_Call {
+func (_c *DB_GetUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, uint) ([]types.BatchKey, error)) *DB_GetUnresolvedBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
