@@ -193,7 +193,7 @@ func TestDataCommittee(t *testing.T) {
 
 	// allow the member to startup and synchronize
 	log.Infof("waiting for delayed member %d to synchronize...", delayedMember.i)
-	<-time.After(20 * time.Second)
+	<-time.After(90 * time.Second)
 
 	iter, err := getSequenceBatchesEventIterator(clientL1)
 	require.NoError(t, err)
