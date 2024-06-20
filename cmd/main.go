@@ -103,6 +103,7 @@ func start(cliCtx *cli.Context) error {
 
 	// ensure synchro/reorg start block is set
 	err = synchronizer.InitStartBlock(
+		cliCtx.Context,
 		storage,
 		etm,
 		c.L1.GenesisBlock,
@@ -141,7 +142,7 @@ func start(cliCtx *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go batchSynchronizer.Start()
+	go batchSynchronizer.Start(cliCtx.Context)
 	cancelFuncs = append(cancelFuncs, batchSynchronizer.Stop)
 
 	// Register services

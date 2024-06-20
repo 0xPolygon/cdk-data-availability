@@ -1,6 +1,7 @@
 package synchronizer
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"testing"
@@ -90,6 +91,7 @@ func Test_InitStartBlock(t *testing.T) {
 		}
 
 		err := InitStartBlock(
+			context.Background(),
 			dbMock,
 			emMock,
 			l1Config.GenesisBlock,

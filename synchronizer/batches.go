@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"sort"
 	"sync"
 	"time"
 
@@ -40,7 +41,6 @@ type BatchSynchronizer struct {
 	committee        map[common.Address]etherman.DataCommitteeMember
 	lock             sync.Mutex
 	reorgs           <-chan BlockReorg
-	events           chan *polygonvalidium.PolygonvalidiumSequenceBatches
 	sequencer        SequencerTracker
 	rpcClientFactory client.Factory
 }
@@ -68,7 +68,6 @@ func NewBatchSynchronizer(
 		self:             self,
 		db:               db,
 		reorgs:           reorgs,
-		events:           make(chan *polygonvalidium.PolygonvalidiumSequenceBatches),
 		sequencer:        sequencer,
 		rpcClientFactory: rpcClientFactory,
 	}
@@ -94,36 +93,35 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 }
 
 // Start starts the synchronizer
-func (bs *BatchSynchronizer) Start() {
+func (bs *BatchSynchronizer) Start(ctx context.Context) {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
-	go bs.startUnresolvedBatchesProcessor()
-	go bs.consumeEvents()
-	go bs.produceEvents()
-	go bs.handleReorgs()
+	go bs.startUnresolvedBatchesProcessor(ctx)
+	go bs.produceEvents(ctx)
+	go bs.handleReorgs(ctx)
 }
 
 // Stop stops the synchronizer
 func (bs *BatchSynchronizer) Stop() {
-	close(bs.events)
 	close(bs.stop)
 }
 
-func (bs *BatchSynchronizer) handleReorgs() {
+func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 	log.Info("starting reorgs handler")
 	for {
 		select {
 		case r := <-bs.reorgs:
-			latest, err := getStartBlock(bs.db)
+			latest, err := getStartBlock(ctx, bs.db)
 			if err != nil {
 				log.Errorf("could not determine latest processed block: %v", err)
 				continue
 			}
+
 			if latest < r.Number {
 				// only reset start block if necessary
 				continue
 			}
-			err = setStartBlock(bs.db, r.Number)
-			if err != nil {
+
+			if err = setStartBlock(ctx, bs.db, r.Number); err != nil {
 				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
 			}
 		case <-bs.stop:
@@ -132,13 +130,13 @@ func (bs *BatchSynchronizer) handleReorgs() {
 	}
 }
 
-func (bs *BatchSynchronizer) produceEvents() {
+func (bs *BatchSynchronizer) produceEvents(ctx context.Context) {
 	log.Info("starting event producer")
 	for {
 		delay := time.NewTimer(bs.retry)
 		select {
 		case <-delay.C:
-			if err := bs.filterEvents(); err != nil {
+			if err := bs.filterEvents(ctx); err != nil {
 				log.Errorf("error filtering events: %v", err)
 			}
 		case <-bs.stop:
@@ -148,8 +146,8 @@ func (bs *BatchSynchronizer) produceEvents() {
 }
 
 // Start an iterator from last block processed, picking off SequenceBatches events
-func (bs *BatchSynchronizer) filterEvents() error {
-	start, err := getStartBlock(bs.db)
+func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
+	start, err := getStartBlock(ctx, bs.db)
 	if err != nil {
 		return err
 	}
@@ -157,11 +155,12 @@ func (bs *BatchSynchronizer) filterEvents() error {
 	end := start + uint64(bs.blockBatchSize)
 
 	// get the latest block number
-	header, err := bs.client.HeaderByNumber(context.TODO(), nil)
+	header, err := bs.client.HeaderByNumber(ctx, nil)
 	if err != nil {
 		log.Errorf("failed to determine latest block number: %v", err)
 		return err
 	}
+
 	// we don't want to scan beyond latest block
 	if end > header.Number.Uint64() {
 		end = header.Number.Uint64()
@@ -169,44 +168,47 @@ func (bs *BatchSynchronizer) filterEvents() error {
 
 	iter, err := bs.client.FilterSequenceBatches(
 		&bind.FilterOpts{
+			Context: ctx,
 			Start:   start,
 			End:     &end,
-			Context: context.TODO(),
 		}, nil)
 	if err != nil {
+		log.Errorf("failed to create SequenceBatches event iterator: %v", err)
 		return err
 	}
+
+	// Collect events into the slice
+	var events []*polygonvalidium.PolygonvalidiumSequenceBatches
 	for iter.Next() {
 		if iter.Error() != nil {
 			return iter.Error()
 		}
-		bs.events <- iter.Event
+
+		events = append(events, iter.Event)
 	}
 
-	// advance start block
-	err = setStartBlock(bs.db, end)
-	if err != nil {
-		return err
+	if err = iter.Close(); err != nil {
+		log.Errorf("failed to close SequenceBatches event iterator: %v", err)
 	}
-	return nil
-}
 
-func (bs *BatchSynchronizer) consumeEvents() {
-	log.Info("starting event consumer")
-	for {
-		select {
-		case sb := <-bs.events:
-			if err := bs.handleEvent(sb); err != nil {
-				log.Errorf("failed to handle event: %v", err)
-			}
-		case <-bs.stop:
-			return
+	// Sort events by block number ascending
+	sort.Slice(events, func(i, j int) bool {
+		return events[i].Raw.BlockNumber < events[j].Raw.BlockNumber
+	})
+
+	// Handle events
+	for _, event := range events {
+		if err = bs.handleEvent(ctx, event); err != nil {
+			log.Errorf("failed to handle event: %v", err)
+			return setStartBlock(ctx, bs.db, event.Raw.BlockNumber-1)
 		}
 	}
+
+	return setStartBlock(ctx, bs.db, end)
 }
 
-func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
-	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
+func (bs *BatchSynchronizer) handleEvent(parentCtx context.Context, event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
+	ctx, cancel := context.WithTimeout(parentCtx, bs.rpcTimeout)
 	defer cancel()
 
 	tx, _, err := bs.client.GetTx(ctx, event.Raw.TxHash)
@@ -214,8 +216,7 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 		return err
 	}
 
-	txData := tx.Data()
-	keys, err := UnpackTxData(txData)
+	keys, err := UnpackTxData(tx.Data())
 	if err != nil {
 		return err
 	}
@@ -231,16 +232,16 @@ func (bs *BatchSynchronizer) handleEvent(event *polygonvalidium.PolygonvalidiumS
 	}
 
 	// Store batch keys. Already handled batch keys are going to be ignored based on the DB logic.
-	return storeUnresolvedBatchKeys(bs.db, batchKeys)
+	return storeUnresolvedBatchKeys(ctx, bs.db, batchKeys)
 }
 
-func (bs *BatchSynchronizer) startUnresolvedBatchesProcessor() {
+func (bs *BatchSynchronizer) startUnresolvedBatchesProcessor(ctx context.Context) {
 	log.Info("starting handling unresolved batches")
 	for {
 		delay := time.NewTimer(bs.retry)
 		select {
 		case <-delay.C:
-			if err := bs.handleUnresolvedBatches(); err != nil {
+			if err := bs.handleUnresolvedBatches(ctx); err != nil {
 				log.Error(err)
 			}
 		case <-bs.stop:
@@ -250,9 +251,9 @@ func (bs *BatchSynchronizer) startUnresolvedBatchesProcessor() {
 }
 
 // handleUnresolvedBatches handles unresolved batches that were collected by the event consumer
-func (bs *BatchSynchronizer) handleUnresolvedBatches() error {
+func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error {
 	// Get unresolved batches
-	batchKeys, err := getUnresolvedBatchKeys(bs.db)
+	batchKeys, err := getUnresolvedBatchKeys(ctx, bs.db)
 	if err != nil {
 		return fmt.Errorf("failed to get unresolved batch keys: %v", err)
 	}
@@ -265,7 +266,7 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches() error {
 	var data []types.OffChainData
 	var resolved []types.BatchKey
 	for _, key := range batchKeys {
-		if exists(bs.db, key.Hash) {
+		if exists(ctx, bs.db, key.Hash) {
 			resolved = append(resolved, key)
 		} else {
 			var value *types.OffChainData
@@ -281,14 +282,14 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches() error {
 
 	// Store data of the batches to the DB
 	if len(data) > 0 {
-		if err = storeOffchainData(bs.db, data); err != nil {
+		if err = storeOffchainData(ctx, bs.db, data); err != nil {
 			return fmt.Errorf("failed to store offchain data: %v", err)
 		}
 	}
 
 	// Mark batches as resolved
 	if len(resolved) > 0 {
-		if err = deleteUnresolvedBatchKeys(bs.db, resolved); err != nil {
+		if err = deleteUnresolvedBatchKeys(ctx, bs.db, resolved); err != nil {
 			return fmt.Errorf("failed to delete successfully resolved batch keys: %v", err)
 		}
 	}
