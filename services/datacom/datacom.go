@@ -6,11 +6,9 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/db"
-	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 // APIDATACOM is the namespace of the datacom service
@@ -69,6 +67,5 @@ func (d *Endpoints) signSequence(signedSequence types.SignedSequenceInterface) (
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
 	}
 	// Return signature
-	log.Infof("this is the signature: %s", common.Bytes2Hex(signature))
 	return signature, nil
 }
