@@ -10,8 +10,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// APISYNC  is the namespace of the sync service
-const APISYNC = "sync"
+const (
+	// APISYNC  is the namespace of the sync service
+	APISYNC = "sync"
+
+	// maxListHashes is the maximum number of hashes that can be requested in a ListOffChainData call
+	maxListHashes = 100
+)
 
 // Endpoints contains implementations for the "zkevm" RPC endpoints
 type Endpoints struct {
@@ -41,6 +46,11 @@ func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Error)
 
 // ListOffChainData returns the list of images of the given hashes
 func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.Error) {
+	if len(hashes) > maxListHashes {
+		log.Errorf("too many hashes requested in ListOffChainData: %d", len(hashes))
+		return "0x0", rpc.NewRPCError(rpc.InvalidRequestErrorCode, "too many hashes requested")
+	}
+
 	keys := make([]common.Hash, len(hashes))
 	for i, hash := range hashes {
 		keys[i] = hash.Hash()
