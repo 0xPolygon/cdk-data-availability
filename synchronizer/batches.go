@@ -39,7 +39,8 @@ type BatchSynchronizer struct {
 	self             common.Address
 	db               db.DB
 	committee        map[common.Address]etherman.DataCommitteeMember
-	lock             sync.Mutex
+	comiteeLock      sync.Mutex
+	syncLock         sync.Mutex
 	reorgs           <-chan BlockReorg
 	sequencer        SequencerTracker
 	rpcClientFactory client.Factory
@@ -75,8 +76,8 @@ func NewBatchSynchronizer(
 }
 
 func (bs *BatchSynchronizer) resolveCommittee() error {
-	bs.lock.Lock()
-	defer bs.lock.Unlock()
+	bs.comiteeLock.Lock()
+	defer bs.comiteeLock.Unlock()
 
 	committee := make(map[common.Address]etherman.DataCommitteeMember)
 	current, err := bs.client.GetCurrentDataCommittee()
@@ -110,6 +111,9 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 	for {
 		select {
 		case r := <-bs.reorgs:
+			bs.syncLock.Lock()
+			defer bs.syncLock.Unlock()
+
 			latest, err := getStartBlock(ctx, bs.db)
 			if err != nil {
 				log.Errorf("could not determine latest processed block: %v", err)
@@ -147,6 +151,9 @@ func (bs *BatchSynchronizer) produceEvents(ctx context.Context) {
 
 // Start an iterator from last block processed, picking off SequenceBatches events
 func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
+	bs.syncLock.Lock()
+	defer bs.syncLock.Unlock()
+
 	start, err := getStartBlock(ctx, bs.db)
 	if err != nil {
 		return err
