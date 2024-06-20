@@ -112,22 +112,26 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 		select {
 		case r := <-bs.reorgs:
 			bs.syncLock.Lock()
-			defer bs.syncLock.Unlock()
 
 			latest, err := getStartBlock(ctx, bs.db)
 			if err != nil {
 				log.Errorf("could not determine latest processed block: %v", err)
+				bs.syncLock.Unlock()
+
 				continue
 			}
 
 			if latest < r.Number {
 				// only reset start block if necessary
+				bs.syncLock.Unlock()
 				continue
 			}
 
 			if err = setStartBlock(ctx, bs.db, r.Number); err != nil {
 				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
 			}
+
+			bs.syncLock.Unlock()
 		case <-bs.stop:
 			return
 		}
