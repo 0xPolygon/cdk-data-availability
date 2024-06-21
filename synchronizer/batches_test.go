@@ -1,6 +1,7 @@
 package synchronizer
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"strings"
@@ -356,7 +357,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			client: ethermanMock,
 		}
 
-		err := batchSynronizer.handleEvent(event)
+		err := batchSynronizer.handleEvent(context.Background(), event)
 		if config.isErrorExpected {
 			require.Error(t, err)
 		} else {
@@ -624,7 +625,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 			sequencer: sequencerMock,
 		}
 
-		err := batchSynronizer.handleUnresolvedBatches()
+		err := batchSynronizer.handleUnresolvedBatches(context.Background())
 		if config.isErrorExpected {
 			require.Error(t, err)
 		} else {
@@ -868,7 +869,7 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 			reorgs: reorgChan,
 		}
 
-		go batchSynchronizer.handleReorgs()
+		go batchSynchronizer.handleReorgs(context.Background())
 
 		reorgChan <- config.reorg
 
