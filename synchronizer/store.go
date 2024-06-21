@@ -15,8 +15,8 @@ const dbTimeout = 2 * time.Second
 // L1SyncTask is the name of the L1 sync task
 const L1SyncTask = "L1"
 
-func getStartBlock(db dbTypes.DB) (uint64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func getStartBlock(parentCtx context.Context, db dbTypes.DB) (uint64, error) {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	start, err := db.GetLastProcessedBlock(ctx, L1SyncTask)
@@ -29,8 +29,8 @@ func getStartBlock(db dbTypes.DB) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(db dbTypes.DB, block uint64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64) error {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	var (
@@ -53,15 +53,15 @@ func setStartBlock(db dbTypes.DB, block uint64) error {
 	return nil
 }
 
-func exists(db dbTypes.DB, key common.Hash) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func exists(parentCtx context.Context, db dbTypes.DB, key common.Hash) bool {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	return db.Exists(ctx, key)
 }
 
-func storeUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func storeUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	var (
@@ -85,15 +85,15 @@ func storeUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
 	return nil
 }
 
-func getUnresolvedBatchKeys(db dbTypes.DB) ([]types.BatchKey, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func getUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB) ([]types.BatchKey, error) {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	return db.GetUnresolvedBatchKeys(ctx)
 }
 
-func deleteUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func deleteUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	var (
@@ -117,8 +117,8 @@ func deleteUnresolvedBatchKeys(db dbTypes.DB, keys []types.BatchKey) error {
 	return nil
 }
 
-func storeOffchainData(db dbTypes.DB, data []types.OffChainData) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func storeOffchainData(parentCtx context.Context, db dbTypes.DB, data []types.OffChainData) error {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	var (

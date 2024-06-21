@@ -1,6 +1,7 @@
 package synchronizer
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -50,7 +51,7 @@ func Test_getStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if block, err := getStartBlock(testDB); tt.wantErr {
+			if block, err := getStartBlock(context.Background(), testDB); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -143,7 +144,7 @@ func Test_setStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := setStartBlock(testDB, tt.block); tt.wantErr {
+			if err := setStartBlock(context.Background(), testDB, tt.block); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -190,7 +191,7 @@ func Test_exists(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			got := exists(testDB, tt.key)
+			got := exists(context.Background(), testDB, tt.key)
 			require.Equal(t, tt.want, got)
 		})
 	}
@@ -281,7 +282,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := storeUnresolvedBatchKeys(testDB, tt.keys); tt.wantErr {
+			if err := storeUnresolvedBatchKeys(context.Background(), testDB, tt.keys); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -333,7 +334,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if keys, err := getUnresolvedBatchKeys(testDB); tt.wantErr {
+			if keys, err := getUnresolvedBatchKeys(context.Background(), testDB); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -429,7 +430,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := deleteUnresolvedBatchKeys(testDB, testData); tt.wantErr {
+			if err := deleteUnresolvedBatchKeys(context.Background(), testDB, testData); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -523,7 +524,7 @@ func Test_storeOffchainData(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := storeOffchainData(testDB, tt.data); tt.wantErr {
+			if err := storeOffchainData(context.Background(), testDB, tt.data); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
