@@ -643,7 +643,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything},
+			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
 			getUnresolvedBatchKeysReturns: []interface{}{nil, errors.New("error")},
 			isErrorExpected:               true,
 		})
@@ -653,7 +653,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything},
+			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
 			getUnresolvedBatchKeysReturns: []interface{}{nil, nil},
 			isErrorExpected:               false,
 		})
@@ -663,7 +663,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything},
+			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
 			getUnresolvedBatchKeysReturns: []interface{}{
 				[]types.BatchKey{{
 					Number: 10,
@@ -691,7 +691,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything},
+			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
 			getUnresolvedBatchKeysReturns: []interface{}{
 				[]types.BatchKey{{
 					Number: 10,
