@@ -156,7 +156,7 @@ func (s *Server) isSingleRequest(data []byte) (bool, Error) {
 	x := bytes.TrimLeft(data, " \t\r\n")
 
 	if len(x) == 0 {
-		return false, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())
+		return false, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())
 	}
 
 	return x[0] == '{', nil
@@ -213,7 +213,7 @@ func (s *Server) parseRequest(data []byte) (Request, error) {
 	var req Request
 
 	if err := json.Unmarshal(data, &req); err != nil {
-		return Request{}, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())
+		return Request{}, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())
 	}
 
 	return req, nil
@@ -223,7 +223,7 @@ func (s *Server) parseRequests(data []byte) ([]Request, error) {
 	var requests []Request
 
 	if err := json.Unmarshal(data, &requests); err != nil {
-		return nil, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())
+		return nil, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())
 	}
 
 	return requests, nil

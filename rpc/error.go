@@ -25,8 +25,8 @@ const (
 )
 
 var (
-	// invalidJSONReqErr denotes error that is returned when invalid JSON request is received
-	invalidJSONReqErr = errors.New("Invalid json request")
+	// errInvalidJSONReq denotes error that is returned when invalid JSON request is received
+	errInvalidJSONReq = errors.New("Invalid json request")
 )
 
 // Error interface

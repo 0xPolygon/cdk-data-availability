@@ -120,7 +120,7 @@ func Test_ServerHandleRequest(t *testing.T) {
 		server.handle(respRecorder, httpReq)
 
 		require.Equal(t, http.StatusInternalServerError, respRecorder.Result().StatusCode)
-		require.Equal(t, invalidJSONReqErr.Error(), respRecorder.Body.String())
+		require.Equal(t, errInvalidJSONReq.Error(), respRecorder.Body.String())
 	})
 
 	t.Run("GET method request", func(t *testing.T) {

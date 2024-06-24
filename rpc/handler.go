@@ -161,7 +161,7 @@ func (h *Handler) HandleWs(reqBody []byte, wsConn *websocket.Conn, httpReq *http
 	log.Debugf("WS message received: %v", string(reqBody))
 	var req Request
 	if err := json.Unmarshal(reqBody, &req); err != nil {
-		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())).Bytes()
+		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())).Bytes()
 	}
 
 	handleReq := handleRequest{

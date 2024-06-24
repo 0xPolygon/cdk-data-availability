@@ -72,7 +72,10 @@ func Test_GetData(t *testing.T) {
 				var params []interface{}
 				require.NoError(t, json.Unmarshal(res.Params, &params))
 				require.Equal(t, float64(tt.batchNum), params[0])
-				require.True(t, params[1].(bool))
+
+				boolVal, ok := params[1].(bool)
+				require.True(t, ok, "params[1] is not of type bool")
+				require.True(t, boolVal)
 
 				if tt.statusCode > 0 {
 					w.WriteHeader(tt.statusCode)
