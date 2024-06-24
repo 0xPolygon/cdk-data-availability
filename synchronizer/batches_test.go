@@ -67,7 +67,7 @@ func TestBatchSynchronizer_ResolveCommittee(t *testing.T) {
 		}
 
 		require.NoError(t, batchSyncronizer.resolveCommittee())
-		require.Len(t, batchSyncronizer.committee, len(committee.Members))
+		require.Equal(t, len(committee.Members), batchSyncronizer.committee.Length())
 
 		ethermanMock.AssertExpectations(t)
 	})
@@ -130,6 +130,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 			client:           ethermanMock,
 			sequencer:        sequencerMock,
 			rpcClientFactory: clientFactoryMock,
+			committee:        NewCommitteeMapSafe(),
 		}
 
 		offChainData, err := batchSyncronizer.resolve(batchKey)

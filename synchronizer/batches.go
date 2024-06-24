@@ -38,8 +38,7 @@ type BatchSynchronizer struct {
 	blockBatchSize   uint
 	self             common.Address
 	db               db.DB
-	committee        map[common.Address]etherman.DataCommitteeMember
-	comitteeLock     sync.Mutex
+	committee        *CommitteeMapSafe
 	syncLock         sync.Mutex
 	reorgs           <-chan BlockReorg
 	sequencer        SequencerTracker
@@ -76,20 +75,19 @@ func NewBatchSynchronizer(
 }
 
 func (bs *BatchSynchronizer) resolveCommittee() error {
-	bs.comitteeLock.Lock()
-	defer bs.comitteeLock.Unlock()
-
-	committee := make(map[common.Address]etherman.DataCommitteeMember)
 	current, err := bs.client.GetCurrentDataCommittee()
 	if err != nil {
 		return err
 	}
-	for _, member := range current.Members {
-		if bs.self != member.Addr {
-			committee[member.Addr] = member
+
+	bs.committee = NewCommitteeMapSafe()
+	filteredMembers := make([]etherman.DataCommitteeMember, 0, len(current.Members))
+	for _, m := range current.Members {
+		if m.Addr != bs.self {
+			filteredMembers = append(filteredMembers, m)
 		}
 	}
-	bs.committee = committee
+	bs.committee.StoreBatch(filteredMembers)
 	return nil
 }
 
@@ -316,7 +314,7 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 	}
 
 	// If the sequencer failed to produce data, try the other nodes
-	if len(bs.committee) == 0 {
+	if bs.committee.Length() == 0 {
 		// committee is resolved again once all members are evicted. They can be evicted
 		// for not having data, or their config being malformed
 		err := bs.resolveCommittee()
@@ -326,21 +324,23 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 	}
 
 	// pull out the members, iterating will change the map on error
-	members := make([]etherman.DataCommitteeMember, len(bs.committee))
-	for _, member := range bs.committee {
-		members = append(members, member)
-	}
+	members := make([]etherman.DataCommitteeMember, bs.committee.Length())
+	bs.committee.Range(func(key common.Address, value etherman.DataCommitteeMember) bool {
+		members = append(members, value)
+		return true
+	})
+
 	// iterate through them randomly until data is resolved
 	for _, r := range rand.Perm(len(members)) {
 		member := members[r]
 		if member.URL == "" || member.Addr == common.HexToAddress("0x0") || member.Addr == bs.self {
-			delete(bs.committee, member.Addr)
+			bs.committee.Delete(member.Addr)
 			continue // malformed committee, skip what is known to be wrong
 		}
 		value, err := bs.resolveWithMember(batch.Hash, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
-			delete(bs.committee, member.Addr)
+			bs.committee.Delete(member.Addr)
 			continue // did not have data or errored out
 		}
 
