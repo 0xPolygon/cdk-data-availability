@@ -39,7 +39,7 @@ type BatchSynchronizer struct {
 	self             common.Address
 	db               db.DB
 	committee        map[common.Address]etherman.DataCommitteeMember
-	comiteeLock      sync.Mutex
+	comitteeLock     sync.Mutex
 	syncLock         sync.Mutex
 	reorgs           <-chan BlockReorg
 	sequencer        SequencerTracker
@@ -76,8 +76,8 @@ func NewBatchSynchronizer(
 }
 
 func (bs *BatchSynchronizer) resolveCommittee() error {
-	bs.comiteeLock.Lock()
-	defer bs.comiteeLock.Unlock()
+	bs.comitteeLock.Lock()
+	defer bs.comitteeLock.Unlock()
 
 	committee := make(map[common.Address]etherman.DataCommitteeMember)
 	current, err := bs.client.GetCurrentDataCommittee()
