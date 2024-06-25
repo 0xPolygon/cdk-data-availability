@@ -12,21 +12,47 @@ import (
 func TestStoreAndLoad(t *testing.T) {
 	committee := NewCommitteeMapSafe()
 
-	member := etherman.DataCommitteeMember{Addr: common.HexToAddress("0x1"), URL: "Member 1"}
+	members := []etherman.DataCommitteeMember{
+		{Addr: common.HexToAddress("0x1"), URL: "Member 1"},
+		{Addr: common.HexToAddress("0x2"), URL: "Member 2"},
+		{Addr: common.HexToAddress("0x3"), URL: "Member 3"},
+		{Addr: common.HexToAddress("0x4"), URL: "Member 4"},
+		{Addr: common.HexToAddress("0x5"), URL: "Member 5"},
+		{Addr: common.HexToAddress("0x6"), URL: "Member 6"},
+	}
 
 	var wg sync.WaitGroup
-	wg.Add(1)
+	wg.Add(2)
+
+	ch := make(chan etherman.DataCommitteeMember)
 
 	go func() {
 		defer wg.Done()
-		committee.Store(member.Addr, member)
+
+		for _, m := range members {
+			committee.Store(m.Addr, m)
+			ch <- m
+		}
+		close(ch)
+	}()
+
+	var actualMembers []etherman.DataCommitteeMember
+	go func() {
+		defer wg.Done()
+
+		for m := range ch {
+			tmpMember, ok := committee.Load(m.Addr)
+			require.True(t, ok)
+			actualMembers = append(actualMembers, tmpMember)
+		}
 	}()
 
 	wg.Wait()
 
-	loadedMember, ok := committee.Load(member.Addr)
-	require.True(t, ok)
-	require.Equal(t, member, loadedMember)
+	require.Len(t, actualMembers, len(members))
+	for i, m := range members {
+		require.Equal(t, m, actualMembers[i])
+	}
 }
 
 func TestDelete(t *testing.T) {
