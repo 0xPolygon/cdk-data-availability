@@ -1,0 +1,128 @@
+name: deb_packager
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+jobs:
+  build:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@master
+        with:
+            go-version: 1.22.x
+      # Variables
+      - name: Adding TAG to ENV
+        run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
+      - name: adding version
+        run: |
+           NUMERIC_VERSION=$( echo ${{ env.GIT_TAG }} | sed 's/[^0-9.]//g' ) 
+           echo "VERSION=$NUMERIC_VERSION" >> $GITHUB_ENV
+
+      - name: make clean
+        run: make clean
+
+      - name: build for amd64/x86
+        run: make build
+
+      - name: Making directory structure
+        run: mkdir -p packaging/deb/cdk-data-availability/usr/bin/
+      - name: creating DEBIAN directory
+        run: mkdir -p packaging/deb/cdk-data-availability/DEBIAN
+      - name: Copying necessary files
+        run: cp -rp dist/cdk-data-availability packaging/deb/cdk-data-availability/usr/bin/
+      - name: create directory structure for systemd
+        run: mkdir -p packaging/deb/cdk-data-availability/lib/systemd/system
+      - name: copy the service file
+        run: cp -rp packaging/package_scripts/systemd/cdk-data-availability.service packaging/deb/cdk-data-availability/lib/systemd/system/
+
+
+      # Control file creation
+      - name: create control file
+        run: |
+            echo "Package: cdk-data-availability" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Version: ${{ env.VERSION }}" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Section: base" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Priority: optional" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Architecture: amd64" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Maintainer: devops@polygon.technology" >> packaging/deb/cdk-data-availability/DEBIAN/control
+            echo "Description: cdk-data-availability binary package" >> packaging/deb/cdk-data-availability/DEBIAN/control
+
+      - name: Creating package for binary for cdk-data-availability ${{ env.ARCH }}
+        run: cp -rp packaging/deb/cdk-data-availability packaging/deb/cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+           ARCH: amd64
+
+      - name: Running package build
+        run: dpkg-deb --build --root-owner-group packaging/deb/cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+           ARCH: amd64
+
+      ### Arm64 setup
+      - name: prepping environment for arm64 build
+        run: make clean
+
+      - name: removing amd64 control file
+        run: rm -rf packaging/deb/cdk-data-availability/DEBIAN/control
+
+      - name: Adding requirements for cross compile
+        run: sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+
+      - name: build for arm64
+        run: GOARCH=arm64 GOOS=linux CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ CGO_ENABLED=1 go build -o dist/cdk-data-availability ./cmd/main.go
+
+      - name: copying necessary files
+        run: cp -rp dist/cdk-data-availability packaging/deb/cdk-data-availability/usr/bin/
+
+      - name: create control file
+        run: |
+          echo "Package: cdk-data-availability" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Version: ${{ env.VERSION }}" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Section: base" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Priority: optional" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Architecture: arm64" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Maintainer: devops@polygon.technology" >> packaging/deb/cdk-data-availability/DEBIAN/control
+          echo "Description: cdk-data-availability binary package" >> packaging/deb/cdk-data-availability/DEBIAN/control
+
+      - name: Creating package for binary for cdk-data-availability ${{ env.ARCH }}
+        run: cp -rp packaging/deb/cdk-data-availability packaging/deb/cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+
+      - name: Running package build
+        run: dpkg-deb --build --root-owner-group packaging/deb/cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+
+      - name: create checksum for the amd64 package for cdk-data-availability
+        run: cd packaging/deb/ && sha256sum cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+          ARCH: amd64
+
+      - name: create checksum for the arm64 package for cdk-data-availability
+        run: cd packaging/deb/ && sha256sum cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > cdk-data-availability-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+          ARCH: arm64
+
+      - name: Release cdk-data-availability Packages
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.GIT_TAG }}
+          prerelease: true
+          files: |
+              packaging/deb/cdk-data-availability**.deb
+              packaging/deb/cdk-data-availability**.deb.checksum
