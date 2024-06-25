@@ -41,9 +41,7 @@ jobs:
 
       - name: Making directory structure
         run: mkdir -p packaging/deb/cdk-data-availability/usr/bin/
-      - name: creating DEBIAN directory
-        run: mkdir -p packaging/deb/cdk-data-availability/DEBIAN
-      - name: Copying necessary files
+      - name: Copying necessary binary file
         run: cp -rp dist/cdk-data-availability packaging/deb/cdk-data-availability/usr/bin/
       - name: create directory structure for systemd
         run: mkdir -p packaging/deb/cdk-data-availability/lib/systemd/system
