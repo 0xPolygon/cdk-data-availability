@@ -67,41 +67,35 @@ func TestStoreBatch(t *testing.T) {
 	}
 }
 
-func TestRange(t *testing.T) {
+func TestAsSlice(t *testing.T) {
 	committee := NewCommitteeMapSafe()
+	committee.StoreBatch(
+		[]etherman.DataCommitteeMember{
+			{Addr: common.HexToAddress("0x1"), URL: "Member 1"},
+			{Addr: common.HexToAddress("0x2"), URL: "Member 2"},
+			{Addr: common.HexToAddress("0x3"), URL: "Member 3"},
+			{Addr: common.HexToAddress("0x4"), URL: "Member 4"},
+		})
 
-	members := []etherman.DataCommitteeMember{
-		{Addr: common.HexToAddress("0x1"), URL: "Member 1"},
-		{Addr: common.HexToAddress("0x2"), URL: "Member 2"},
-		{Addr: common.HexToAddress("0x3"), URL: "Member 3"},
-	}
+	membersSlice := committee.AsSlice()
 
-	committee.StoreBatch(members)
-
-	foundMembers := make(map[common.Address]etherman.DataCommitteeMember)
-	committee.Range(func(key common.Address, value etherman.DataCommitteeMember) bool {
-		foundMembers[key] = value
-		return true
-	})
-
-	require.Equal(t, len(members), len(foundMembers))
-	for _, member := range members {
-		require.Equal(t, member, foundMembers[member.Addr])
+	require.Equal(t, committee.Length(), len(membersSlice))
+	for _, member := range membersSlice {
+		foundMember, ok := committee.Load(member.Addr)
+		require.True(t, ok)
+		require.Equal(t, foundMember, member)
 	}
 }
 
-// Test for Length method
 func TestLength(t *testing.T) {
 	committee := NewCommitteeMapSafe()
 
 	members := []etherman.DataCommitteeMember{
 		{Addr: common.HexToAddress("0x1"), URL: "http://localhost:1001"},
 		{Addr: common.HexToAddress("0x2"), URL: "http://localhost:1002"},
-		{Addr: common.HexToAddress("0x3"), URL: "http://localhost:1003"},
 	}
 
 	committee.StoreBatch(members)
 
-	length := committee.Length()
-	require.Equal(t, len(members), length)
+	require.Equal(t, len(members), committee.Length())
 }

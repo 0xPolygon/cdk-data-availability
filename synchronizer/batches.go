@@ -86,6 +86,7 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 			filteredMembers = append(filteredMembers, m)
 		}
 	}
+
 	bs.committee = NewCommitteeMapSafe()
 	bs.committee.StoreBatch(filteredMembers)
 	return nil
@@ -324,11 +325,7 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 	}
 
 	// pull out the members, iterating will change the map on error
-	members := make([]etherman.DataCommitteeMember, bs.committee.Length())
-	bs.committee.Range(func(_ common.Address, member etherman.DataCommitteeMember) bool {
-		members = append(members, member)
-		return true
-	})
+	members := bs.committee.AsSlice()
 
 	// iterate through them randomly until data is resolved
 	for _, r := range rand.Perm(len(members)) {

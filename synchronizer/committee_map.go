@@ -56,17 +56,16 @@ func (t *CommitteeMapSafe) Delete(key common.Address) {
 	delete(t.members, key)
 }
 
-// Range calls f sequentially for each key and value present in the map.
-// If f returns false, range stops the iteration.
-func (t *CommitteeMapSafe) Range(f func(key common.Address, value etherman.DataCommitteeMember) bool) {
+// AsSlice returns a slice of data committee members.
+func (t *CommitteeMapSafe) AsSlice() []etherman.DataCommitteeMember {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
-	for k, v := range t.members {
-		if !f(k, v) {
-			break
-		}
+	membersSlice := make([]etherman.DataCommitteeMember, 0, len(t.members))
+	for _, m := range t.members {
+		membersSlice = append(membersSlice, m)
 	}
+	return membersSlice
 }
 
 // Length returns the current length of the map.
