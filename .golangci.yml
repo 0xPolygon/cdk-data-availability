@@ -31,6 +31,7 @@ linters:
   - tparallel # Detects inappropriate usage of t.Parallel() method in your Go test codes
   - thelper # Detects golang test helpers without t.Helper() call and checks the consistency of test helpers
   - errcheck # Errcheck is a go lint rule for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
+  - lll # Long lines
 
 linters-settings:
   revive:
@@ -47,6 +48,7 @@ issues:
       - path: _test\.go
         linters:
           - gosec
+          - lll
   include:
   - EXC0012  # EXC0012 revive: Annoying issue about not having a comment. The rare codebase has such comments
   - EXC0014  # EXC0014 revive: Annoying issue about not having a comment. The rare codebase has such comments
