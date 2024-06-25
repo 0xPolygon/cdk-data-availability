@@ -80,13 +80,13 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 		return err
 	}
 
-	bs.committee = NewCommitteeMapSafe()
 	filteredMembers := make([]etherman.DataCommitteeMember, 0, len(current.Members))
 	for _, m := range current.Members {
 		if m.Addr != bs.self {
 			filteredMembers = append(filteredMembers, m)
 		}
 	}
+	bs.committee = NewCommitteeMapSafe()
 	bs.committee.StoreBatch(filteredMembers)
 	return nil
 }
