@@ -30,6 +30,7 @@ linters:
   - forcetypeassert # Finds forced type assertions
   - tparallel # Detects inappropriate usage of t.Parallel() method in your Go test codes
   - thelper # Detects golang test helpers without t.Helper() call and checks the consistency of test helpers
+  - errcheck # Errcheck is a go lint rule for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
 
 linters-settings:
   revive:
