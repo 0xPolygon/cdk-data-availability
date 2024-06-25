@@ -40,6 +40,8 @@ func TestDataCom_SignSequence(t *testing.T) {
 	require.NoError(t, err)
 
 	testFn := func(t *testing.T, cfg testConfig) {
+		t.Helper()
+
 		var (
 			signer         = privateKey
 			signedSequence *types.SignedSequence

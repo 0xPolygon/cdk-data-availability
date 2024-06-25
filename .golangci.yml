@@ -29,6 +29,7 @@ linters:
   - goconst # Repeated strings that could be replaced by a constant
   - forcetypeassert # Finds forced type assertions
   - tparallel # Detects inappropriate usage of t.Parallel() method in your Go test codes
+  - thelper # Detects golang test helpers without t.Helper() call and checks the consistency of test helpers
 
 linters-settings:
   revive:

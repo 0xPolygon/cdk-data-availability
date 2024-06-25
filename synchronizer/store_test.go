@@ -25,6 +25,7 @@ func Test_getStartBlock(t *testing.T) {
 		{
 			name: "GetLastProcessedBlock returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("GetLastProcessedBlock", mock.Anything, "L1").
@@ -38,6 +39,7 @@ func Test_getStartBlock(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("GetLastProcessedBlock", mock.Anything, "L1").Return(uint64(5), nil)
@@ -73,6 +75,7 @@ func Test_setStartBlock(t *testing.T) {
 		{
 			name: "StoreLastProcessedBlock returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreLastProcessedBlock", mock.Anything, uint64(2), "L1").
@@ -86,6 +89,7 @@ func Test_setStartBlock(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreLastProcessedBlock", mock.Anything, uint64(4), "L1").
@@ -127,6 +131,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "StoreUnresolvedBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(testError)
@@ -139,6 +144,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(nil)
@@ -179,6 +185,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "GetUnresolvedBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).
@@ -191,6 +198,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).Return(testData, nil)
@@ -231,6 +239,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "DeleteUnresolvedBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
@@ -243,6 +252,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
@@ -283,6 +293,7 @@ func Test_storeOffchainData(t *testing.T) {
 		{
 			name: "StoreOffChainData returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreOffChainData", mock.Anything, testData).Return(testError)
@@ -295,6 +306,7 @@ func Test_storeOffchainData(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("StoreOffChainData", mock.Anything, testData).Return(nil)

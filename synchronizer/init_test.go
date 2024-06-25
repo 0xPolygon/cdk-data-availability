@@ -45,6 +45,8 @@ func Test_InitStartBlock(t *testing.T) {
 	}
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 		emMock := mocks.NewEtherman(t)
 
