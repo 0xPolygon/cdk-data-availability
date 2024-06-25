@@ -12,6 +12,8 @@ import (
 )
 
 func TestEndpoints_GetOffChainData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name  string
 		hash  types.ArgHash
@@ -68,6 +70,8 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 }
 
 func TestSyncEndpoints_ListOffChainData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name   string
 		hashes []types.ArgHash

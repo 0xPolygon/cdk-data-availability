@@ -11,6 +11,8 @@ import (
 )
 
 func TestEndpoints_GetStatus(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name                     string
 		countOffchainData        uint64

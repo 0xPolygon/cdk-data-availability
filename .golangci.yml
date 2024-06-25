@@ -28,6 +28,7 @@ linters:
   - errname # Checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
   - goconst # Repeated strings that could be replaced by a constant
   - forcetypeassert # Finds forced type assertions
+  - tparallel # Detects inappropriate usage of t.Parallel() method in your Go test codes
 
 linters-settings:
   revive:

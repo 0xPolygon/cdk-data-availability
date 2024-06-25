@@ -16,6 +16,8 @@ import (
 )
 
 func Test_GetData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name         string
 		batchNum     uint64

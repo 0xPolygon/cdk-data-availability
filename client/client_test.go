@@ -17,6 +17,8 @@ import (
 )
 
 func TestClient_GetStatus(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		result     string
@@ -80,6 +82,8 @@ func TestClient_GetStatus(t *testing.T) {
 }
 
 func TestClient_SignSequence(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		ss         types.SignedSequence
@@ -163,6 +167,8 @@ func TestClient_SignSequence(t *testing.T) {
 }
 
 func TestClient_GetOffChainData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		hash       common.Hash
@@ -234,6 +240,8 @@ func TestClient_GetOffChainData(t *testing.T) {
 }
 
 func TestClient_ListOffChainData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		hashes     []common.Hash
