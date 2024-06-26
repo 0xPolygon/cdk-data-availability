@@ -22,13 +22,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
-		beginStateTransactionReturns []interface{}
-		storeOffChainDataReturns     []interface{}
-		rollbackReturns              []interface{}
-		commitReturns                []interface{}
-		sender                       *ecdsa.PrivateKey
-		signer                       *ecdsa.PrivateKey
-		expectedError                string
+		storeOffChainDataReturns []interface{}
+		sender                   *ecdsa.PrivateKey
+		signer                   *ecdsa.PrivateKey
+		expectedError            string
 	}
 
 	sequence := types.Sequence{
@@ -49,20 +46,11 @@ func TestDataCom_SignSequence(t *testing.T) {
 			err            error
 		)
 
-		txMock := mocks.NewTx(t)
 		dbMock := mocks.NewDB(t)
-		if cfg.beginStateTransactionReturns != nil {
-			dbMock.On("BeginStateTransaction", mock.Anything).Return(cfg.beginStateTransactionReturns...).Once()
-		} else if cfg.storeOffChainDataReturns != nil {
-			dbMock.On("BeginStateTransaction", mock.Anything).Return(txMock, nil).Once()
-			dbMock.On("StoreOffChainData", mock.Anything, sequence.OffChainData(), txMock).Return(
-				cfg.storeOffChainDataReturns...).Once()
 
-			if cfg.rollbackReturns != nil {
-				txMock.On("Rollback").Return(cfg.rollbackReturns...).Once()
-			} else {
-				txMock.On("Commit").Return(cfg.commitReturns...).Once()
-			}
+		if len(cfg.storeOffChainDataReturns) > 0 {
+			dbMock.On("StoreOffChainData", mock.Anything, sequence.OffChainData()).Return(
+				cfg.storeOffChainDataReturns...).Once()
 		}
 
 		ethermanMock := mocks.NewEtherman(t)
@@ -103,7 +91,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 
 		sqr.Stop()
 
-		txMock.AssertExpectations(t)
 		dbMock.AssertExpectations(t)
 		ethermanMock.AssertExpectations(t)
 	}
@@ -134,27 +121,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 		})
 	})
 
-	t.Run("Fail to begin state transaction", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			sender:                       otherPrivateKey,
-			expectedError:                "failed to connect to the state",
-			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
-		})
-	})
-
-	t.Run("Fail to store off chain data - rollback fails", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			sender:                   otherPrivateKey,
-			expectedError:            "failed to rollback db transaction",
-			storeOffChainDataReturns: []interface{}{errors.New("error")},
-			rollbackReturns:          []interface{}{errors.New("rollback fails")},
-		})
-	})
-
 	t.Run("Fail to store off chain data", func(t *testing.T) {
 		t.Parallel()
 
@@ -162,18 +128,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 			sender:                   otherPrivateKey,
 			expectedError:            "failed to store offchain data",
 			storeOffChainDataReturns: []interface{}{errors.New("error")},
-			rollbackReturns:          []interface{}{nil},
-		})
-	})
-
-	t.Run("Fail to commit tx", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			sender:                   otherPrivateKey,
-			expectedError:            "failed to commit db transaction",
-			storeOffChainDataReturns: []interface{}{nil},
-			commitReturns:            []interface{}{errors.New("error")},
 		})
 	})
 
@@ -189,7 +143,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 			sender:                   otherPrivateKey,
 			signer:                   key,
 			storeOffChainDataReturns: []interface{}{nil},
-			commitReturns:            []interface{}{nil},
 			expectedError:            "failed to sign",
 		})
 	})
@@ -200,7 +153,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			storeOffChainDataReturns: []interface{}{nil},
-			commitReturns:            []interface{}{nil},
 		})
 	})
 }

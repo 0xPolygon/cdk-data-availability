@@ -20,8 +20,7 @@ const (
 
 // Endpoints contains implementations for the "zkevm" RPC endpoints
 type Endpoints struct {
-	db    db.DB
-	txMan rpc.DBTxManager
+	db db.DB
 }
 
 // NewEndpoints returns Endpoints
@@ -33,15 +32,13 @@ func NewEndpoints(db db.DB) *Endpoints {
 
 // GetOffChainData returns the image of the given hash
 func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Error) {
-	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
-		data, err := z.db.GetOffChainData(ctx, hash.Hash(), dbTx)
-		if err != nil {
-			log.Errorf("failed to get the offchain requested data from the DB: %v", err)
-			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
-		}
+	data, err := z.db.GetOffChainData(context.Background(), hash.Hash())
+	if err != nil {
+		log.Errorf("failed to get the offchain requested data from the DB: %v", err)
+		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
+	}
 
-		return data, nil
-	})
+	return data, nil
 }
 
 // ListOffChainData returns the list of images of the given hashes
@@ -56,13 +53,11 @@ func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.E
 		keys[i] = hash.Hash()
 	}
 
-	return z.txMan.NewDbTxScope(z.db, func(ctx context.Context, dbTx db.Tx) (interface{}, rpc.Error) {
-		list, err := z.db.ListOffChainData(ctx, keys, dbTx)
-		if err != nil {
-			log.Errorf("failed to list the requested data from the DB: %v", err)
-			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
-		}
+	list, err := z.db.ListOffChainData(context.Background(), keys)
+	if err != nil {
+		log.Errorf("failed to list the requested data from the DB: %v", err)
+		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
+	}
 
-		return list, nil
-	})
+	return list, nil
 }
