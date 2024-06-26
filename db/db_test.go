@@ -250,7 +250,8 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 			// Seed data
 			seedUnresolvedBatchKeys(t, wdb, mock, tt.bks)
 
-			expected := mock.ExpectQuery(`SELECT num, hash FROM data_node\.unresolved_batches`)
+			var limit = uint(10)
+			expected := mock.ExpectQuery(`SELECT num, hash FROM data_node\.unresolved_batches LIMIT \$1\;`).WithArgs(limit)
 
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
@@ -262,7 +263,7 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 
 			dbPG := New(wdb)
 
-			data, err := dbPG.GetUnresolvedBatchKeys(context.Background())
+			data, err := dbPG.GetUnresolvedBatchKeys(context.Background(), limit)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
