@@ -30,7 +30,7 @@ func TestStoreAndLoad(t *testing.T) {
 		defer wg.Done()
 
 		for _, m := range members {
-			committee.Store(m.Addr, m)
+			committee.Store(m)
 			ch <- m
 		}
 		close(ch)
@@ -41,9 +41,9 @@ func TestStoreAndLoad(t *testing.T) {
 		defer wg.Done()
 
 		for m := range ch {
-			tmpMember, ok := committee.Load(m.Addr)
+			member, ok := committee.Load(m.Addr)
 			require.True(t, ok)
-			actualMembers = append(actualMembers, tmpMember)
+			actualMembers = append(actualMembers, member)
 		}
 	}()
 
@@ -53,6 +53,18 @@ func TestStoreAndLoad(t *testing.T) {
 	for i, m := range members {
 		require.Equal(t, m, actualMembers[i])
 	}
+
+	// replace the single committee member
+	replacedMember := etherman.DataCommitteeMember{Addr: members[0].Addr, URL: "New Member 1"}
+	committee.Store(replacedMember)
+	require.Equal(t, len(members), committee.Length())
+	actualReplacedMember, exists := committee.Load(replacedMember.Addr)
+	require.True(t, exists)
+	require.Equal(t, replacedMember, actualReplacedMember)
+	// skip the first member, because it is replaced and already asserted
+	for i, m := range members[1:] {
+		require.Equal(t, m, actualMembers[i+1])
+	}
 }
 
 func TestDelete(t *testing.T) {
@@ -60,7 +72,7 @@ func TestDelete(t *testing.T) {
 
 	member := etherman.DataCommitteeMember{Addr: common.HexToAddress("0x1"), URL: "Member 1"}
 
-	committee.Store(member.Addr, member)
+	committee.Store(member)
 	committee.Delete(member.Addr)
 
 	_, ok := committee.Load(member.Addr)
