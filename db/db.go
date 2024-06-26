@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -18,28 +17,19 @@ var (
 
 // DB defines functions that a DB instance should implement
 type DB interface {
-	BeginStateTransaction(ctx context.Context) (Tx, error)
-
-	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error
+	StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 
-	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
+	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
 	GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
-	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
+	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
 
 	Exists(ctx context.Context, key common.Hash) bool
-	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
-	ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)
-	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+	GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error)
+	ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error)
+	StoreOffChainData(ctx context.Context, od []types.OffChainData) error
 
 	CountOffchainData(ctx context.Context) (uint64, error)
-}
-
-// Tx is the interface that defines functions a db tx has to implement
-type Tx interface {
-	sqlx.ExecerContext
-	sqlx.QueryerContext
-	driver.Tx
 }
 
 // DB is the database layer of the data node
