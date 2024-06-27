@@ -680,20 +680,18 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
-		getLastProcessedBlockReturns []interface{}
-		commitReturns                []interface{}
-		reorg                        BlockReorg
+		getLastProcessedBlockReturns   []interface{}
+		storeLastProcessedBlockReturns []interface{}
+		reorg                          BlockReorg
 	}
 
 	testFn := func(config testConfig) {
 		dbMock := mocks.NewDB(t)
-		txMock := mocks.NewTx(t)
 
 		dbMock.On("GetLastProcessedBlock", mock.Anything, L1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
-		if config.commitReturns != nil {
-			dbMock.On("BeginStateTransaction", mock.Anything).Return(txMock, nil).Once()
-			dbMock.On("StoreLastProcessedBlock", mock.Anything, L1SyncTask, mock.Anything, txMock).Return(nil).Once()
-			txMock.On("Commit").Return(config.commitReturns...).Once()
+		if config.storeLastProcessedBlockReturns != nil {
+			dbMock.On("StoreLastProcessedBlock", mock.Anything, L1SyncTask, mock.Anything).
+				Return(config.storeLastProcessedBlockReturns...).Once()
 		}
 
 		reorgChan := make(chan BlockReorg)
@@ -710,7 +708,6 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 		batchSynchronizer.stop <- struct{}{}
 
 		dbMock.AssertExpectations(t)
-		txMock.AssertExpectations(t)
 	}
 
 	t.Run("Getting last processed block fails", func(t *testing.T) {
@@ -739,8 +736,8 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockReturns: []interface{}{uint64(15), nil},
-			commitReturns:                []interface{}{errors.New("error")},
+			getLastProcessedBlockReturns:   []interface{}{uint64(15), nil},
+			storeLastProcessedBlockReturns: []interface{}{errors.New("error")},
 			reorg: BlockReorg{
 				Number: 10,
 			},
@@ -751,8 +748,8 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getLastProcessedBlockReturns: []interface{}{uint64(25), nil},
-			commitReturns:                []interface{}{nil},
+			getLastProcessedBlockReturns:   []interface{}{uint64(25), nil},
+			storeLastProcessedBlockReturns: []interface{}{nil},
 			reorg: BlockReorg{
 				Number: 15,
 			},
