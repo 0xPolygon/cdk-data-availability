@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -95,7 +96,7 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 			bk.Hash.Hex(),
 		); err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
-				return txErr
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
 			}
 
 			return err
@@ -154,7 +155,7 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 			bk.Hash.Hex(),
 		); err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
-				return txErr
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
 			}
 
 			return err
@@ -199,7 +200,7 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) 
 			common.Bytes2Hex(d.Value),
 		); err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
-				return txErr
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
 			}
 
 			return err
