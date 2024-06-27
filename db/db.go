@@ -94,8 +94,8 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 			bk.Number,
 			bk.Hash.Hex(),
 		); err != nil {
-			if err = tx.Rollback(); err != nil {
-				return err
+			if txErr := tx.Rollback(); txErr != nil {
+				return txErr
 			}
 
 			return err
@@ -153,8 +153,8 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 			bk.Number,
 			bk.Hash.Hex(),
 		); err != nil {
-			if err = tx.Rollback(); err != nil {
-				return err
+			if txErr := tx.Rollback(); txErr != nil {
+				return txErr
 			}
 
 			return err
@@ -198,8 +198,8 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) 
 			d.Key.Hex(),
 			common.Bytes2Hex(d.Value),
 		); err != nil {
-			if err = tx.Rollback(); err != nil {
-				return err
+			if txErr := tx.Rollback(); txErr != nil {
+				return txErr
 			}
 
 			return err
