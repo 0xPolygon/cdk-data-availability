@@ -17,7 +17,6 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 		hash  types.ArgHash
 		data  interface{}
 		dbErr error
-		txErr error
 		err   error
 	}{
 		{
@@ -32,13 +31,6 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to get the requested data"),
 		},
-		{
-			name:  "tx returns error",
-			hash:  types.ArgHash{},
-			data:  types.ArgBytes("offchaindata"),
-			txErr: errors.New("test error"),
-			err:   errors.New("failed to connect to the state"),
-		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -46,25 +38,11 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			txMock := mocks.NewTx(t)
-
 			dbMock := mocks.NewDB(t)
-			dbMock.On("BeginStateTransaction", context.Background()).
-				Return(txMock, tt.txErr)
-			if tt.txErr == nil {
-				dbMock.On("GetOffChainData", context.Background(), tt.hash.Hash(), txMock).
-					Return(tt.data, tt.dbErr)
 
-				if tt.err != nil {
-					txMock.On("Rollback").
-						Return(nil)
-				} else {
-					txMock.On("Commit").
-						Return(nil)
-				}
-			}
+			dbMock.On("GetOffChainData", context.Background(), tt.hash.Hash()).
+				Return(tt.data, tt.dbErr)
 
-			defer txMock.AssertExpectations(t)
 			defer dbMock.AssertExpectations(t)
 
 			z := &Endpoints{db: dbMock}
@@ -87,7 +65,6 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 		hashes []types.ArgHash
 		data   interface{}
 		dbErr  error
-		txErr  error
 		err    error
 	}{
 		{
@@ -106,15 +83,6 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to list the requested data"),
 		},
-		{
-			name:   "tx returns error",
-			hashes: []types.ArgHash{},
-			data: map[common.Hash]types.ArgBytes{
-				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
-			},
-			txErr: errors.New("test error"),
-			err:   errors.New("failed to connect to the state"),
-		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -122,30 +90,16 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			txMock := mocks.NewTx(t)
-
 			dbMock := mocks.NewDB(t)
-			dbMock.On("BeginStateTransaction", context.Background()).
-				Return(txMock, tt.txErr)
-			if tt.txErr == nil {
-				keys := make([]common.Hash, len(tt.hashes))
-				for i, hash := range tt.hashes {
-					keys[i] = hash.Hash()
-				}
 
-				dbMock.On("ListOffChainData", context.Background(), keys, txMock).
-					Return(tt.data, tt.dbErr)
-
-				if tt.err != nil {
-					txMock.On("Rollback").
-						Return(nil)
-				} else {
-					txMock.On("Commit").
-						Return(nil)
-				}
+			keys := make([]common.Hash, len(tt.hashes))
+			for i, hash := range tt.hashes {
+				keys[i] = hash.Hash()
 			}
 
-			defer txMock.AssertExpectations(t)
+			dbMock.On("ListOffChainData", context.Background(), keys).
+				Return(tt.data, tt.dbErr)
+
 			defer dbMock.AssertExpectations(t)
 
 			z := &Endpoints{db: dbMock}

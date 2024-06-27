@@ -7,11 +7,7 @@ import (
 
 	common "github.com/ethereum/go-ethereum/common"
 
-	db "github.com/0xPolygon/cdk-data-availability/db"
-
 	mock "github.com/stretchr/testify/mock"
-
-	sqlx "github.com/jmoiron/sqlx"
 
 	types "github.com/0xPolygon/cdk-data-availability/types"
 )
@@ -27,64 +23,6 @@ type DB_Expecter struct {
 
 func (_m *DB) EXPECT() *DB_Expecter {
 	return &DB_Expecter{mock: &_m.Mock}
-}
-
-// BeginStateTransaction provides a mock function with given fields: ctx
-func (_m *DB) BeginStateTransaction(ctx context.Context) (db.Tx, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BeginStateTransaction")
-	}
-
-	var r0 db.Tx
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (db.Tx, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) db.Tx); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(db.Tx)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_BeginStateTransaction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BeginStateTransaction'
-type DB_BeginStateTransaction_Call struct {
-	*mock.Call
-}
-
-// BeginStateTransaction is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *DB_Expecter) BeginStateTransaction(ctx interface{}) *DB_BeginStateTransaction_Call {
-	return &DB_BeginStateTransaction_Call{Call: _e.mock.On("BeginStateTransaction", ctx)}
-}
-
-func (_c *DB_BeginStateTransaction_Call) Run(run func(ctx context.Context)) *DB_BeginStateTransaction_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *DB_BeginStateTransaction_Call) Return(_a0 db.Tx, _a1 error) *DB_BeginStateTransaction_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_BeginStateTransaction_Call) RunAndReturn(run func(context.Context) (db.Tx, error)) *DB_BeginStateTransaction_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // CountOffchainData provides a mock function with given fields: ctx
@@ -143,17 +81,17 @@ func (_c *DB_CountOffchainData_Call) RunAndReturn(run func(context.Context) (uin
 	return _c
 }
 
-// DeleteUnresolvedBatchKeys provides a mock function with given fields: ctx, bks, dbTx
-func (_m *DB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error {
-	ret := _m.Called(ctx, bks, dbTx)
+// DeleteUnresolvedBatchKeys provides a mock function with given fields: ctx, bks
+func (_m *DB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+	ret := _m.Called(ctx, bks)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUnresolvedBatchKeys")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey, sqlx.ExecerContext) error); ok {
-		r0 = rf(ctx, bks, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey) error); ok {
+		r0 = rf(ctx, bks)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -169,14 +107,13 @@ type DB_DeleteUnresolvedBatchKeys_Call struct {
 // DeleteUnresolvedBatchKeys is a helper method to define mock.On call
 //   - ctx context.Context
 //   - bks []types.BatchKey
-//   - dbTx sqlx.ExecerContext
-func (_e *DB_Expecter) DeleteUnresolvedBatchKeys(ctx interface{}, bks interface{}, dbTx interface{}) *DB_DeleteUnresolvedBatchKeys_Call {
-	return &DB_DeleteUnresolvedBatchKeys_Call{Call: _e.mock.On("DeleteUnresolvedBatchKeys", ctx, bks, dbTx)}
+func (_e *DB_Expecter) DeleteUnresolvedBatchKeys(ctx interface{}, bks interface{}) *DB_DeleteUnresolvedBatchKeys_Call {
+	return &DB_DeleteUnresolvedBatchKeys_Call{Call: _e.mock.On("DeleteUnresolvedBatchKeys", ctx, bks)}
 }
 
-func (_c *DB_DeleteUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext)) *DB_DeleteUnresolvedBatchKeys_Call {
+func (_c *DB_DeleteUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_DeleteUnresolvedBatchKeys_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]types.BatchKey), args[2].(sqlx.ExecerContext))
+		run(args[0].(context.Context), args[1].([]types.BatchKey))
 	})
 	return _c
 }
@@ -186,7 +123,7 @@ func (_c *DB_DeleteUnresolvedBatchKeys_Call) Return(_a0 error) *DB_DeleteUnresol
 	return _c
 }
 
-func (_c *DB_DeleteUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey, sqlx.ExecerContext) error) *DB_DeleteUnresolvedBatchKeys_Call {
+func (_c *DB_DeleteUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_DeleteUnresolvedBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -295,9 +232,9 @@ func (_c *DB_GetLastProcessedBlock_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
-// GetOffChainData provides a mock function with given fields: ctx, key, dbTx
-func (_m *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
-	ret := _m.Called(ctx, key, dbTx)
+// GetOffChainData provides a mock function with given fields: ctx, key
+func (_m *DB) GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error) {
+	ret := _m.Called(ctx, key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOffChainData")
@@ -305,19 +242,19 @@ func (_m *DB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.Qu
 
 	var r0 types.ArgBytes
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, sqlx.QueryerContext) (types.ArgBytes, error)); ok {
-		return rf(ctx, key, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) (types.ArgBytes, error)); ok {
+		return rf(ctx, key)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.Hash, sqlx.QueryerContext) types.ArgBytes); ok {
-		r0 = rf(ctx, key, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, common.Hash) types.ArgBytes); ok {
+		r0 = rf(ctx, key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(types.ArgBytes)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, common.Hash, sqlx.QueryerContext) error); ok {
-		r1 = rf(ctx, key, dbTx)
+	if rf, ok := ret.Get(1).(func(context.Context, common.Hash) error); ok {
+		r1 = rf(ctx, key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -333,14 +270,13 @@ type DB_GetOffChainData_Call struct {
 // GetOffChainData is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key common.Hash
-//   - dbTx sqlx.QueryerContext
-func (_e *DB_Expecter) GetOffChainData(ctx interface{}, key interface{}, dbTx interface{}) *DB_GetOffChainData_Call {
-	return &DB_GetOffChainData_Call{Call: _e.mock.On("GetOffChainData", ctx, key, dbTx)}
+func (_e *DB_Expecter) GetOffChainData(ctx interface{}, key interface{}) *DB_GetOffChainData_Call {
+	return &DB_GetOffChainData_Call{Call: _e.mock.On("GetOffChainData", ctx, key)}
 }
 
-func (_c *DB_GetOffChainData_Call) Run(run func(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext)) *DB_GetOffChainData_Call {
+func (_c *DB_GetOffChainData_Call) Run(run func(ctx context.Context, key common.Hash)) *DB_GetOffChainData_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.Hash), args[2].(sqlx.QueryerContext))
+		run(args[0].(context.Context), args[1].(common.Hash))
 	})
 	return _c
 }
@@ -350,7 +286,7 @@ func (_c *DB_GetOffChainData_Call) Return(_a0 types.ArgBytes, _a1 error) *DB_Get
 	return _c
 }
 
-func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash, sqlx.QueryerContext) (types.ArgBytes, error)) *DB_GetOffChainData_Call {
+func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash) (types.ArgBytes, error)) *DB_GetOffChainData_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -414,9 +350,9 @@ func (_c *DB_GetUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// ListOffChainData provides a mock function with given fields: ctx, keys, dbTx
-func (_m *DB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error) {
-	ret := _m.Called(ctx, keys, dbTx)
+// ListOffChainData provides a mock function with given fields: ctx, keys
+func (_m *DB) ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error) {
+	ret := _m.Called(ctx, keys)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListOffChainData")
@@ -424,19 +360,19 @@ func (_m *DB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sql
 
 	var r0 map[common.Hash]types.ArgBytes
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash, sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)); ok {
-		return rf(ctx, keys, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash) (map[common.Hash]types.ArgBytes, error)); ok {
+		return rf(ctx, keys)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash, sqlx.QueryerContext) map[common.Hash]types.ArgBytes); ok {
-		r0 = rf(ctx, keys, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, []common.Hash) map[common.Hash]types.ArgBytes); ok {
+		r0 = rf(ctx, keys)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[common.Hash]types.ArgBytes)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []common.Hash, sqlx.QueryerContext) error); ok {
-		r1 = rf(ctx, keys, dbTx)
+	if rf, ok := ret.Get(1).(func(context.Context, []common.Hash) error); ok {
+		r1 = rf(ctx, keys)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -452,14 +388,13 @@ type DB_ListOffChainData_Call struct {
 // ListOffChainData is a helper method to define mock.On call
 //   - ctx context.Context
 //   - keys []common.Hash
-//   - dbTx sqlx.QueryerContext
-func (_e *DB_Expecter) ListOffChainData(ctx interface{}, keys interface{}, dbTx interface{}) *DB_ListOffChainData_Call {
-	return &DB_ListOffChainData_Call{Call: _e.mock.On("ListOffChainData", ctx, keys, dbTx)}
+func (_e *DB_Expecter) ListOffChainData(ctx interface{}, keys interface{}) *DB_ListOffChainData_Call {
+	return &DB_ListOffChainData_Call{Call: _e.mock.On("ListOffChainData", ctx, keys)}
 }
 
-func (_c *DB_ListOffChainData_Call) Run(run func(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext)) *DB_ListOffChainData_Call {
+func (_c *DB_ListOffChainData_Call) Run(run func(ctx context.Context, keys []common.Hash)) *DB_ListOffChainData_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]common.Hash), args[2].(sqlx.QueryerContext))
+		run(args[0].(context.Context), args[1].([]common.Hash))
 	})
 	return _c
 }
@@ -469,22 +404,22 @@ func (_c *DB_ListOffChainData_Call) Return(_a0 map[common.Hash]types.ArgBytes, _
 	return _c
 }
 
-func (_c *DB_ListOffChainData_Call) RunAndReturn(run func(context.Context, []common.Hash, sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)) *DB_ListOffChainData_Call {
+func (_c *DB_ListOffChainData_Call) RunAndReturn(run func(context.Context, []common.Hash) (map[common.Hash]types.ArgBytes, error)) *DB_ListOffChainData_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// StoreLastProcessedBlock provides a mock function with given fields: ctx, task, block, dbTx
-func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
-	ret := _m.Called(ctx, task, block, dbTx)
+// StoreLastProcessedBlock provides a mock function with given fields: ctx, task, block
+func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error {
+	ret := _m.Called(ctx, task, block)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreLastProcessedBlock")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64, sqlx.ExecerContext) error); ok {
-		r0 = rf(ctx, task, block, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
+		r0 = rf(ctx, task, block)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -501,14 +436,13 @@ type DB_StoreLastProcessedBlock_Call struct {
 //   - ctx context.Context
 //   - task string
 //   - block uint64
-//   - dbTx sqlx.ExecerContext
-func (_e *DB_Expecter) StoreLastProcessedBlock(ctx interface{}, task interface{}, block interface{}, dbTx interface{}) *DB_StoreLastProcessedBlock_Call {
-	return &DB_StoreLastProcessedBlock_Call{Call: _e.mock.On("StoreLastProcessedBlock", ctx, task, block, dbTx)}
+func (_e *DB_Expecter) StoreLastProcessedBlock(ctx interface{}, task interface{}, block interface{}) *DB_StoreLastProcessedBlock_Call {
+	return &DB_StoreLastProcessedBlock_Call{Call: _e.mock.On("StoreLastProcessedBlock", ctx, task, block)}
 }
 
-func (_c *DB_StoreLastProcessedBlock_Call) Run(run func(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext)) *DB_StoreLastProcessedBlock_Call {
+func (_c *DB_StoreLastProcessedBlock_Call) Run(run func(ctx context.Context, task string, block uint64)) *DB_StoreLastProcessedBlock_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(uint64), args[3].(sqlx.ExecerContext))
+		run(args[0].(context.Context), args[1].(string), args[2].(uint64))
 	})
 	return _c
 }
@@ -518,22 +452,22 @@ func (_c *DB_StoreLastProcessedBlock_Call) Return(_a0 error) *DB_StoreLastProces
 	return _c
 }
 
-func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context, string, uint64, sqlx.ExecerContext) error) *DB_StoreLastProcessedBlock_Call {
+func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context, string, uint64) error) *DB_StoreLastProcessedBlock_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// StoreOffChainData provides a mock function with given fields: ctx, od, dbTx
-func (_m *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
-	ret := _m.Called(ctx, od, dbTx)
+// StoreOffChainData provides a mock function with given fields: ctx, od
+func (_m *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
+	ret := _m.Called(ctx, od)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreOffChainData")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []types.OffChainData, sqlx.ExecerContext) error); ok {
-		r0 = rf(ctx, od, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, []types.OffChainData) error); ok {
+		r0 = rf(ctx, od)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -549,14 +483,13 @@ type DB_StoreOffChainData_Call struct {
 // StoreOffChainData is a helper method to define mock.On call
 //   - ctx context.Context
 //   - od []types.OffChainData
-//   - dbTx sqlx.ExecerContext
-func (_e *DB_Expecter) StoreOffChainData(ctx interface{}, od interface{}, dbTx interface{}) *DB_StoreOffChainData_Call {
-	return &DB_StoreOffChainData_Call{Call: _e.mock.On("StoreOffChainData", ctx, od, dbTx)}
+func (_e *DB_Expecter) StoreOffChainData(ctx interface{}, od interface{}) *DB_StoreOffChainData_Call {
+	return &DB_StoreOffChainData_Call{Call: _e.mock.On("StoreOffChainData", ctx, od)}
 }
 
-func (_c *DB_StoreOffChainData_Call) Run(run func(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext)) *DB_StoreOffChainData_Call {
+func (_c *DB_StoreOffChainData_Call) Run(run func(ctx context.Context, od []types.OffChainData)) *DB_StoreOffChainData_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]types.OffChainData), args[2].(sqlx.ExecerContext))
+		run(args[0].(context.Context), args[1].([]types.OffChainData))
 	})
 	return _c
 }
@@ -566,22 +499,22 @@ func (_c *DB_StoreOffChainData_Call) Return(_a0 error) *DB_StoreOffChainData_Cal
 	return _c
 }
 
-func (_c *DB_StoreOffChainData_Call) RunAndReturn(run func(context.Context, []types.OffChainData, sqlx.ExecerContext) error) *DB_StoreOffChainData_Call {
+func (_c *DB_StoreOffChainData_Call) RunAndReturn(run func(context.Context, []types.OffChainData) error) *DB_StoreOffChainData_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// StoreUnresolvedBatchKeys provides a mock function with given fields: ctx, bks, dbTx
-func (_m *DB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error {
-	ret := _m.Called(ctx, bks, dbTx)
+// StoreUnresolvedBatchKeys provides a mock function with given fields: ctx, bks
+func (_m *DB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+	ret := _m.Called(ctx, bks)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreUnresolvedBatchKeys")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey, sqlx.ExecerContext) error); ok {
-		r0 = rf(ctx, bks, dbTx)
+	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey) error); ok {
+		r0 = rf(ctx, bks)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -597,14 +530,13 @@ type DB_StoreUnresolvedBatchKeys_Call struct {
 // StoreUnresolvedBatchKeys is a helper method to define mock.On call
 //   - ctx context.Context
 //   - bks []types.BatchKey
-//   - dbTx sqlx.ExecerContext
-func (_e *DB_Expecter) StoreUnresolvedBatchKeys(ctx interface{}, bks interface{}, dbTx interface{}) *DB_StoreUnresolvedBatchKeys_Call {
-	return &DB_StoreUnresolvedBatchKeys_Call{Call: _e.mock.On("StoreUnresolvedBatchKeys", ctx, bks, dbTx)}
+func (_e *DB_Expecter) StoreUnresolvedBatchKeys(ctx interface{}, bks interface{}) *DB_StoreUnresolvedBatchKeys_Call {
+	return &DB_StoreUnresolvedBatchKeys_Call{Call: _e.mock.On("StoreUnresolvedBatchKeys", ctx, bks)}
 }
 
-func (_c *DB_StoreUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext)) *DB_StoreUnresolvedBatchKeys_Call {
+func (_c *DB_StoreUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_StoreUnresolvedBatchKeys_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]types.BatchKey), args[2].(sqlx.ExecerContext))
+		run(args[0].(context.Context), args[1].([]types.BatchKey))
 	})
 	return _c
 }
@@ -614,7 +546,7 @@ func (_c *DB_StoreUnresolvedBatchKeys_Call) Return(_a0 error) *DB_StoreUnresolve
 	return _c
 }
 
-func (_c *DB_StoreUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey, sqlx.ExecerContext) error) *DB_StoreUnresolvedBatchKeys_Call {
+func (_c *DB_StoreUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_StoreUnresolvedBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }

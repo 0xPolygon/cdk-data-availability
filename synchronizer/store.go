@@ -23,9 +23,11 @@ func getStartBlock(parentCtx context.Context, db dbTypes.DB) (uint64, error) {
 	if err != nil {
 		log.Errorf("error retrieving last processed block, starting from 0: %v", err)
 	}
+
 	if start > 0 {
 		start = start - 1 // since a block may have been partially processed
 	}
+
 	return start, err
 }
 
@@ -33,24 +35,7 @@ func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64) error
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	var (
-		dbTx dbTypes.Tx
-		err  error
-	)
-
-	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
-		return err
-	}
-
-	if err = db.StoreLastProcessedBlock(ctx, L1SyncTask, block, dbTx); err != nil {
-		return err
-	}
-
-	if err = dbTx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return db.StoreLastProcessedBlock(ctx, L1SyncTask, block)
 }
 
 func exists(parentCtx context.Context, db dbTypes.DB, key common.Hash) bool {
@@ -64,25 +49,7 @@ func storeUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []t
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	var (
-		dbTx dbTypes.Tx
-		err  error
-	)
-
-	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
-		return err
-	}
-
-	if err = db.StoreUnresolvedBatchKeys(ctx, keys, dbTx); err != nil {
-		rollback(err, dbTx)
-		return err
-	}
-
-	if err = dbTx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return db.StoreUnresolvedBatchKeys(ctx, keys)
 }
 
 func getUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB) ([]types.BatchKey, error) {
@@ -96,54 +63,12 @@ func deleteUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	var (
-		dbTx dbTypes.Tx
-		err  error
-	)
-
-	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
-		return err
-	}
-
-	if err = db.DeleteUnresolvedBatchKeys(ctx, keys, dbTx); err != nil {
-		rollback(err, dbTx)
-		return err
-	}
-
-	if err = dbTx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return db.DeleteUnresolvedBatchKeys(ctx, keys)
 }
 
 func storeOffchainData(parentCtx context.Context, db dbTypes.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	var (
-		dbTx dbTypes.Tx
-		err  error
-	)
-
-	if dbTx, err = db.BeginStateTransaction(ctx); err != nil {
-		return err
-	}
-
-	if err = db.StoreOffChainData(ctx, data, dbTx); err != nil {
-		rollback(err, dbTx)
-		return err
-	}
-
-	if err = dbTx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func rollback(err error, dbTx dbTypes.Tx) {
-	if txErr := dbTx.Rollback(); txErr != nil {
-		log.Errorf("failed to roll back transaction after error %v : %v", err, txErr)
-	}
+	return db.StoreOffChainData(ctx, data)
 }

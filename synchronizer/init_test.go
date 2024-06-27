@@ -23,11 +23,8 @@ func Test_InitStartBlock(t *testing.T) {
 		// store mocks
 		getLastProcessedBlockArgs      []interface{}
 		getLastProcessedBlockReturns   []interface{}
-		beginStateTransactionArgs      []interface{}
-		beginStateTransactionReturns   []interface{}
 		storeLastProcessedBlockArgs    []interface{}
 		storeLastProcessedBlockReturns []interface{}
-		commitReturns                  []interface{}
 		// eth client mocks
 		headerByNumberArgs    []interface{}
 		headerByNumberReturns []interface{}
@@ -49,7 +46,6 @@ func Test_InitStartBlock(t *testing.T) {
 
 	testFn := func(t *testing.T, config testConfig) {
 		dbMock := mocks.NewDB(t)
-		txMock := mocks.NewTx(t)
 		emMock := mocks.NewEtherman(t)
 
 		if config.getLastProcessedBlockArgs != nil && config.getLastProcessedBlockReturns != nil {
@@ -60,22 +56,6 @@ func Test_InitStartBlock(t *testing.T) {
 		if config.storeLastProcessedBlockArgs != nil && config.storeLastProcessedBlockReturns != nil {
 			dbMock.On("StoreLastProcessedBlock", config.storeLastProcessedBlockArgs...).Return(
 				config.storeLastProcessedBlockReturns...).Once()
-		}
-
-		if config.commitReturns != nil {
-			txMock.On("Commit", mock.Anything).Return(config.commitReturns...).Once()
-		}
-
-		if config.beginStateTransactionArgs != nil {
-			var returnArgs []interface{}
-			if config.beginStateTransactionReturns != nil {
-				returnArgs = config.beginStateTransactionReturns
-			} else {
-				returnArgs = append(returnArgs, txMock, nil)
-			}
-
-			dbMock.On("BeginStateTransaction", config.beginStateTransactionArgs...).Return(
-				returnArgs...).Once()
 		}
 
 		if config.headerByNumberArgs != nil && config.headerByNumberReturns != nil {
@@ -104,7 +84,6 @@ func Test_InitStartBlock(t *testing.T) {
 		}
 
 		dbMock.AssertExpectations(t)
-		txMock.AssertExpectations(t)
 	}
 
 	t.Run("GetLastProcessedBlock returns an error", func(t *testing.T) {
@@ -139,29 +118,12 @@ func Test_InitStartBlock(t *testing.T) {
 		})
 	})
 
-	t.Run("BeginStateTransaction fails", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
-			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
-			beginStateTransactionArgs:    []interface{}{mock.Anything},
-			beginStateTransactionReturns: []interface{}{nil, errors.New("error")},
-			headerByNumberArgs:           []interface{}{mock.Anything, mock.Anything},
-			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
-				Number: big.NewInt(0),
-			}).Header(), nil},
-			isErrorExpected: true,
-		})
-	})
-
 	t.Run("Store off-chain data fails", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
 			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			beginStateTransactionArgs:      []interface{}{mock.Anything},
 			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{errors.New("error")},
 			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
@@ -172,35 +134,14 @@ func Test_InitStartBlock(t *testing.T) {
 		})
 	})
 
-	t.Run("Commit fails", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			headerByNumberArgs: []interface{}{mock.Anything, mock.Anything},
-			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
-				Number: big.NewInt(0),
-			}).Header(), nil},
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
-			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
-			storeLastProcessedBlockReturns: []interface{}{nil},
-			beginStateTransactionArgs:      []interface{}{mock.Anything},
-			commitReturns:                  []interface{}{errors.New("error")},
-
-			isErrorExpected: true,
-		})
-	})
-
 	t.Run("Successful init", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
 			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			beginStateTransactionArgs:      []interface{}{mock.Anything},
 			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(2), mock.Anything},
 			storeLastProcessedBlockReturns: []interface{}{nil},
-			commitReturns:                  []interface{}{nil},
 			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
 			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
 				Number: big.NewInt(3),

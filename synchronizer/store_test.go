@@ -71,28 +71,11 @@ func Test_setStartBlock(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "BeginStateTransaction returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).
-					Return(nil, testError)
-
-				return mockDB
-			},
-			block:   1,
-			wantErr: true,
-		},
-		{
 			name: "StoreLastProcessedBlock returns error",
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(2), mockTx).
+				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(2)).
 					Return(testError)
 
 				return mockDB
@@ -101,38 +84,11 @@ func Test_setStartBlock(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "Commit returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(3), mockTx).
-					Return(nil)
-
-				mockTx.On("Commit").
-					Return(testError)
-
-				return mockDB
-			},
-			block:   3,
-			wantErr: true,
-		},
-		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(4), mockTx).
-					Return(nil)
-
-				mockTx.On("Commit").
+				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(4)).
 					Return(nil)
 
 				return mockDB
@@ -213,47 +169,11 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "BeginStateTransaction returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(nil, testError)
-
-				return mockDB
-			},
-			keys:    testData,
-			wantErr: true,
-		},
-		{
 			name: "StoreUnresolvedBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData, mockTx).Return(testError)
-
-				mockTx.On("Rollback").Return(nil)
-
-				return mockDB
-			},
-			keys:    testData,
-			wantErr: true,
-		},
-		{
-			name: "Commit returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData, mockTx).Return(nil)
-
-				mockTx.On("Commit").Return(testError)
+				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(testError)
 
 				return mockDB
 			},
@@ -265,13 +185,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData, mockTx).Return(nil)
-
-				mockTx.On("Commit").Return(nil)
+				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(nil)
 
 				return mockDB
 			},
@@ -359,48 +273,11 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "BeginStateTransaction returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).
-					Return(nil, testError)
-
-				return mockDB
-			},
-			wantErr: true,
-		},
-		{
 			name: "DeleteUnresolvedBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData, mockTx).
-					Return(testError)
-
-				mockTx.On("Rollback").Return(nil)
-
-				return mockDB
-			},
-			wantErr: true,
-		},
-		{
-			name: "Commit returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData, mockTx).
-					Return(nil)
-
-				mockTx.On("Commit").
+				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
 					Return(testError)
 
 				return mockDB
@@ -412,14 +289,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData, mockTx).
-					Return(nil)
-
-				mockTx.On("Commit").
+				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
 					Return(nil)
 
 				return mockDB
@@ -455,47 +325,11 @@ func Test_storeOffchainData(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "BeginStateTransaction returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(nil, testError)
-
-				return mockDB
-			},
-			data:    testData,
-			wantErr: true,
-		},
-		{
 			name: "StoreOffChainData returns error",
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreOffChainData", mock.Anything, testData, mockTx).Return(testError)
-
-				mockTx.On("Rollback").Return(nil)
-
-				return mockDB
-			},
-			data:    testData,
-			wantErr: true,
-		},
-		{
-			name: "Commit returns error",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreOffChainData", mock.Anything, testData, mockTx).Return(nil)
-
-				mockTx.On("Commit").Return(testError)
+				mockDB.On("StoreOffChainData", mock.Anything, testData).Return(testError)
 
 				return mockDB
 			},
@@ -507,13 +341,7 @@ func Test_storeOffchainData(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockTx := mocks.NewTx(t)
-
-				mockDB.On("BeginStateTransaction", mock.Anything).Return(mockTx, nil)
-
-				mockDB.On("StoreOffChainData", mock.Anything, testData, mockTx).Return(nil)
-
-				mockTx.On("Commit").Return(nil)
+				mockDB.On("StoreOffChainData", mock.Anything, testData).Return(nil)
 
 				return mockDB
 			},

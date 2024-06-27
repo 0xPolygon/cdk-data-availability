@@ -3,8 +3,8 @@ package db
 import (
 	"context"
 	"database/sql"
-	"database/sql/driver"
 	"errors"
+	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,28 +18,19 @@ var (
 
 // DB defines functions that a DB instance should implement
 type DB interface {
-	BeginStateTransaction(ctx context.Context) (Tx, error)
-
-	StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error
+	StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 
-	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
+	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
 	GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
-	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error
+	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
 
 	Exists(ctx context.Context, key common.Hash) bool
-	GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error)
-	ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error)
-	StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error
+	GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error)
+	ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error)
+	StoreOffChainData(ctx context.Context, od []types.OffChainData) error
 
 	CountOffchainData(ctx context.Context) (uint64, error)
-}
-
-// Tx is the interface that defines functions a db tx has to implement
-type Tx interface {
-	sqlx.ExecerContext
-	sqlx.QueryerContext
-	driver.Tx
 }
 
 // DB is the database layer of the data node
@@ -54,13 +45,8 @@ func New(pg *sqlx.DB) DB {
 	}
 }
 
-// BeginStateTransaction begins a DB transaction. The caller is responsible for committing or rolling back the transaction
-func (db *pgDB) BeginStateTransaction(ctx context.Context) (Tx, error) {
-	return db.pg.BeginTxx(ctx, nil)
-}
-
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
-func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error {
 	const storeLastProcessedBlockSQL = `
 		INSERT INTO data_node.sync_tasks (task, block) 
 		VALUES ($1, $2)
@@ -68,7 +54,7 @@ func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, task string, block 
 		SET block = EXCLUDED.block, processed = NOW();
 	`
 
-	if _, err := db.execer(dbTx).ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
+	if _, err := db.pg.ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
 		return err
 	}
 
@@ -91,25 +77,33 @@ func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64,
 }
 
 // StoreUnresolvedBatchKeys stores unresolved batch keys in the database
-func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
 	const storeUnresolvedBatchesSQL = `
 		INSERT INTO data_node.unresolved_batches (num, hash)
 		VALUES ($1, $2)
 		ON CONFLICT (num, hash) DO NOTHING;
 	`
 
-	execer := db.execer(dbTx)
+	tx, err := db.pg.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
 	for _, bk := range bks {
-		if _, err := execer.ExecContext(
+		if _, err = tx.ExecContext(
 			ctx, storeUnresolvedBatchesSQL,
 			bk.Number,
 			bk.Hash.Hex(),
 		); err != nil {
+			if txErr := tx.Rollback(); txErr != nil {
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
+			}
+
 			return err
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 // GetUnresolvedBatchKeys returns the unresolved batch keys from the database
@@ -143,23 +137,32 @@ func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types
 }
 
 // DeleteUnresolvedBatchKeys deletes the unresolved batch keys from the database
-func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
 	const deleteUnresolvedBatchKeysSQL = `
 		DELETE FROM data_node.unresolved_batches
 		WHERE num = $1 AND hash = $2;
 	`
 
+	tx, err := db.pg.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
 	for _, bk := range bks {
-		if _, err := db.execer(dbTx).ExecContext(
+		if _, err = tx.ExecContext(
 			ctx, deleteUnresolvedBatchKeysSQL,
 			bk.Number,
 			bk.Hash.Hex(),
 		); err != nil {
+			if txErr := tx.Rollback(); txErr != nil {
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
+			}
+
 			return err
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 // Exists checks if a key exists in offchain data table
@@ -178,29 +181,37 @@ func (db *pgDB) Exists(ctx context.Context, key common.Hash) bool {
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData, dbTx sqlx.ExecerContext) error {
+func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value)
 		VALUES ($1, $2)
 		ON CONFLICT (key) DO NOTHING;
 	`
 
-	execer := db.execer(dbTx)
+	tx, err := db.pg.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
 	for _, d := range od {
-		if _, err := execer.ExecContext(
+		if _, err = tx.ExecContext(
 			ctx, storeOffChainDataSQL,
 			d.Key.Hex(),
 			common.Bytes2Hex(d.Value),
 		); err != nil {
+			if txErr := tx.Rollback(); txErr != nil {
+				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
+			}
+
 			return err
 		}
 	}
 
-	return nil
+	return tx.Commit()
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.QueryerContext) (types.ArgBytes, error) {
+func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error) {
 	const getOffchainDataSQL = `
 		SELECT value
 		FROM data_node.offchain_data 
@@ -211,10 +222,11 @@ func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.
 		hexValue string
 	)
 
-	if err := db.querier(dbTx).QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
+	if err := db.pg.QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrStateNotSynchronized
 		}
+
 		return nil, err
 	}
 
@@ -222,7 +234,7 @@ func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash, dbTx sqlx.
 }
 
 // ListOffChainData returns values identified by the given keys
-func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx sqlx.QueryerContext) (map[common.Hash]types.ArgBytes, error) {
+func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error) {
 	if len(keys) == 0 {
 		return nil, nil
 	}
@@ -246,7 +258,7 @@ func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash, dbTx s
 	// sqlx.In returns queries with the `?` bindvar, we can rebind it for our backend
 	query = db.pg.Rebind(query)
 
-	rows, err := db.querier(dbTx).QueryxContext(ctx, query, args...)
+	rows, err := db.pg.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -279,20 +291,4 @@ func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
 	}
 
 	return count, nil
-}
-
-func (db *pgDB) execer(dbTx sqlx.ExecerContext) sqlx.ExecerContext {
-	if dbTx != nil {
-		return dbTx
-	}
-
-	return db.pg
-}
-
-func (db *pgDB) querier(dbTx sqlx.QueryerContext) sqlx.QueryerContext {
-	if dbTx != nil {
-		return dbTx
-	}
-
-	return db.pg
 }
