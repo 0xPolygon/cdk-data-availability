@@ -409,17 +409,17 @@ func (_c *DB_ListOffChainData_Call) RunAndReturn(run func(context.Context, []com
 	return _c
 }
 
-// StoreLastProcessedBlock provides a mock function with given fields: ctx, task, block
-func (_m *DB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error {
-	ret := _m.Called(ctx, task, block)
+// StoreLastProcessedBlock provides a mock function with given fields: ctx, block, task
+func (_m *DB) StoreLastProcessedBlock(ctx context.Context, block uint64, task string) error {
+	ret := _m.Called(ctx, block, task)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreLastProcessedBlock")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, uint64) error); ok {
-		r0 = rf(ctx, task, block)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64, string) error); ok {
+		r0 = rf(ctx, block, task)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -434,15 +434,15 @@ type DB_StoreLastProcessedBlock_Call struct {
 
 // StoreLastProcessedBlock is a helper method to define mock.On call
 //   - ctx context.Context
-//   - task string
 //   - block uint64
-func (_e *DB_Expecter) StoreLastProcessedBlock(ctx interface{}, task interface{}, block interface{}) *DB_StoreLastProcessedBlock_Call {
-	return &DB_StoreLastProcessedBlock_Call{Call: _e.mock.On("StoreLastProcessedBlock", ctx, task, block)}
+//   - task string
+func (_e *DB_Expecter) StoreLastProcessedBlock(ctx interface{}, block interface{}, task interface{}) *DB_StoreLastProcessedBlock_Call {
+	return &DB_StoreLastProcessedBlock_Call{Call: _e.mock.On("StoreLastProcessedBlock", ctx, block, task)}
 }
 
-func (_c *DB_StoreLastProcessedBlock_Call) Run(run func(ctx context.Context, task string, block uint64)) *DB_StoreLastProcessedBlock_Call {
+func (_c *DB_StoreLastProcessedBlock_Call) Run(run func(ctx context.Context, block uint64, task string)) *DB_StoreLastProcessedBlock_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(uint64))
+		run(args[0].(context.Context), args[1].(uint64), args[2].(string))
 	})
 	return _c
 }
@@ -452,7 +452,7 @@ func (_c *DB_StoreLastProcessedBlock_Call) Return(_a0 error) *DB_StoreLastProces
 	return _c
 }
 
-func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context, string, uint64) error) *DB_StoreLastProcessedBlock_Call {
+func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context, uint64, string) error) *DB_StoreLastProcessedBlock_Call {
 	_c.Call.Return(run)
 	return _c
 }
