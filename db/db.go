@@ -18,7 +18,7 @@ var (
 
 // DB defines functions that a DB instance should implement
 type DB interface {
-	StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error
+	StoreLastProcessedBlock(ctx context.Context, block uint64, task string) error
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 
 	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
@@ -46,7 +46,7 @@ func New(pg *sqlx.DB) DB {
 }
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
-func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, task string, block uint64) error {
+func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, block uint64, task string) error {
 	const storeLastProcessedBlockSQL = `
 		INSERT INTO data_node.sync_tasks (task, block) 
 		VALUES ($1, $2)
@@ -183,8 +183,8 @@ func (db *pgDB) Exists(ctx context.Context, key common.Hash) bool {
 // StoreOffChainData stores and array of key values in the Db
 func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
 	const storeOffChainDataSQL = `
-		INSERT INTO data_node.offchain_data (key, value)
-		VALUES ($1, $2)
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES ($1, $2, $3)
 		ON CONFLICT (key) DO NOTHING;
 	`
 
@@ -198,6 +198,7 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) 
 			ctx, storeOffChainDataSQL,
 			d.Key.Hex(),
 			common.Bytes2Hex(d.Value),
+			d.BatchNum,
 		); err != nil {
 			if txErr := tx.Rollback(); txErr != nil {
 				return fmt.Errorf("%v: rollback caused by %v", txErr, err)

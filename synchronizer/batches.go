@@ -26,7 +26,7 @@ const defaultBlockBatchSize = 32
 
 // SequencerTracker is an interface that defines functions that a sequencer tracker must implement
 type SequencerTracker interface {
-	GetSequenceBatch(batchNum uint64) (*sequencer.SeqBatch, error)
+	GetSequenceBatch(ctx context.Context, batchNum uint64) (*sequencer.SeqBatch, error)
 }
 
 // BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
@@ -95,9 +95,10 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start(ctx context.Context) {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
-	go bs.startUnresolvedBatchesProcessor(ctx)
+	go bs.processUnresolvedBatches(ctx)
 	go bs.produceEvents(ctx)
 	go bs.handleReorgs(ctx)
+	go bs.verifyBatches(ctx)
 }
 
 // Stop stops the synchronizer
@@ -112,7 +113,7 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 		case r := <-bs.reorgs:
 			bs.syncLock.Lock()
 
-			latest, err := getStartBlock(ctx, bs.db)
+			latest, err := getStartBlock(ctx, bs.db, L1SyncTask)
 			if err != nil {
 				log.Errorf("could not determine latest processed block: %v", err)
 				bs.syncLock.Unlock()
@@ -126,7 +127,7 @@ func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
 				continue
 			}
 
-			if err = setStartBlock(ctx, bs.db, r.Number); err != nil {
+			if err = setStartBlock(ctx, bs.db, r.Number, L1SyncTask); err != nil {
 				log.Errorf("failed to store new start block to %d: %v", r.Number, err)
 			}
 
@@ -157,7 +158,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 	bs.syncLock.Lock()
 	defer bs.syncLock.Unlock()
 
-	start, err := getStartBlock(ctx, bs.db)
+	start, err := getStartBlock(ctx, bs.db, L1SyncTask)
 	if err != nil {
 		return err
 	}
@@ -210,11 +211,11 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 	for _, event := range events {
 		if err = bs.handleEvent(ctx, event); err != nil {
 			log.Errorf("failed to handle event: %v", err)
-			return setStartBlock(ctx, bs.db, event.Raw.BlockNumber-1)
+			return setStartBlock(ctx, bs.db, event.Raw.BlockNumber-1, L1SyncTask)
 		}
 	}
 
-	return setStartBlock(ctx, bs.db, end)
+	return setStartBlock(ctx, bs.db, end, L1SyncTask)
 }
 
 func (bs *BatchSynchronizer) handleEvent(parentCtx context.Context, event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
@@ -245,7 +246,7 @@ func (bs *BatchSynchronizer) handleEvent(parentCtx context.Context, event *polyg
 	return storeUnresolvedBatchKeys(ctx, bs.db, batchKeys)
 }
 
-func (bs *BatchSynchronizer) startUnresolvedBatchesProcessor(ctx context.Context) {
+func (bs *BatchSynchronizer) processUnresolvedBatches(ctx context.Context) {
 	log.Info("starting handling unresolved batches")
 	for {
 		delay := time.NewTimer(bs.retry)
@@ -280,7 +281,7 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 			resolved = append(resolved, key)
 		} else {
 			var value *types.OffChainData
-			if value, err = bs.resolve(key); err != nil {
+			if value, err = bs.resolve(ctx, key); err != nil {
 				log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
 				continue
 			}
@@ -307,9 +308,9 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 	return nil
 }
 
-func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData, error) {
+func (bs *BatchSynchronizer) resolve(ctx context.Context, batch types.BatchKey) (*types.OffChainData, error) {
 	// First try to get the data from the trusted sequencer
-	data := bs.trySequencer(batch)
+	data := bs.trySequencer(ctx, batch)
 	if data != nil {
 		return data, nil
 	}
@@ -318,8 +319,7 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 	if bs.committee.Length() == 0 {
 		// committee is resolved again once all members are evicted. They can be evicted
 		// for not having data, or their config being malformed
-		err := bs.resolveCommittee()
-		if err != nil {
+		if err := bs.resolveCommittee(); err != nil {
 			return nil, err
 		}
 	}
@@ -330,11 +330,14 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 	// iterate through them randomly until data is resolved
 	for _, r := range rand.Perm(len(members)) {
 		member := members[r]
-		if member.URL == "" || member.Addr == common.HexToAddress("0x0") || member.Addr == bs.self {
+		if member.URL == "" ||
+			common.HexToAddress("0x0").Cmp(member.Addr) == 0 ||
+			member.Addr.Cmp(bs.self) == 0 {
 			bs.committee.Delete(member.Addr)
 			continue // malformed committee, skip what is known to be wrong
 		}
-		value, err := bs.resolveWithMember(batch.Hash, member)
+
+		value, err := bs.resolveWithMember(ctx, batch, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
 			bs.committee.Delete(member.Addr)
@@ -343,12 +346,13 @@ func (bs *BatchSynchronizer) resolve(batch types.BatchKey) (*types.OffChainData,
 
 		return value, nil
 	}
+
 	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for number %d, key %v", batch.Number, batch.Hash.Hex())
 }
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.
-func (bs *BatchSynchronizer) trySequencer(batch types.BatchKey) *types.OffChainData {
-	seqBatch, err := bs.sequencer.GetSequenceBatch(batch.Number)
+func (bs *BatchSynchronizer) trySequencer(ctx context.Context, batch types.BatchKey) *types.OffChainData {
+	seqBatch, err := bs.sequencer.GetSequenceBatch(ctx, batch.Number)
 	if err != nil {
 		log.Warnf("failed to get data from sequencer: %v", err)
 		return nil
@@ -359,29 +363,62 @@ func (bs *BatchSynchronizer) trySequencer(batch types.BatchKey) *types.OffChainD
 		log.Warnf("number %d: sequencer gave wrong data for key: %s", batch.Number, batch.Hash.Hex())
 		return nil
 	}
+
 	return &types.OffChainData{
-		Key:   batch.Hash,
-		Value: seqBatch.BatchL2Data,
+		Key:      batch.Hash,
+		Value:    seqBatch.BatchL2Data,
+		BatchNum: batch.Number,
 	}
 }
 
-func (bs *BatchSynchronizer) resolveWithMember(key common.Hash, member etherman.DataCommitteeMember) (*types.OffChainData, error) {
+func (bs *BatchSynchronizer) resolveWithMember(
+	parentCtx context.Context,
+	batch types.BatchKey,
+	member etherman.DataCommitteeMember,
+) (*types.OffChainData, error) {
 	cm := bs.rpcClientFactory.New(member.URL)
-	ctx, cancel := context.WithTimeout(context.Background(), bs.rpcTimeout)
+
+	ctx, cancel := context.WithTimeout(parentCtx, bs.rpcTimeout)
 	defer cancel()
 
-	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, key.Hex())
+	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, batch.Hash.Hex())
 
-	bytes, err := cm.GetOffChainData(ctx, key)
+	bytes, err := cm.GetOffChainData(ctx, batch.Hash)
 	if err != nil {
 		return nil, err
 	}
+
 	expectKey := crypto.Keccak256Hash(bytes)
-	if key != expectKey {
+	if batch.Hash.Cmp(expectKey) != 0 {
 		return nil, fmt.Errorf("unexpected key gotten from member: %v. Key: %v", member.Addr.Hex(), expectKey.Hex())
 	}
+
 	return &types.OffChainData{
-		Key:   key,
-		Value: bytes,
+		Key:      batch.Hash,
+		Value:    bytes,
+		BatchNum: batch.Number,
 	}, nil
+}
+
+func (bs *BatchSynchronizer) verifyBatches(ctx context.Context) {
+	log.Info("starting batch verifier")
+	for {
+		delay := time.NewTimer(bs.retry)
+		select {
+		case <-delay.C:
+			if err := bs.verifyUnverifiedBatches(ctx); err != nil {
+				log.Error(err)
+			}
+		case <-bs.stop:
+			return
+		}
+	}
+}
+
+// verifyUnverifiedBatches verifies unverified batches from the database.
+// It retrieves the data from the offchain data table and verifies the hash where the batch number is zero.
+// It loads the batch number from the blockchain.
+func (bs *BatchSynchronizer) verifyUnverifiedBatches(ctx context.Context) error {
+	// TODO: Implement
+	return nil
 }

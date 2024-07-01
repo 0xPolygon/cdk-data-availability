@@ -1,6 +1,7 @@
 package sequencer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -17,8 +18,8 @@ type SeqBatch struct {
 }
 
 // GetData returns batch data from the trusted sequencer
-func GetData(url string, batchNum uint64) (*SeqBatch, error) {
-	response, err := rpc.JSONRPCCall(url, "zkevm_getBatchByNumber", batchNum, true)
+func GetData(ctx context.Context, url string, batchNum uint64) (*SeqBatch, error) {
+	response, err := rpc.JSONRPCCallWithContext(ctx, url, "zkevm_getBatchByNumber", batchNum, true)
 	if err != nil {
 		return nil, err
 	}

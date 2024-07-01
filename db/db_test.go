@@ -56,7 +56,7 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			dbPG := New(wdb)
 
-			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block)
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.block, tt.task)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -116,7 +116,7 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			dbPG := New(wdb)
 
-			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.task, tt.block)
+			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.block, tt.task)
 			require.NoError(t, err)
 
 			actual, err := dbPG.GetLastProcessedBlock(context.Background(), tt.task)

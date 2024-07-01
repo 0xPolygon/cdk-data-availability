@@ -51,7 +51,7 @@ func Test_getStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if block, err := getStartBlock(context.Background(), testDB); tt.wantErr {
+			if block, err := getStartBlock(context.Background(), testDB, l1SyncTask); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -100,7 +100,7 @@ func Test_setStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := setStartBlock(context.Background(), testDB, tt.block); tt.wantErr {
+			if err := setStartBlock(context.Background(), testDB, tt.block, l1SyncTask); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)

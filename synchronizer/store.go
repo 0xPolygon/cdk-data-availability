@@ -10,18 +10,28 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const dbTimeout = 2 * time.Second
+// SyncTask is the type of the sync task
+type SyncTask string
 
-// L1SyncTask is the name of the L1 sync task
-const L1SyncTask = "L1"
+const (
+	// L1SyncTask is the name of the L1 sync task
+	L1SyncTask SyncTask = "L1"
 
-func getStartBlock(parentCtx context.Context, db dbTypes.DB) (uint64, error) {
+	// L1BatchNumTask is the name of the L1 batch number task.
+	// The task identifies the last block number processed by the logic that populates
+	// batch numbers for the offchain data.
+	L1BatchNumTask SyncTask = "L1_BATCH_NUM"
+
+	dbTimeout = 2 * time.Second
+)
+
+func getStartBlock(parentCtx context.Context, db dbTypes.DB, syncTask SyncTask) (uint64, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	start, err := db.GetLastProcessedBlock(ctx, L1SyncTask)
+	start, err := db.GetLastProcessedBlock(ctx, string(syncTask))
 	if err != nil {
-		log.Errorf("error retrieving last processed block, starting from 0: %v", err)
+		log.Errorf("error retrieving last processed block for %s task, starting from 0: %v", syncTask, err)
 	}
 
 	if start > 0 {
@@ -31,11 +41,11 @@ func getStartBlock(parentCtx context.Context, db dbTypes.DB) (uint64, error) {
 	return start, err
 }
 
-func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64) error {
+func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64, syncTask SyncTask) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	return db.StoreLastProcessedBlock(ctx, L1SyncTask, block)
+	return db.StoreLastProcessedBlock(ctx, block, string(syncTask))
 }
 
 func exists(parentCtx context.Context, db dbTypes.DB, key common.Hash) bool {

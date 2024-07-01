@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	sequencer "github.com/0xPolygon/cdk-data-availability/sequencer"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -20,9 +22,9 @@ func (_m *SequencerTracker) EXPECT() *SequencerTracker_Expecter {
 	return &SequencerTracker_Expecter{mock: &_m.Mock}
 }
 
-// GetSequenceBatch provides a mock function with given fields: batchNum
-func (_m *SequencerTracker) GetSequenceBatch(batchNum uint64) (*sequencer.SeqBatch, error) {
-	ret := _m.Called(batchNum)
+// GetSequenceBatch provides a mock function with given fields: ctx, batchNum
+func (_m *SequencerTracker) GetSequenceBatch(ctx context.Context, batchNum uint64) (*sequencer.SeqBatch, error) {
+	ret := _m.Called(ctx, batchNum)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSequenceBatch")
@@ -30,19 +32,19 @@ func (_m *SequencerTracker) GetSequenceBatch(batchNum uint64) (*sequencer.SeqBat
 
 	var r0 *sequencer.SeqBatch
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uint64) (*sequencer.SeqBatch, error)); ok {
-		return rf(batchNum)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64) (*sequencer.SeqBatch, error)); ok {
+		return rf(ctx, batchNum)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) *sequencer.SeqBatch); ok {
-		r0 = rf(batchNum)
+	if rf, ok := ret.Get(0).(func(context.Context, uint64) *sequencer.SeqBatch); ok {
+		r0 = rf(ctx, batchNum)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*sequencer.SeqBatch)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uint64) error); ok {
-		r1 = rf(batchNum)
+	if rf, ok := ret.Get(1).(func(context.Context, uint64) error); ok {
+		r1 = rf(ctx, batchNum)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,14 +58,15 @@ type SequencerTracker_GetSequenceBatch_Call struct {
 }
 
 // GetSequenceBatch is a helper method to define mock.On call
+//   - ctx context.Context
 //   - batchNum uint64
-func (_e *SequencerTracker_Expecter) GetSequenceBatch(batchNum interface{}) *SequencerTracker_GetSequenceBatch_Call {
-	return &SequencerTracker_GetSequenceBatch_Call{Call: _e.mock.On("GetSequenceBatch", batchNum)}
+func (_e *SequencerTracker_Expecter) GetSequenceBatch(ctx interface{}, batchNum interface{}) *SequencerTracker_GetSequenceBatch_Call {
+	return &SequencerTracker_GetSequenceBatch_Call{Call: _e.mock.On("GetSequenceBatch", ctx, batchNum)}
 }
 
-func (_c *SequencerTracker_GetSequenceBatch_Call) Run(run func(batchNum uint64)) *SequencerTracker_GetSequenceBatch_Call {
+func (_c *SequencerTracker_GetSequenceBatch_Call) Run(run func(ctx context.Context, batchNum uint64)) *SequencerTracker_GetSequenceBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint64))
+		run(args[0].(context.Context), args[1].(uint64))
 	})
 	return _c
 }
@@ -73,7 +76,7 @@ func (_c *SequencerTracker_GetSequenceBatch_Call) Return(_a0 *sequencer.SeqBatch
 	return _c
 }
 
-func (_c *SequencerTracker_GetSequenceBatch_Call) RunAndReturn(run func(uint64) (*sequencer.SeqBatch, error)) *SequencerTracker_GetSequenceBatch_Call {
+func (_c *SequencerTracker_GetSequenceBatch_Call) RunAndReturn(run func(context.Context, uint64) (*sequencer.SeqBatch, error)) *SequencerTracker_GetSequenceBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

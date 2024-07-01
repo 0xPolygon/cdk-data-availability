@@ -133,7 +133,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 			committee:        NewCommitteeMapSafe(),
 		}
 
-		offChainData, err := batchSyncronizer.resolve(batchKey)
+		offChainData, err := batchSyncronizer.resolve(context.Background(), batchKey)
 		if config.isErrorExpected {
 			if config.errorString != "" {
 				require.ErrorContains(t, err, config.errorString)
@@ -156,7 +156,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 		t.Parallel()
 
 		testFn(testConfig{
-			getSequenceBatchArgs: []interface{}{batchKey.Number},
+			getSequenceBatchArgs: []interface{}{context.Background(), batchKey.Number},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
 				Number:      types.ArgUint64(batchKey.Number),
 				BatchL2Data: types.ArgBytes(data),
@@ -184,7 +184,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 			isErrorExpected:                false,
 			getOffChainDataArgs:            [][]interface{}{{mock.Anything, batchKey.Hash}},
 			getOffChainDataReturns:         [][]interface{}{{data, nil}},
-			getSequenceBatchArgs:           []interface{}{batchKey.Number},
+			getSequenceBatchArgs:           []interface{}{context.Background(), batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 			newArgs:                        [][]interface{}{{committee.Members[0].URL}},
@@ -208,7 +208,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 		}
 
 		testFn(testConfig{
-			getSequenceBatchArgs:           []interface{}{batchKey.Number},
+			getSequenceBatchArgs:           []interface{}{context.Background(), batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 			newArgs: [][]interface{}{
@@ -257,7 +257,7 @@ func TestBatchSynchronizer_Resolve(t *testing.T) {
 				{[]byte{0, 0, 0, 1}, nil}, // member doesn't have batch
 				{[]byte{0, 0, 0, 1}, nil}, // member doesn't have batch
 			},
-			getSequenceBatchArgs:           []interface{}{batchKey.Number},
+			getSequenceBatchArgs:           []interface{}{context.Background(), batchKey.Number},
 			getSequenceBatchReturns:        []interface{}{nil, errors.New("error")},
 			getCurrentDataCommitteeReturns: []interface{}{committee, nil},
 		})
@@ -596,7 +596,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 				mock.Anything,
 			},
 			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
-			getSequenceBatchArgs:             []interface{}{uint64(10)},
+			getSequenceBatchArgs:             []interface{}{context.Background(), uint64(10)},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
 				Number:      types.ArgUint64(10),
 				BatchL2Data: types.ArgBytes(batchL2Data),
