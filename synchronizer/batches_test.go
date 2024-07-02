@@ -732,9 +732,9 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 	testFn := func(config testConfig) {
 		dbMock := mocks.NewDB(t)
 
-		dbMock.On("GetLastProcessedBlock", mock.Anything, L1SyncTask).Return(config.getLastProcessedBlockReturns...).Once()
+		dbMock.On("GetLastProcessedBlock", mock.Anything, string(L1SyncTask)).Return(config.getLastProcessedBlockReturns...).Once()
 		if config.storeLastProcessedBlockReturns != nil {
-			dbMock.On("StoreLastProcessedBlock", mock.Anything, mock.Anything, L1SyncTask).
+			dbMock.On("StoreLastProcessedBlock", mock.Anything, mock.Anything, string(L1SyncTask)).
 				Return(config.storeLastProcessedBlockReturns...).Once()
 		}
 
