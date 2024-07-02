@@ -15,19 +15,27 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 	tests := []struct {
 		name  string
 		hash  types.ArgHash
-		data  interface{}
+		data  *types.OffChainData
 		dbErr error
 		err   error
 	}{
 		{
 			name: "successfully got offchain data",
 			hash: types.ArgHash{},
-			data: types.ArgBytes("offchaindata"),
+			data: &types.OffChainData{
+				Key:      common.Hash{},
+				Value:    types.ArgBytes("offchaindata"),
+				BatchNum: 0,
+			},
 		},
 		{
-			name:  "db returns error",
-			hash:  types.ArgHash{},
-			data:  types.ArgBytes("offchaindata"),
+			name: "db returns error",
+			hash: types.ArgHash{},
+			data: &types.OffChainData{
+				Key:      common.Hash{},
+				Value:    types.ArgBytes("offchaindata"),
+				BatchNum: 0,
+			},
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to get the requested data"),
 		},
@@ -53,7 +61,7 @@ func TestEndpoints_GetOffChainData(t *testing.T) {
 				require.EqualError(t, tt.err, err.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.data, got)
+				require.Equal(t, types.ArgBytes(tt.data.Value), got)
 			}
 		})
 	}
@@ -63,23 +71,27 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 	tests := []struct {
 		name   string
 		hashes []types.ArgHash
-		data   interface{}
+		data   []types.OffChainData
 		dbErr  error
 		err    error
 	}{
 		{
 			name:   "successfully got offchain data",
 			hashes: []types.ArgHash{},
-			data: map[common.Hash]types.ArgBytes{
-				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
-			},
+			data: []types.OffChainData{{
+				Key:      common.BytesToHash(nil),
+				Value:    types.ArgBytes("offchaindata"),
+				BatchNum: 0,
+			}},
 		},
 		{
 			name:   "db returns error",
 			hashes: []types.ArgHash{},
-			data: map[common.Hash]types.ArgBytes{
-				common.BytesToHash(nil): types.ArgBytes("offchaindata"),
-			},
+			data: []types.OffChainData{{
+				Key:      common.BytesToHash(nil),
+				Value:    types.ArgBytes("offchaindata"),
+				BatchNum: 0,
+			}},
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to list the requested data"),
 		},
@@ -110,7 +122,13 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 				require.EqualError(t, tt.err, err.Error())
 			} else {
 				require.NoError(t, err)
-				require.Equal(t, tt.data, got)
+
+				listMap := make(map[common.Hash]types.ArgBytes)
+				for _, data := range tt.data {
+					listMap[data.Key] = data.Value
+				}
+
+				require.Equal(t, listMap, got)
 			}
 		})
 	}

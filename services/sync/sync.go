@@ -38,7 +38,7 @@ func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Error)
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
 	}
 
-	return data, nil
+	return types.ArgBytes(data.Value), nil
 }
 
 // ListOffChainData returns the list of images of the given hashes
@@ -59,5 +59,10 @@ func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.E
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
 	}
 
-	return list, nil
+	listMap := make(map[common.Hash]types.ArgBytes)
+	for _, data := range list {
+		listMap[data.Key] = data.Value
+	}
+
+	return listMap, nil
 }

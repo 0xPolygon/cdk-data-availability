@@ -90,7 +90,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, string(L1SyncTask)},
 			getLastProcessedBlockReturns: []interface{}{uint64(1), errors.New("can't get last processed block")},
 			isErrorExpected:              true,
 		})
@@ -100,7 +100,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, string(L1SyncTask)},
 			getLastProcessedBlockReturns: []interface{}{uint64(10), nil},
 			isErrorExpected:              false,
 		})
@@ -110,7 +110,7 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask},
+			getLastProcessedBlockArgs:    []interface{}{mock.Anything, string(L1SyncTask)},
 			getLastProcessedBlockReturns: []interface{}{uint64(0), nil},
 			headerByNumberArgs:           []interface{}{mock.Anything, mock.Anything},
 			headerByNumberReturns:        []interface{}{nil, errors.New("error")},
@@ -122,9 +122,9 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
+			getLastProcessedBlockArgs:      []interface{}{mock.Anything, string(L1SyncTask)},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(0), mock.Anything},
+			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, uint64(0), string(L1SyncTask)},
 			storeLastProcessedBlockReturns: []interface{}{errors.New("error")},
 			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
 			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{
@@ -138,9 +138,9 @@ func Test_InitStartBlock(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getLastProcessedBlockArgs:      []interface{}{mock.Anything, L1SyncTask},
+			getLastProcessedBlockArgs:      []interface{}{mock.Anything, string(L1SyncTask)},
 			getLastProcessedBlockReturns:   []interface{}{uint64(0), nil},
-			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, L1SyncTask, uint64(2), mock.Anything},
+			storeLastProcessedBlockArgs:    []interface{}{mock.Anything, uint64(2), string(L1SyncTask)},
 			storeLastProcessedBlockReturns: []interface{}{nil},
 			headerByNumberArgs:             []interface{}{mock.Anything, mock.Anything},
 			headerByNumberReturns: []interface{}{ethTypes.NewBlockWithHeader(&ethTypes.Header{

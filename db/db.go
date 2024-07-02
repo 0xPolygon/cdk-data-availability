@@ -25,9 +25,8 @@ type DB interface {
 	GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
 	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
 
-	Exists(ctx context.Context, key common.Hash) bool
-	GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error)
-	ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error)
+	GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error)
+	ListOffChainData(ctx context.Context, keys []common.Hash) ([]types.OffChainData, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData) error
 
 	CountOffchainData(ctx context.Context) (uint64, error)
@@ -165,27 +164,13 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 	return tx.Commit()
 }
 
-// Exists checks if a key exists in offchain data table
-func (db *pgDB) Exists(ctx context.Context, key common.Hash) bool {
-	const keyExists = "SELECT COUNT(*) FROM data_node.offchain_data WHERE key = $1;"
-
-	var (
-		count uint
-	)
-
-	if err := db.pg.QueryRowContext(ctx, keyExists, key.Hex()).Scan(&count); err != nil {
-		return false
-	}
-
-	return count > 0
-}
-
 // StoreOffChainData stores and array of key values in the Db
 func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
 	const storeOffChainDataSQL = `
 		INSERT INTO data_node.offchain_data (key, value, batch_num)
 		VALUES ($1, $2, $3)
-		ON CONFLICT (key) DO NOTHING;
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
 	`
 
 	tx, err := db.pg.BeginTxx(ctx, nil)
@@ -212,18 +197,20 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) 
 }
 
 // GetOffChainData returns the value identified by the key
-func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash) (types.ArgBytes, error) {
+func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error) {
 	const getOffchainDataSQL = `
-		SELECT value
+		SELECT key, value, batch_num
 		FROM data_node.offchain_data 
 		WHERE key = $1 LIMIT 1;
 	`
 
-	var (
-		hexValue string
-	)
+	data := struct {
+		Key      string `db:"key"`
+		Value    string `db:"value"`
+		BatchNum uint64 `db:"batch_num"`
+	}{}
 
-	if err := db.pg.QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).Scan(&hexValue); err != nil {
+	if err := db.pg.QueryRowxContext(ctx, getOffchainDataSQL, key.Hex()).StructScan(&data); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrStateNotSynchronized
 		}
@@ -231,17 +218,21 @@ func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash) (types.Arg
 		return nil, err
 	}
 
-	return common.FromHex(hexValue), nil
+	return &types.OffChainData{
+		Key:      common.HexToHash(data.Key),
+		Value:    common.FromHex(data.Value),
+		BatchNum: data.BatchNum,
+	}, nil
 }
 
 // ListOffChainData returns values identified by the given keys
-func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) (map[common.Hash]types.ArgBytes, error) {
+func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) ([]types.OffChainData, error) {
 	if len(keys) == 0 {
 		return nil, nil
 	}
 
 	const listOffchainDataSQL = `
-		SELECT key, value
+		SELECT key, value, batch_num
 		FROM data_node.offchain_data 
 		WHERE key IN (?);
 	`
@@ -266,17 +257,22 @@ func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) (map[c
 
 	defer rows.Close()
 
-	list := make(map[common.Hash]types.ArgBytes)
+	list := make([]types.OffChainData, 0, len(keys))
 	for rows.Next() {
 		data := struct {
-			Key   string `db:"key"`
-			Value string `db:"value"`
+			Key      string `db:"key"`
+			Value    string `db:"value"`
+			BatchNum uint64 `db:"batch_num"`
 		}{}
 		if err = rows.StructScan(&data); err != nil {
 			return nil, err
 		}
 
-		list[common.HexToHash(data.Key)] = common.FromHex(data.Value)
+		list = append(list, types.OffChainData{
+			Key:      common.HexToHash(data.Key),
+			Value:    common.FromHex(data.Value),
+			BatchNum: data.BatchNum,
+		})
 	}
 
 	return list, nil

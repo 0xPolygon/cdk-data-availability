@@ -98,7 +98,6 @@ func (bs *BatchSynchronizer) Start(ctx context.Context) {
 	go bs.processUnresolvedBatches(ctx)
 	go bs.produceEvents(ctx)
 	go bs.handleReorgs(ctx)
-	go bs.verifyBatches(ctx)
 }
 
 // Stop stops the synchronizer
@@ -273,22 +272,57 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 		return nil
 	}
 
+	// Collect list of keys
+	keys := make([]common.Hash, len(batchKeys))
+	hashToKeys := make(map[common.Hash]types.BatchKey)
+	for i, key := range batchKeys {
+		keys[i] = key.Hash
+		hashToKeys[key.Hash] = key
+	}
+
+	// Get the existing offchain data by the given list of keys
+	existingOffchainData, err := listOffchainData(ctx, bs.db, keys)
+	if err != nil {
+		return fmt.Errorf("failed to list offchain data: %v", err)
+	}
+
 	// Resolve the unresolved data
 	var data []types.OffChainData
 	var resolved []types.BatchKey
-	for _, key := range batchKeys {
-		if exists(ctx, bs.db, key.Hash) {
-			resolved = append(resolved, key)
-		} else {
-			var value *types.OffChainData
-			if value, err = bs.resolve(ctx, key); err != nil {
-				log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
-				continue
-			}
 
-			resolved = append(resolved, key)
-			data = append(data, *value)
+	// Go over existing keys and mark them as resolved if they exist.
+	// Update the batch number if it is zero.
+	for _, extData := range existingOffchainData {
+		batchKey, ok := hashToKeys[extData.Key]
+		if !ok {
+			// This should not happen, but log it just in case
+			log.Errorf("unexpected key %s in the offchain data", extData.Key.Hex())
+			continue
 		}
+
+		// If the batch number is zero, update it
+		if extData.BatchNum == 0 {
+			extData.BatchNum = batchKey.Number
+			data = append(data, extData)
+		}
+
+		// Mark the batch as resolved
+		resolved = append(resolved, batchKey)
+
+		// Remove the key from the map
+		delete(hashToKeys, extData.Key)
+	}
+
+	// Resolve the remaining unresolved data
+	for _, key := range hashToKeys {
+		value, err := bs.resolve(ctx, key)
+		if err != nil {
+			log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
+			continue
+		}
+
+		resolved = append(resolved, key)
+		data = append(data, *value)
 	}
 
 	// Store data of the batches to the DB
@@ -398,27 +432,4 @@ func (bs *BatchSynchronizer) resolveWithMember(
 		Value:    bytes,
 		BatchNum: batch.Number,
 	}, nil
-}
-
-func (bs *BatchSynchronizer) verifyBatches(ctx context.Context) {
-	log.Info("starting batch verifier")
-	for {
-		delay := time.NewTimer(bs.retry)
-		select {
-		case <-delay.C:
-			if err := bs.verifyUnverifiedBatches(ctx); err != nil {
-				log.Error(err)
-			}
-		case <-bs.stop:
-			return
-		}
-	}
-}
-
-// verifyUnverifiedBatches verifies unverified batches from the database.
-// It retrieves the data from the offchain data table and verifies the hash where the batch number is zero.
-// It loads the batch number from the blockchain.
-func (bs *BatchSynchronizer) verifyUnverifiedBatches(ctx context.Context) error {
-	// TODO: Implement
-	return nil
 }

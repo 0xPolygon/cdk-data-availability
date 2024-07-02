@@ -17,11 +17,6 @@ const (
 	// L1SyncTask is the name of the L1 sync task
 	L1SyncTask SyncTask = "L1"
 
-	// L1BatchNumTask is the name of the L1 batch number task.
-	// The task identifies the last block number processed by the logic that populates
-	// batch numbers for the offchain data.
-	L1BatchNumTask SyncTask = "L1_BATCH_NUM"
-
 	dbTimeout = 2 * time.Second
 )
 
@@ -48,11 +43,11 @@ func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64, syncT
 	return db.StoreLastProcessedBlock(ctx, block, string(syncTask))
 }
 
-func exists(parentCtx context.Context, db dbTypes.DB, key common.Hash) bool {
+func listOffchainData(parentCtx context.Context, db dbTypes.DB, keys []common.Hash) ([]types.OffChainData, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	return db.Exists(ctx, key)
+	return db.ListOffChainData(ctx, keys)
 }
 
 func storeUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {

@@ -5,8 +5,6 @@ import (
 	"math/big"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/log"
@@ -24,62 +22,29 @@ func InitStartBlock(parentCtx context.Context, db db.DB, em etherman.Etherman, g
 	ctx, cancel := context.WithTimeout(parentCtx, initBlockTimeout)
 	defer cancel()
 
-	// Get start block either from genesis block or from contract deployment block number
-	startBlock, err := getInitialStartBlock(ctx, em, genesisBlock, validiumAddr)
+	current, err := getStartBlock(ctx, db, L1SyncTask)
 	if err != nil {
 		return err
 	}
 
-	initializeBlock := func(syncTask SyncTask) error {
-		current, err := getStartBlock(ctx, db, syncTask)
-		if err != nil {
-			return err
-		}
-
-		if current > 0 {
-			// no need to resolve start block, it's already been set
-			return nil
-		}
-
-		return setStartBlock(ctx, db, startBlock.Uint64(), syncTask)
+	if current > 0 {
+		// no need to resolve start block, it's already been set
+		return nil
 	}
 
-	var errGroup errgroup.Group
+	log.Info("starting search for start block of contract ", validiumAddr)
 
-	// Init start block for L1SyncTask
-	errGroup.Go(func() error {
-		log.Info("initializing start block for L1 sync task")
-
-		return initializeBlock(L1SyncTask)
-	})
-
-	// Init start block for L1BatchNumTask
-	errGroup.Go(func() error {
-		log.Info("initializing start block for L1_BATCH_NUM sync task")
-
-		return initializeBlock(L1BatchNumTask)
-	})
-
-	return errGroup.Wait()
-}
-
-func getInitialStartBlock(
-	ctx context.Context,
-	em etherman.Etherman,
-	genesisBlock uint64,
-	validiumAddr common.Address,
-) (*big.Int, error) {
 	startBlock := new(big.Int)
 	if genesisBlock != 0 {
 		startBlock.SetUint64(genesisBlock)
 	} else {
-		var err error
-		if startBlock, err = findContractDeploymentBlock(ctx, em, validiumAddr); err != nil {
-			return nil, err
+		startBlock, err = findContractDeploymentBlock(ctx, em, validiumAddr)
+		if err != nil {
+			return err
 		}
 	}
 
-	return startBlock, nil
+	return setStartBlock(ctx, db, startBlock.Uint64(), L1SyncTask)
 }
 
 func findContractDeploymentBlock(ctx context.Context, em etherman.Etherman, contract common.Address) (*big.Int, error) {

@@ -391,8 +391,8 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			mock.ExpectBegin()
 			for _, o := range tt.od {
-				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
-					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value))
+				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value, batch_num\) VALUES \(\$1, \$2, \$3\) ON CONFLICT \(key\) DO UPDATE SET value = EXCLUDED\.value, batch_num = EXCLUDED\.batch_num`).
+					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum)
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
 				} else {
@@ -426,17 +426,22 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		name      string
 		od        []types.OffChainData
 		key       common.Hash
-		expected  types.ArgBytes
+		expected  *types.OffChainData
 		returnErr error
 	}{
 		{
 			name: "successfully selected value",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value1"),
+				Key:      common.HexToHash("key1"),
+				Value:    []byte("value1"),
+				BatchNum: 1,
 			}},
-			key:      common.BytesToHash([]byte("key1")),
-			expected: []byte("value1"),
+			key: common.BytesToHash([]byte("key1")),
+			expected: &types.OffChainData{
+				Key:      common.HexToHash("key1"),
+				Value:    []byte("value1"),
+				BatchNum: 1,
+			},
 		},
 		{
 			name: "error returned",
@@ -474,13 +479,14 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			// Seed data
 			seedOffchainData(t, wdb, mock, tt.od)
 
-			expected := mock.ExpectQuery(`SELECT value FROM data_node\.offchain_data WHERE key = \$1 LIMIT 1`).
+			expected := mock.ExpectQuery(`SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key = \$1 LIMIT 1`).
 				WithArgs(tt.key.Hex())
 
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
 			} else {
-				expected.WillReturnRows(sqlmock.NewRows([]string{"value"}).AddRow(common.Bytes2Hex(tt.expected)))
+				expected.WillReturnRows(sqlmock.NewRows([]string{"key", "value", "batch_num"}).
+					AddRow(tt.expected.Key.Hex(), common.Bytes2Hex(tt.expected.Value), tt.expected.BatchNum))
 			}
 
 			dbPG := New(wdb)
@@ -503,7 +509,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		name      string
 		od        []types.OffChainData
 		keys      []common.Hash
-		expected  map[common.Hash]types.ArgBytes
+		expected  []types.OffChainData
 		sql       string
 		returnErr error
 	}{
@@ -516,29 +522,43 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			keys: []common.Hash{
 				common.BytesToHash([]byte("key1")),
 			},
-			expected: map[common.Hash]types.ArgBytes{
-				common.BytesToHash([]byte("key1")): []byte("value1"),
+			expected: []types.OffChainData{
+				{
+					Key:      common.BytesToHash([]byte("key1")),
+					Value:    []byte("value1"),
+					BatchNum: 0,
+				},
 			},
-			sql: `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
+			sql: `SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 		},
 		{
 			name: "successfully selected two values",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value1"),
+				Key:      common.HexToHash("key1"),
+				Value:    []byte("value1"),
+				BatchNum: 1,
 			}, {
-				Key:   common.HexToHash("key2"),
-				Value: []byte("value2"),
+				Key:      common.HexToHash("key2"),
+				Value:    []byte("value2"),
+				BatchNum: 2,
 			}},
 			keys: []common.Hash{
 				common.BytesToHash([]byte("key1")),
 				common.BytesToHash([]byte("key2")),
 			},
-			expected: map[common.Hash]types.ArgBytes{
-				common.BytesToHash([]byte("key1")): []byte("value1"),
-				common.BytesToHash([]byte("key2")): []byte("value2"),
+			expected: []types.OffChainData{
+				{
+					Key:      common.BytesToHash([]byte("key1")),
+					Value:    []byte("value1"),
+					BatchNum: 1,
+				},
+				{
+					Key:      common.BytesToHash([]byte("key2")),
+					Value:    []byte("value2"),
+					BatchNum: 2,
+				},
 			},
-			sql: `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\, \$2\)`,
+			sql: `SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key IN \(\$1\, \$2\)`,
 		},
 		{
 			name: "error returned",
@@ -549,7 +569,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			keys: []common.Hash{
 				common.BytesToHash([]byte("key1")),
 			},
-			sql:       `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
+			sql:       `SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 			returnErr: errors.New("test error"),
 		},
 		{
@@ -561,7 +581,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			keys: []common.Hash{
 				common.BytesToHash([]byte("undefined")),
 			},
-			sql:       `SELECT key, value FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
+			sql:       `SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key IN \(\$1\)`,
 			returnErr: ErrStateNotSynchronized,
 		},
 	}
@@ -593,10 +613,10 @@ func Test_DB_ListOffChainData(t *testing.T) {
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
 			} else {
-				returnData := sqlmock.NewRows([]string{"key", "value"})
+				returnData := sqlmock.NewRows([]string{"key", "value", "batch_num"})
 
-				for key, val := range tt.expected {
-					returnData = returnData.AddRow(key.Hex(), common.Bytes2Hex(val))
+				for _, data := range tt.expected {
+					returnData = returnData.AddRow(data.Key.Hex(), common.Bytes2Hex(data.Value), data.BatchNum)
 				}
 
 				expected.WillReturnRows(returnData)
@@ -611,85 +631,6 @@ func Test_DB_ListOffChainData(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, data)
 			}
-
-			require.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
-}
-
-func Test_DB_Exist(t *testing.T) {
-	testTable := []struct {
-		name      string
-		od        []types.OffChainData
-		key       common.Hash
-		count     int
-		returnErr error
-	}{
-		{
-			name: "two values found",
-			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value1"),
-			}, {
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value2"),
-			}},
-			key:   common.BytesToHash([]byte("key1")),
-			count: 2,
-		},
-		{
-			name: "no values found",
-			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value1"),
-			}, {
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value2"),
-			}},
-			key:   common.BytesToHash([]byte("undefined")),
-			count: 0,
-		},
-		{
-			name: "error returned",
-			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
-				Value: []byte("value1"),
-			}},
-			key:       common.BytesToHash([]byte("undefined")),
-			returnErr: errors.New("test error"),
-		},
-	}
-
-	for _, tt := range testTable {
-		tt := tt
-
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			db, mock, err := sqlmock.New()
-			require.NoError(t, err)
-
-			defer db.Close()
-
-			wdb := sqlx.NewDb(db, "postgres")
-
-			// Seed data
-			seedOffchainData(t, wdb, mock, tt.od)
-
-			expected := mock.ExpectQuery(`SELECT COUNT\(\*\) FROM data_node\.offchain_data WHERE key = \$1`).
-				WithArgs(tt.key.Hex())
-
-			if tt.returnErr != nil {
-				expected.WillReturnError(tt.returnErr)
-			} else {
-				expected.WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(tt.count))
-			}
-
-			dbPG := New(wdb)
-
-			actual := dbPG.Exists(context.Background(), tt.key)
-			require.NoError(t, err)
-			require.Equal(t, tt.count > 0, actual)
 
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
@@ -772,8 +713,8 @@ func seedOffchainData(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, od []type
 
 	mock.ExpectBegin()
 	for i, o := range od {
-		mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value\) VALUES \(\$1, \$2\) ON CONFLICT \(key\) DO NOTHING`).
-			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value)).
+		mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value, batch_num\) VALUES \(\$1, \$2, \$3\) ON CONFLICT \(key\) DO UPDATE SET value = EXCLUDED\.value, batch_num = EXCLUDED\.batch_num`).
+			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum).
 			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
 	}
 	mock.ExpectCommit()
