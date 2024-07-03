@@ -22,14 +22,16 @@ func InitStartBlock(parentCtx context.Context, db db.DB, em etherman.Etherman, g
 	ctx, cancel := context.WithTimeout(parentCtx, initBlockTimeout)
 	defer cancel()
 
-	current, err := getStartBlock(ctx, db)
+	current, err := getStartBlock(ctx, db, L1SyncTask)
 	if err != nil {
 		return err
 	}
+
 	if current > 0 {
 		// no need to resolve start block, it's already been set
 		return nil
 	}
+
 	log.Info("starting search for start block of contract ", validiumAddr)
 
 	startBlock := new(big.Int)
@@ -42,7 +44,7 @@ func InitStartBlock(parentCtx context.Context, db db.DB, em etherman.Etherman, g
 		}
 	}
 
-	return setStartBlock(ctx, db, startBlock.Uint64())
+	return setStartBlock(ctx, db, startBlock.Uint64(), L1SyncTask)
 }
 
 func findContractDeploymentBlock(ctx context.Context, em etherman.Etherman, contract common.Address) (*big.Int, error) {

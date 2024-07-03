@@ -39,7 +39,7 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
 	}
 
-	backfillProgress, err := s.db.GetLastProcessedBlock(ctx, synchronizer.L1SyncTask)
+	backfillProgress, err := s.db.GetLastProcessedBlock(ctx, string(synchronizer.L1SyncTask))
 	if err != nil {
 		log.Errorf("failed to get last block processed by the synchronizer: %v", err)
 	}

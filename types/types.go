@@ -31,8 +31,9 @@ type BatchKey struct {
 
 // OffChainData represents some data that is not stored on chain and should be preserved
 type OffChainData struct {
-	Key   common.Hash
-	Value []byte
+	Key      common.Hash
+	Value    []byte
+	BatchNum uint64
 }
 
 // ArgUint64 helps to marshal uint64 values provided in the RPC requests

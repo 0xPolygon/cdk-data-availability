@@ -51,7 +51,7 @@ func Test_getStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if block, err := getStartBlock(context.Background(), testDB); tt.wantErr {
+			if block, err := getStartBlock(context.Background(), testDB, L1SyncTask); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -75,7 +75,7 @@ func Test_setStartBlock(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(2)).
+				mockDB.On("StoreLastProcessedBlock", mock.Anything, uint64(2), "L1").
 					Return(testError)
 
 				return mockDB
@@ -88,7 +88,7 @@ func Test_setStartBlock(t *testing.T) {
 			db: func(t *testing.T) db.DB {
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("StoreLastProcessedBlock", mock.Anything, "L1", uint64(4)).
+				mockDB.On("StoreLastProcessedBlock", mock.Anything, uint64(4), "L1").
 					Return(nil)
 
 				return mockDB
@@ -100,55 +100,11 @@ func Test_setStartBlock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			testDB := tt.db(t)
 
-			if err := setStartBlock(context.Background(), testDB, tt.block); tt.wantErr {
+			if err := setStartBlock(context.Background(), testDB, tt.block, L1SyncTask); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
 			}
-		})
-	}
-}
-
-func Test_exists(t *testing.T) {
-	tests := []struct {
-		name string
-		db   func(t *testing.T) db.DB
-		key  common.Hash
-		want bool
-	}{
-		{
-			name: "Exists returns true",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("Exists", mock.Anything, common.HexToHash("0x01")).
-					Return(true)
-
-				return mockDB
-			},
-			key:  common.HexToHash("0x01"),
-			want: true,
-		},
-		{
-			name: "Exists returns false",
-			db: func(t *testing.T) db.DB {
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("Exists", mock.Anything, common.HexToHash("0x02")).
-					Return(false)
-
-				return mockDB
-			},
-			key:  common.HexToHash("0x02"),
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testDB := tt.db(t)
-
-			got := exists(context.Background(), testDB, tt.key)
-			require.Equal(t, tt.want, got)
 		})
 	}
 }

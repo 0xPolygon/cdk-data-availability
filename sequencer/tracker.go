@@ -302,8 +302,8 @@ func (st *Tracker) pollUrlChanges(ctx context.Context, urlChan chan<- string) {
 }
 
 // GetSequenceBatch returns sequence batch for given batch number
-func (st *Tracker) GetSequenceBatch(batchNum uint64) (*SeqBatch, error) {
-	return GetData(st.GetUrl(), batchNum)
+func (st *Tracker) GetSequenceBatch(ctx context.Context, batchNum uint64) (*SeqBatch, error) {
+	return GetData(ctx, st.GetUrl(), batchNum)
 }
 
 // Stop stops the SequencerTracker

@@ -1,6 +1,7 @@
 package sequencer
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -82,7 +83,7 @@ func Test_GetData(t *testing.T) {
 			}))
 			defer svr.Close()
 
-			got, err := GetData(svr.URL, tt.batchNum)
+			got, err := GetData(context.Background(), svr.URL, tt.batchNum)
 			if tt.err != nil {
 				require.Error(t, err)
 				require.EqualError(t, tt.err, err.Error())
