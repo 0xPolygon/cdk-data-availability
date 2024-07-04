@@ -316,3 +316,51 @@ func Test_storeOffchainData(t *testing.T) {
 		})
 	}
 }
+
+func Test_detectOffchainDataGaps(t *testing.T) {
+	testError := errors.New("test error")
+
+	tests := []struct {
+		name    string
+		db      func(t *testing.T) db.DB
+		gaps    map[uint64]uint64
+		wantErr bool
+	}{
+		{
+			name: "DetectOffchainDataGaps returns error",
+			db: func(t *testing.T) db.DB {
+				mockDB := mocks.NewDB(t)
+
+				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(nil, testError)
+
+				return mockDB
+			},
+			gaps:    nil,
+			wantErr: true,
+		},
+		{
+			name: "all good",
+			db: func(t *testing.T) db.DB {
+				mockDB := mocks.NewDB(t)
+
+				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(map[uint64]uint64{1: 3}, nil)
+
+				return mockDB
+			},
+			gaps:    map[uint64]uint64{1: 3},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDB := tt.db(t)
+
+			if gaps, err := detectOffchainDataGaps(context.Background(), testDB); tt.wantErr {
+				require.ErrorIs(t, err, testError)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.gaps, gaps)
+			}
+		})
+	}
+}
