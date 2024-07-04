@@ -708,6 +708,85 @@ func Test_DB_CountOffchainData(t *testing.T) {
 	}
 }
 
+func Test_DB_DetectOffchainDataGaps(t *testing.T) {
+	testTable := []struct {
+		name      string
+		seed      []types.OffChainData
+		gaps      map[uint64]uint64
+		returnErr error
+	}{
+		{
+			name: "one gap found",
+			seed: []types.OffChainData{{
+				Key:      common.HexToHash("key1"),
+				Value:    []byte("value1"),
+				BatchNum: 1,
+			}, {
+				Key:      common.HexToHash("key2"),
+				Value:    []byte("value2"),
+				BatchNum: 2,
+			}, {
+				Key:      common.HexToHash("key4"),
+				Value:    []byte("value4"),
+				BatchNum: 4,
+			}},
+			gaps: map[uint64]uint64{
+				2: 4,
+			},
+		},
+		{
+			name: "error returned",
+			seed: []types.OffChainData{{
+				Key:   common.HexToHash("key1"),
+				Value: []byte("value1"),
+			}},
+			returnErr: errors.New("test error"),
+		},
+	}
+
+	for _, tt := range testTable {
+		tt := tt
+
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			db, mock, err := sqlmock.New()
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			wdb := sqlx.NewDb(db, "postgres")
+
+			// Seed data
+			seedOffchainData(t, wdb, mock, tt.seed)
+
+			expected := mock.ExpectQuery(`SELECT \* FROM vw_batch_num_gaps`)
+
+			if tt.returnErr != nil {
+				expected.WillReturnError(tt.returnErr)
+			} else {
+				rows := sqlmock.NewRows([]string{"current_batch_num", "next_batch_num"})
+				for k, v := range tt.gaps {
+					rows.AddRow(k, v)
+				}
+				expected.WillReturnRows(rows)
+			}
+
+			dbPG := New(wdb)
+
+			actual, err := dbPG.DetectOffchainDataGaps(context.Background())
+			if tt.returnErr != nil {
+				require.ErrorIs(t, err, tt.returnErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.gaps, actual)
+			}
+
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
 func seedOffchainData(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
 	t.Helper()
 
