@@ -151,7 +151,7 @@ func start(cliCtx *cli.Context) error {
 		[]rpc.Service{
 			{
 				Name:    status.APISTATUS,
-				Service: status.NewEndpoints(storage),
+				Service: status.NewEndpoints(storage, batchSynchronizer),
 			},
 			{
 				Name:    sync.APISYNC,

@@ -15,17 +15,25 @@ import (
 // APISTATUS is the namespace of the status service
 const APISTATUS = "status"
 
+// GapsDetector is an interface for detecting gaps in the offchain data
+type GapsDetector interface {
+	// Gaps returns a map of gaps in the offchain data
+	Gaps() map[uint64]uint64
+}
+
 // Endpoints contains implementations for the "status" RPC endpoints
 type Endpoints struct {
-	db        db.DB
-	startTime time.Time
+	db           db.DB
+	startTime    time.Time
+	gapsDetector GapsDetector
 }
 
 // NewEndpoints returns Endpoints
-func NewEndpoints(db db.DB) *Endpoints {
+func NewEndpoints(db db.DB, gapsDetector GapsDetector) *Endpoints {
 	return &Endpoints{
-		db:        db,
-		startTime: time.Now(),
+		db:           db,
+		startTime:    time.Now(),
+		gapsDetector: gapsDetector,
 	}
 }
 
@@ -45,9 +53,10 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 	}
 
 	return types.DACStatus{
-		Version:          dataavailability.Version,
-		Uptime:           uptime,
-		KeyCount:         rowCount,
-		BackfillProgress: backfillProgress,
+		Version:               dataavailability.Version,
+		Uptime:                uptime,
+		KeyCount:              rowCount,
+		BackfillProgress:      backfillProgress,
+		OffchainDataGapsExist: len(s.gapsDetector.Gaps()) > 0,
 	}, nil
 }

@@ -28,8 +28,8 @@ type DB interface {
 	GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error)
 	ListOffChainData(ctx context.Context, keys []common.Hash) ([]types.OffChainData, error)
 	StoreOffChainData(ctx context.Context, od []types.OffChainData) error
-
 	CountOffchainData(ctx context.Context) (uint64, error)
+	DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, error)
 }
 
 // DB is the database layer of the data node
@@ -288,4 +288,31 @@ func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
 	}
 
 	return count, nil
+}
+
+// DetectOffchainDataGaps returns the number of gaps in the offchain_data table
+func (db *pgDB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, error) {
+	const detectBatchNumGapQuery = "SELECT * FROM vw_batch_num_gaps;"
+
+	rows, err := db.pg.QueryxContext(ctx, detectBatchNumGapQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	gaps := make(map[uint64]uint64)
+	for rows.Next() {
+		data := struct {
+			CurrentBatchNum uint64 `db:"current_batch_num"`
+			NextBatchNum    uint64 `db:"next_batch_num"`
+		}{}
+		if err = rows.StructScan(&data); err != nil {
+			return nil, err
+		}
+
+		gaps[data.CurrentBatchNum] = data.NextBatchNum
+	}
+
+	return gaps, nil
 }
