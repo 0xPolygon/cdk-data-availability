@@ -9,6 +9,7 @@ import (
 	solsha3 "github.com/miguelmota/go-solidity-sha3"
 )
 
+// Batch represents the batch data that the sequencer will send to L1
 type Batch struct {
 	L2Data            ArgBytes       `json:"L2Data"`
 	ForcedGER         common.Hash    `json:"forcedGlobalExitRoot"`
