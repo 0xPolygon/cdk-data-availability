@@ -6,6 +6,7 @@ run:
     - state/runtime/instrumentation
     - test
     - ci
+    - mocks
 
 linters:
   enable:
