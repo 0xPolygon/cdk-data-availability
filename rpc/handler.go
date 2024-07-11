@@ -123,7 +123,11 @@ func (h *Handler) Handle(req handleRequest) Response {
 	// check params passed by request match function params
 	var testStruct []interface{}
 	if err := json.Unmarshal(req.Params, &testStruct); err == nil && len(testStruct) > fd.numParams() {
-		return NewResponse(req.Request, nil, NewRPCError(InvalidParamsErrorCode, fmt.Sprintf("too many arguments, want at most %d", fd.numParams())))
+		return NewResponse(
+			req.Request,
+			nil,
+			NewRPCError(InvalidParamsErrorCode, fmt.Sprintf("too many arguments, want at most %d", fd.numParams())),
+		)
 	}
 
 	inputs := make([]interface{}, fd.numParams()-inArgsOffset)
@@ -161,7 +165,7 @@ func (h *Handler) HandleWs(reqBody []byte, wsConn *websocket.Conn, httpReq *http
 	log.Debugf("WS message received: %v", string(reqBody))
 	var req Request
 	if err := json.Unmarshal(reqBody, &req); err != nil {
-		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, invalidJSONReqErr.Error())).Bytes()
+		return NewResponse(req, nil, NewRPCError(InvalidRequestErrorCode, errInvalidJSONReq.Error())).Bytes()
 	}
 
 	handleReq := handleRequest{
@@ -254,7 +258,12 @@ func validateFunc(funcName string, fv reflect.Value, isMethod bool) (inNum int, 
 		return
 	}
 	if !isRPCErrorType(ft.Out(1)) {
-		err = fmt.Errorf("unexpected type for the second return value of the function '%s': '%s'. Expected '%s'", funcName, ft.Out(1), rpcErrType)
+		err = fmt.Errorf(
+			"unexpected type for the second return value of the function '%s': '%s'. Expected '%s'",
+			funcName,
+			ft.Out(1),
+			rpcErrType,
+		)
 		return
 	}
 

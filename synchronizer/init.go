@@ -18,7 +18,12 @@ const (
 )
 
 // InitStartBlock initializes the L1 sync task by finding the inception block for the CDKValidium contract
-func InitStartBlock(parentCtx context.Context, db db.DB, em etherman.Etherman, genesisBlock uint64, validiumAddr common.Address) error {
+func InitStartBlock(
+	parentCtx context.Context,
+	db db.DB, em etherman.Etherman,
+	genesisBlock uint64,
+	validiumAddr common.Address,
+) error {
 	ctx, cancel := context.WithTimeout(parentCtx, initBlockTimeout)
 	defer cancel()
 

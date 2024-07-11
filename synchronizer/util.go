@@ -16,10 +16,14 @@ import (
 
 var (
 	// methodIDSequenceBatchesValidiumEtrog is sequenceBatchesValidium method id in Etrog fork (0x2d72c248)
-	methodIDSequenceBatchesValidiumEtrog = crypto.Keccak256([]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],address,bytes)"))[:methodIDLen]
+	methodIDSequenceBatchesValidiumEtrog = crypto.Keccak256(
+		[]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],address,bytes)"),
+	)[:methodIDLen]
 
 	// methodIDSequenceBatchesValidiumElderberry is sequenceBatchesValidium method id in Elderberry fork (0xdb5b0ed7)
-	methodIDSequenceBatchesValidiumElderberry = crypto.Keccak256([]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],uint64,uint64,address,bytes)"))[:methodIDLen]
+	methodIDSequenceBatchesValidiumElderberry = crypto.Keccak256(
+		[]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],uint64,uint64,address,bytes)"),
+	)[:methodIDLen]
 )
 
 const (

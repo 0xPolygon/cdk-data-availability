@@ -29,7 +29,8 @@ type SequencerTracker interface {
 	GetSequenceBatch(ctx context.Context, batchNum uint64) (*sequencer.SeqBatch, error)
 }
 
-// BatchSynchronizer watches for number events, checks if they are "locally" stored, then retrieves and stores missing data
+// BatchSynchronizer watches for number events, checks if they are
+// "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
 	client           etherman.Etherman
 	stop             chan struct{}
@@ -217,7 +218,10 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 	return setStartBlock(ctx, bs.db, end, L1SyncTask)
 }
 
-func (bs *BatchSynchronizer) handleEvent(parentCtx context.Context, event *polygonvalidium.PolygonvalidiumSequenceBatches) error {
+func (bs *BatchSynchronizer) handleEvent(
+	parentCtx context.Context,
+	event *polygonvalidium.PolygonvalidiumSequenceBatches,
+) error {
 	ctx, cancel := context.WithTimeout(parentCtx, bs.rpcTimeout)
 	defer cancel()
 
@@ -287,8 +291,8 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 	}
 
 	// Resolve the unresolved data
-	var data []types.OffChainData
-	var resolved []types.BatchKey
+	data := make([]types.OffChainData, 0)
+	resolved := make([]types.BatchKey, 0)
 
 	// Go over existing keys and mark them as resolved if they exist.
 	// Update the batch number if it is zero.
@@ -381,7 +385,8 @@ func (bs *BatchSynchronizer) resolve(ctx context.Context, batch types.BatchKey) 
 		return value, nil
 	}
 
-	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode, "no data found for number %d, key %v", batch.Number, batch.Hash.Hex())
+	return nil, rpc.NewRPCError(rpc.NotFoundErrorCode,
+		"no data found for number %d, key %v", batch.Number, batch.Hash.Hex())
 }
 
 // trySequencer returns L2Data from the trusted sequencer, but does not return errors, only logs warnings if not found.

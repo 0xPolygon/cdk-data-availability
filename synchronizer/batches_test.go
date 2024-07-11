@@ -314,6 +314,8 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 		ethermanMock := mocks.NewEtherman(t)
 
@@ -473,6 +475,8 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 	txHash := crypto.Keccak256Hash(batchL2Data)
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 		ethermanMock := mocks.NewEtherman(t)
 		sequencerMock := mocks.NewSequencerTracker(t)
