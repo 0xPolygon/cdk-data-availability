@@ -42,7 +42,7 @@ func (t *CommitteeMapSafe) Load(addr common.Address) (etherman.DataCommitteeMemb
 	if !exists {
 		return etherman.DataCommitteeMember{}, false
 	}
-	return rawValue.(etherman.DataCommitteeMember), exists
+	return rawValue.(etherman.DataCommitteeMember), exists //nolint:forcetypeassert
 }
 
 // Delete deletes the value for a key.
@@ -57,7 +57,7 @@ func (t *CommitteeMapSafe) Delete(key common.Address) {
 func (t *CommitteeMapSafe) AsSlice() []etherman.DataCommitteeMember {
 	membersSlice := make([]etherman.DataCommitteeMember, 0, atomic.LoadInt32(&t.membersCount))
 	t.members.Range(func(_, rawMember any) bool {
-		membersSlice = append(membersSlice, rawMember.(etherman.DataCommitteeMember))
+		membersSlice = append(membersSlice, rawMember.(etherman.DataCommitteeMember)) //nolint:forcetypeassert
 
 		return true
 	})

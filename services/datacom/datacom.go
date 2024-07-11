@@ -46,7 +46,8 @@ func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface
 
 	// Store off-chain data by hash (hash(L2Data): L2Data)
 	if err = d.db.StoreOffChainData(context.Background(), signedSequence.Sequence.OffChainData()); err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to store offchain data. Error: %w", err).Error())
+		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode,
+			fmt.Errorf("failed to store offchain data. Error: %w", err).Error())
 	}
 
 	// Sign

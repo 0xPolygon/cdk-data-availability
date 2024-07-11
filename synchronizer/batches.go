@@ -291,8 +291,8 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 	}
 
 	// Resolve the unresolved data
-	var data []types.OffChainData
-	var resolved []types.BatchKey
+	data := make([]types.OffChainData, 0)
+	resolved := make([]types.BatchKey, 0)
 
 	// Go over existing keys and mark them as resolved if they exist.
 	// Update the batch number if it is zero.
