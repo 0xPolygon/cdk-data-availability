@@ -1,7 +1,7 @@
 [
     {
         "inputs": [],
-        "name": "CommitteeAddressDoesntExist",
+        "name": "CommitteeAddressDoesNotExist",
         "type": "error"
     },
     {
