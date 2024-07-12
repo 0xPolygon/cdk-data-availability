@@ -39,7 +39,7 @@ Instructions on how to run this software can be found [here](./docs/running.md)
 
 ## Contact
 
-For more discussions, please head to the R&D Discord: [https://discord.gg/0xPolygonRnD](https://discord.gg/0xPolygonRnD)
+For more discussions, please head to the [R&D Discord](https://discord.gg/0xPolygonRnD)
 
 
 ## License
