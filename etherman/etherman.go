@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygondatacommittee"
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/config"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygondatacommittee"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -41,23 +41,23 @@ type Etherman interface {
 	TrustedSequencer(ctx context.Context) (common.Address, error)
 	WatchSetTrustedSequencer(
 		ctx context.Context,
-		events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer,
+		events chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer,
 	) (event.Subscription, error)
 	TrustedSequencerURL(ctx context.Context) (string, error)
 	WatchSetTrustedSequencerURL(
 		ctx context.Context,
-		events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL,
+		events chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL,
 	) (event.Subscription, error)
 	FilterSequenceBatches(
 		opts *bind.FilterOpts,
 		numBatch []uint64,
-	) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error)
+	) (*polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatchesIterator, error)
 }
 
 // etherman is the implementation of EtherMan.
 type etherman struct {
 	EthClient     *ethclient.Client
-	CDKValidium   *polygonvalidium.Polygonvalidium
+	CDKValidium   *polygonvalidiumetrog.Polygonvalidiumetrog
 	DataCommittee *polygondatacommittee.Polygondatacommittee
 }
 
@@ -72,7 +72,7 @@ func New(ctx context.Context, cfg config.L1Config) (Etherman, error) {
 		return nil, err
 	}
 
-	cdkValidium, err := polygonvalidium.NewPolygonvalidium(
+	cdkValidium, err := polygonvalidiumetrog.NewPolygonvalidiumetrog(
 		common.HexToAddress(cfg.PolygonValidiumAddress),
 		ethClient,
 	)
@@ -126,7 +126,7 @@ func (e *etherman) TrustedSequencer(ctx context.Context) (common.Address, error)
 // WatchSetTrustedSequencer watches trusted sequencer address
 func (e *etherman) WatchSetTrustedSequencer(
 	ctx context.Context,
-	events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencer,
+	events chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencer,
 ) (event.Subscription, error) {
 	return e.CDKValidium.WatchSetTrustedSequencer(&bind.WatchOpts{Context: ctx}, events)
 }
@@ -142,14 +142,14 @@ func (e *etherman) TrustedSequencerURL(ctx context.Context) (string, error) {
 // WatchSetTrustedSequencerURL watches trusted sequencer's RPC url
 func (e *etherman) WatchSetTrustedSequencerURL(
 	ctx context.Context,
-	events chan *polygonvalidium.PolygonvalidiumSetTrustedSequencerURL,
+	events chan *polygonvalidiumetrog.PolygonvalidiumetrogSetTrustedSequencerURL,
 ) (event.Subscription, error) {
 	return e.CDKValidium.WatchSetTrustedSequencerURL(&bind.WatchOpts{Context: ctx}, events)
 }
 
 // FilterSequenceBatches retrieves filtered batches on CDK validium
 func (e *etherman) FilterSequenceBatches(opts *bind.FilterOpts,
-	numBatch []uint64) (*polygonvalidium.PolygonvalidiumSequenceBatchesIterator, error) {
+	numBatch []uint64) (*polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatchesIterator, error) {
 	return e.CDKValidium.FilterSequenceBatches(opts, numBatch)
 }
 

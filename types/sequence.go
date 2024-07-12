@@ -3,8 +3,6 @@ package types
 import (
 	"crypto/ecdsa"
 	"errors"
-	"math/big"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -39,40 +37,9 @@ func (s *Sequence) HashToSign() []byte {
 
 // Sign returns a signed sequence by the private key.
 // Note that what's being signed is the accumulated input hash
-func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) (*SignedSequence, error) {
+func (s *Sequence) Sign(privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	hashToSign := s.HashToSign()
-	sig, err := crypto.Sign(hashToSign, privateKey)
-	if err != nil {
-		return nil, err
-	}
-
-	rBytes := sig[:32]
-	sBytes := sig[32:64]
-	vByte := sig[64]
-
-	if strings.ToUpper(common.Bytes2Hex(sBytes)) > "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0" {
-		magicNumber := common.Hex2Bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141")
-		sBig := big.NewInt(0).SetBytes(sBytes)
-		magicBig := big.NewInt(0).SetBytes(magicNumber)
-		s1 := magicBig.Sub(magicBig, sBig)
-		sBytes = s1.Bytes()
-		if vByte == 0 {
-			vByte = 1
-		} else {
-			vByte = 0
-		}
-	}
-	vByte += 27
-
-	actualSignature := []byte{}
-	actualSignature = append(actualSignature, rBytes...)
-	actualSignature = append(actualSignature, sBytes...)
-	actualSignature = append(actualSignature, vByte)
-
-	return &SignedSequence{
-		Sequence:  *s,
-		Signature: actualSignature,
-	}, nil
+	return Sign(privateKey, hashToSign)
 }
 
 // OffChainData returns the data that needs to be stored off chain from a given sequence
@@ -106,4 +73,14 @@ func (s *SignedSequence) Signer() (common.Address, error) {
 		return common.Address{}, err
 	}
 	return crypto.PubkeyToAddress(*pubKey), nil
+}
+
+// OffChainData returns the data to be stored of the sequence
+func (s *SignedSequence) OffChainData() []OffChainData {
+	return s.Sequence.OffChainData()
+}
+
+// Sign signs the sequence using the privateKey
+func (s *SignedSequence) Sign(privateKey *ecdsa.PrivateKey) (ArgBytes, error) {
+	return s.Sequence.Sign(privateKey)
 }

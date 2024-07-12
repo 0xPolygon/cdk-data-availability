@@ -2,14 +2,10 @@ STOP := docker compose down
 
 .PHONY: run
 run: stop ## Runs a full node for e2e
-	docker compose up -d zkevm-state-db
-	docker compose up -d zkevm-pool-db
 	docker compose up -d cdk-data-availability-db
 	docker compose up -d l1
 	sleep 1
 	docker compose up -d cdk-data-availability
-	docker compose up -d zkevm-prover
-	docker compose up -d zkevm-node
 
 .PHONY: stop
 stop: ## Stop a full data node
@@ -40,14 +36,6 @@ help: ## Prints this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 ### node commands called by testing operations ###
-
-.PHONY: run-node
-run-node: ## Runs the node
-	docker compose up -d zkevm-node
-
-.PHONY: stop-node
-stop-node: ## Stops the node
-	docker compose stop zkevm-node && docker compose rm -f zkevm-node
 
 .PHONY: run-network
 run-network: ## Runs the l1 network

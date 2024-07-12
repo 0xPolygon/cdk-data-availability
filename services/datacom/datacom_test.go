@@ -68,8 +68,12 @@ func TestDataCom_SignSequence(t *testing.T) {
 		sqr.Start(context.Background())
 
 		if cfg.sender != nil {
-			signedSequence, err = sequence.Sign(cfg.sender)
+			signature, err := sequence.Sign(cfg.sender)
 			require.NoError(t, err)
+			signedSequence = &types.SignedSequence{
+				Sequence:  sequence,
+				Signature: signature,
+			}
 		} else {
 			signedSequence = &types.SignedSequence{
 				Sequence:  sequence,

@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/client"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/db"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
@@ -42,6 +42,7 @@ type BatchSynchronizer struct {
 	committee        *CommitteeMapSafe
 	syncLock         sync.Mutex
 	reorgs           <-chan BlockReorg
+	events           chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
 	sequencer        SequencerTracker
 	rpcClientFactory client.Factory
 }
@@ -69,6 +70,7 @@ func NewBatchSynchronizer(
 		self:             self,
 		db:               db,
 		reorgs:           reorgs,
+		events:           make(chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches),
 		sequencer:        sequencer,
 		rpcClientFactory: rpcClientFactory,
 	}
@@ -189,7 +191,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 	}
 
 	// Collect events into the slice
-	var events []*polygonvalidium.PolygonvalidiumSequenceBatches
+	var events []*polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
 	for iter.Next() {
 		if iter.Error() != nil {
 			return iter.Error()
@@ -220,7 +222,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 
 func (bs *BatchSynchronizer) handleEvent(
 	parentCtx context.Context,
-	event *polygonvalidium.PolygonvalidiumSequenceBatches,
+	event *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches,
 ) error {
 	ctx, cancel := context.WithTimeout(parentCtx, bs.rpcTimeout)
 	defer cancel()

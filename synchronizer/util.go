@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	elderberryValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/elderberry/polygonvalidium"
-	etrogValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
+	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
+	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -41,12 +41,12 @@ func UnpackTxData(txData []byte) ([]common.Hash, error) {
 	)
 
 	if bytes.Equal(methodID, methodIDSequenceBatchesValidiumEtrog) {
-		a, err = abi.JSON(strings.NewReader(etrogValidium.PolygonvalidiumMetaData.ABI))
+		a, err = abi.JSON(strings.NewReader(etrogValidium.PolygonvalidiumetrogMetaData.ABI))
 		if err != nil {
 			return nil, err
 		}
 	} else if bytes.Equal(methodID, methodIDSequenceBatchesValidiumElderberry) {
-		a, err = abi.JSON(strings.NewReader(elderberryValidium.PolygonvalidiumMetaData.ABI))
+		a, err = abi.JSON(strings.NewReader(elderberryValidium.PolygonvalidiumetrogMetaData.ABI))
 		if err != nil {
 			return nil, err
 		}

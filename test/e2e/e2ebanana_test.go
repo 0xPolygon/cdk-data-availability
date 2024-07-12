@@ -2,13 +2,9 @@ package e2e
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"errors"
 	"testing"
 
-	"github.com/0xPolygon/cdk-data-availability/client"
-	"github.com/0xPolygon/cdk-data-availability/config"
-	cfgTypes "github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -16,22 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func initTest(t *testing.T) (*testClient, *ecdsa.PrivateKey) {
-	const (
-		url         = "http://localhost:8444"
-		memberAddr  = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8"
-		privKeyPath = "../config/sequencer.keystore"
-		privKeyPass = "testonly"
-	)
-	pk, err := config.NewKeyFromKeystore(cfgTypes.KeystoreFileConfig{
-		Path:     privKeyPath,
-		Password: privKeyPass,
-	})
-	require.NoError(t, err)
-	return newTestClient(url, common.HexToAddress(memberAddr)), pk
-}
-
-func TestSignSequence(t *testing.T) {
+func TestSignSequenceBanana(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -39,12 +20,29 @@ func TestSignSequence(t *testing.T) {
 	tc, pk := initTest(t)
 	type testSequences struct {
 		name        string
-		sequence    types.SignedSequence
+		sequence    types.SignedSequenceBanana
 		expectedErr error
 	}
-	expectedSequence := types.Sequence{
-		common.Hex2Bytes("274567245673256275642756243560234572347657236520"),
-		common.Hex2Bytes("7863456782345678923456789354"),
+	expectedSequence := types.SequenceBanana{
+		Batches: []types.Batch{
+			{
+				L2Data:            common.FromHex("723473475757adadaddada"),
+				ForcedGER:         common.Hash{},
+				ForcedTimestamp:   0,
+				Coinbase:          common.HexToAddress("aabbccddee"),
+				ForcedBlockHashL1: common.Hash{},
+			},
+			{
+				L2Data:            common.FromHex("723473475757adadaddada723473475757adadaddada"),
+				ForcedGER:         common.Hash{},
+				ForcedTimestamp:   0,
+				Coinbase:          common.HexToAddress("aabbccddee"),
+				ForcedBlockHashL1: common.Hash{},
+			},
+		},
+		OldAccInputHash:      common.HexToHash("abcdef0987654321"),
+		L1InfoRoot:           common.HexToHash("ffddeeaabb09876"),
+		MaxSequenceTimestamp: 78945,
 	}
 
 	unexpectedSenderPrivKey, err := crypto.GenerateKey()
@@ -54,15 +52,15 @@ func TestSignSequence(t *testing.T) {
 	tSequences := []testSequences{
 		{
 			name: "invalid_signature",
-			sequence: types.SignedSequence{
-				Sequence:  types.Sequence{},
+			sequence: types.SignedSequenceBanana{
+				Sequence:  types.SequenceBanana{},
 				Signature: common.Hex2Bytes("f00"),
 			},
 			expectedErr: errors.New("-32000 failed to verify sender"),
 		},
 		{
 			name: "signature_not_from_sender",
-			sequence: types.SignedSequence{
+			sequence: types.SignedSequenceBanana{
 				Sequence:  expectedSequence,
 				Signature: unexpectedSenderSignature,
 			},
@@ -70,12 +68,12 @@ func TestSignSequence(t *testing.T) {
 		},
 		{
 			name:        "empty_batch",
-			sequence:    types.SignedSequence{},
+			sequence:    types.SignedSequenceBanana{},
 			expectedErr: nil,
 		},
 		{
 			name: "success",
-			sequence: types.SignedSequence{
+			sequence: types.SignedSequenceBanana{
 				Sequence:  expectedSequence,
 				Signature: nil,
 			},
@@ -87,30 +85,18 @@ func TestSignSequence(t *testing.T) {
 			if ts.sequence.Signature == nil {
 				signature, err := ts.sequence.Sequence.Sign(pk)
 				require.NoError(t, err)
-				ts.sequence = types.SignedSequence{
+				ts.sequence = types.SignedSequenceBanana{
 					Sequence:  ts.sequence.Sequence,
 					Signature: signature,
 				}
 			}
-			tc.signSequence(t, &ts.sequence, ts.expectedErr)
+			tc.signSequenceBanana(t, &ts.sequence, ts.expectedErr)
 		})
 	}
 }
 
-type testClient struct {
-	client        client.Client
-	dacMemberAddr common.Address
-}
-
-func newTestClient(url string, addr common.Address) *testClient {
-	return &testClient{
-		client:        client.New(url),
-		dacMemberAddr: addr,
-	}
-}
-
-func (tc *testClient) signSequence(t *testing.T, expected *types.SignedSequence, expectedErr error) {
-	if signature, err := tc.client.SignSequence(context.Background(), *expected); err != nil {
+func (tc *testClient) signSequenceBanana(t *testing.T, expected *types.SignedSequenceBanana, expectedErr error) {
+	if signature, err := tc.client.SignSequenceBanana(context.Background(), *expected); err != nil {
 		assert.Equal(t, expectedErr.Error(), err.Error())
 	} else {
 		// Verify signature
