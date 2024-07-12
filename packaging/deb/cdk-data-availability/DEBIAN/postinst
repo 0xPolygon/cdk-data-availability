@@ -1,0 +1,12 @@
+#!/bin/bash
+# This is a postinstallation script so the service can be configured and started when requested
+#
+sudo adduser --disabled-password --disabled-login --shell /usr/sbin/nologin --quiet --system --no-create-home --home /nonexistent cdk-data-availability
+if [ -d "/opt/cdk-data-availability" ]
+then
+    echo "Directory /opt/cdk-data-availability exists."
+else
+    sudo mkdir -p /opt/cdk-data-availability
+    sudo chown -R cdk-data-availability /opt/cdk-data-availability
+fi
+sudo systemctl daemon-reload

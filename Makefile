@@ -26,6 +26,11 @@ ifndef CHECK_DOCKER
 	$(error "Docker is not installed. Please install Docker and retry.")
 endif
 
+clean:
+	env GO111MODULE=on go clean -cache
+	rm -fr build/_workspace/pkg/ $(GOBIN)/*
+
+
 # Targets that require the checks
 generate: check-go
 build: check-go
