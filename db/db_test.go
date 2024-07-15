@@ -727,6 +727,8 @@ func Test_DB_CountOffchainData(t *testing.T) {
 }
 
 func Test_DB_DetectOffchainDataGaps(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		seed      []types.OffChainData
