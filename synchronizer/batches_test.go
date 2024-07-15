@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
+	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
+	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	elderberryValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/elderberry/polygonvalidium"
-	etrogValidium "github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -279,7 +279,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	}
 
 	to := common.HexToAddress("0xFFFF")
-	event := &etrogValidium.PolygonvalidiumSequenceBatches{
+	event := &etrogValidium.PolygonvalidiumetrogSequenceBatches{
 		Raw: ethTypes.Log{
 			TxHash: common.BytesToHash([]byte{0, 1, 2, 3}),
 		},
@@ -294,7 +294,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		},
 	}
 
-	a, err := abi.JSON(strings.NewReader(etrogValidium.PolygonvalidiumABI))
+	a, err := abi.JSON(strings.NewReader(etrogValidium.PolygonvalidiumetrogABI))
 	require.NoError(t, err)
 
 	methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
@@ -314,6 +314,8 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 		ethermanMock := mocks.NewEtherman(t)
 
@@ -375,7 +377,7 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 	t.Run("doesn't have batch in storage - successfully stored (Elderberry fork)", func(t *testing.T) {
 		t.Parallel()
 
-		a, err := abi.JSON(strings.NewReader(elderberryValidium.PolygonvalidiumABI))
+		a, err := abi.JSON(strings.NewReader(elderberryValidium.PolygonvalidiumetrogABI))
 		require.NoError(t, err)
 
 		methodDefinition, ok := a.Methods["sequenceBatchesValidium"]
@@ -473,6 +475,8 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 	txHash := crypto.Keccak256Hash(batchL2Data)
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 		ethermanMock := mocks.NewEtherman(t)
 		sequencerMock := mocks.NewSequencerTracker(t)

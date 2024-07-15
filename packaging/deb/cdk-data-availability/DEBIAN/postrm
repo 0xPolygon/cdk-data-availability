@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+###############
+# Remove cdk-data-availability installs
+##############
+sudo rm -rf /lib/systemd/system/cdk-data-availability.service
+sudo deluser cdk-data-availability
+sudo systemctl daemon-reload

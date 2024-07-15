@@ -1,0 +1,16 @@
+[Unit]
+  Description=cdk-data-availability-service
+  StartLimitIntervalSec=500
+  StartLimitBurst=5
+
+[Service]
+  Restart=on-failure
+  RestartSec=5s
+  ExecStart=/usr/bin/cdk-data-availability
+  Type=simple
+  KillSignal=SIGINT
+  User=cdk-data-availability
+  TimeoutStopSec=120
+
+[Install]
+  WantedBy=multi-user.target

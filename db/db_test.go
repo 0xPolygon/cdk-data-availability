@@ -14,6 +14,8 @@ import (
 )
 
 func Test_DB_StoreLastProcessedBlock(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		task      string
@@ -69,6 +71,8 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 }
 
 func Test_DB_GetLastProcessedBlock(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		task      string
@@ -133,6 +137,8 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 }
 
 func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		bk        []types.BatchKey
@@ -212,6 +218,8 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		bks       []types.BatchKey
@@ -277,6 +285,8 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		bks       []types.BatchKey
@@ -343,6 +353,8 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_DB_StoreOffChainData(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		od        []types.OffChainData
@@ -422,6 +434,8 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 }
 
 func Test_DB_GetOffChainData(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		od        []types.OffChainData
@@ -505,6 +519,8 @@ func Test_DB_GetOffChainData(t *testing.T) {
 }
 
 func Test_DB_ListOffChainData(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		od        []types.OffChainData
@@ -638,6 +654,8 @@ func Test_DB_ListOffChainData(t *testing.T) {
 }
 
 func Test_DB_CountOffchainData(t *testing.T) {
+	t.Parallel()
+
 	testTable := []struct {
 		name      string
 		od        []types.OffChainData

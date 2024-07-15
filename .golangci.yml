@@ -6,17 +6,33 @@ run:
     - state/runtime/instrumentation
     - test
     - ci
+    - mocks
 
 linters:
   enable:
-  - whitespace
-  - gosec
+  - whitespace # Tool for detection of leading and trailing whitespace
+  - gosec # Security problems
   - gci
-  - misspell
+  - misspell # Misspelled English words in comments
   - gomnd
-  - gofmt
-  - goimports
+  - gofmt # Whether the code was gofmt-ed
+  - goimports # Unused imports
   - revive
+  - wastedassign # Finds wasted assignment statements
+  - unconvert # Unnecessary type conversions
+  - prealloc # Finds slice declarations that could potentially be pre-allocated
+  - predeclared # Finds code that shadows one of Go's predeclared identifiers
+  - nolintlint # Ill-formed or insufficient nolint directives
+  - makezero # Finds slice declarations with non-zero initial length
+  - importas # Enforces consistent import aliases
+  - dogsled # Checks assignments with too many blank identifiers (e.g. x, , , _, := f())
+  - errname # Checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
+  - goconst # Repeated strings that could be replaced by a constant
+  - forcetypeassert # Finds forced type assertions
+  - tparallel # Detects inappropriate usage of t.Parallel() method in your Go test codes
+  - thelper # Detects golang test helpers without t.Helper() call and checks the consistency of test helpers
+  - errcheck # Errcheck is a go lint rule for checking for unchecked errors in go programs. These unchecked errors can be critical bugs in some cases
+  - lll # Long lines
 
 linters-settings:
   revive:
@@ -24,8 +40,16 @@ linters-settings:
     - name: exported
       arguments:
       - disableStutteringCheck
+  goconst:
+    min-len: 4
+    min-occurrences: 3
 
 issues:
+  exclude-rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - lll
   include:
   - EXC0012  # EXC0012 revive: Annoying issue about not having a comment. The rare codebase has such comments
   - EXC0014  # EXC0014 revive: Annoying issue about not having a comment. The rare codebase has such comments

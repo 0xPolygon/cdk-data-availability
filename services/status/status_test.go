@@ -11,6 +11,8 @@ import (
 )
 
 func TestEndpoints_GetStatus(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name                     string
 		countOffchainData        uint64
@@ -64,11 +66,14 @@ func TestEndpoints_GetStatus(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 
-				require.NotEmpty(t, actual.(types.DACStatus).Uptime)
-				require.Equal(t, "v0.1.0", actual.(types.DACStatus).Version)
-				require.Equal(t, tt.countOffchainData, actual.(types.DACStatus).KeyCount)
-				require.Equal(t, tt.getLastProcessedBlock, actual.(types.DACStatus).BackfillProgress)
-				require.True(t, actual.(types.DACStatus).OffchainDataGapsExist)
+				dacStatus, ok := actual.(types.DACStatus)
+				require.True(t, ok, "actual is not of type types.DACStatus")
+
+				require.NotEmpty(t, dacStatus.Uptime)
+				require.Equal(t, "v0.1.0", dacStatus.Version)
+				require.Equal(t, tt.countOffchainData, dacStatus.KeyCount)
+				require.Equal(t, tt.getLastProcessedBlock, dacStatus.BackfillProgress)
+				require.True(t, dacStatus.OffchainDataGapsExist)
 			}
 		})
 	}

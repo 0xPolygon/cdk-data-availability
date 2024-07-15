@@ -13,6 +13,8 @@ import (
 )
 
 func Test_JSONRPCCallWithContext(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		result     string

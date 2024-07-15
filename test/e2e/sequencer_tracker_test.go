@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/config"
 	"github.com/0xPolygon/cdk-data-availability/config/types"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
-	"github.com/0xPolygon/cdk-data-availability/etherman/smartcontracts/etrog/polygonvalidium"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/test/operations"
 	"github.com/ethereum/go-ethereum/common"
@@ -30,7 +30,7 @@ func TestSequencerAddrExists(t *testing.T) {
 	clientL1, err := ethclient.Dial(operations.DefaultL1NetworkURL)
 	require.NoError(t, err)
 
-	validiumContract, err := polygonvalidium.NewPolygonvalidium(
+	validiumContract, err := polygonvalidiumetrog.NewPolygonvalidiumetrog(
 		common.HexToAddress(operations.DefaultL1CDKValidiumSmartContract),
 		clientL1,
 	)
