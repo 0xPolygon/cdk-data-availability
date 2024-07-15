@@ -14,6 +14,8 @@ import (
 )
 
 func Test_getStartBlock(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 
 	tests := []struct {
@@ -50,7 +52,11 @@ func Test_getStartBlock(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if block, err := getStartBlock(context.Background(), testDB, L1SyncTask); tt.wantErr {
@@ -64,6 +70,8 @@ func Test_getStartBlock(t *testing.T) {
 }
 
 func Test_setStartBlock(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 
 	tests := []struct {
@@ -101,7 +109,11 @@ func Test_setStartBlock(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if err := setStartBlock(context.Background(), testDB, tt.block, L1SyncTask); tt.wantErr {
@@ -114,6 +126,8 @@ func Test_setStartBlock(t *testing.T) {
 }
 
 func Test_storeUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 	testData := []types.BatchKey{
 		{
@@ -155,7 +169,11 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if err := storeUnresolvedBatchKeys(context.Background(), testDB, tt.keys); tt.wantErr {
@@ -168,6 +186,8 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_getUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 	testData := []types.BatchKey{
 		{
@@ -209,7 +229,11 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if keys, err := getUnresolvedBatchKeys(context.Background(), testDB); tt.wantErr {
@@ -223,6 +247,8 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_deleteUnresolvedBatchKeys(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 	testData := []types.BatchKey{
 		{
@@ -263,7 +289,11 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if err := deleteUnresolvedBatchKeys(context.Background(), testDB, testData); tt.wantErr {
@@ -276,6 +306,8 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 }
 
 func Test_storeOffchainData(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 	testData := []types.OffChainData{
 		{
@@ -317,7 +349,11 @@ func Test_storeOffchainData(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if err := storeOffchainData(context.Background(), testDB, tt.data); tt.wantErr {
@@ -330,6 +366,8 @@ func Test_storeOffchainData(t *testing.T) {
 }
 
 func Test_detectOffchainDataGaps(t *testing.T) {
+	t.Parallel()
+
 	testError := errors.New("test error")
 
 	tests := []struct {
@@ -341,6 +379,8 @@ func Test_detectOffchainDataGaps(t *testing.T) {
 		{
 			name: "DetectOffchainDataGaps returns error",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
+
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(nil, testError)
@@ -353,6 +393,8 @@ func Test_detectOffchainDataGaps(t *testing.T) {
 		{
 			name: "all good",
 			db: func(t *testing.T) db.DB {
+				t.Helper()
+
 				mockDB := mocks.NewDB(t)
 
 				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(map[uint64]uint64{1: 3}, nil)
@@ -364,7 +406,11 @@ func Test_detectOffchainDataGaps(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			testDB := tt.db(t)
 
 			if gaps, err := detectOffchainDataGaps(context.Background(), testDB); tt.wantErr {

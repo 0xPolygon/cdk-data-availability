@@ -818,6 +818,8 @@ func TestBatchSynchronizer_detectOffchainDataGaps(t *testing.T) {
 	}
 
 	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
 		dbMock := mocks.NewDB(t)
 
 		if config.detectOffchainDataGapsArgs != nil && config.detectOffchainDataGapsReturns != nil {
