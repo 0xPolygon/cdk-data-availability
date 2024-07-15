@@ -301,12 +301,14 @@ func (db *pgDB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, 
 
 	defer rows.Close()
 
+	type row struct {
+		CurrentBatchNum uint64 `db:"current_batch_num"`
+		NextBatchNum    uint64 `db:"next_batch_num"`
+	}
+
 	gaps := make(map[uint64]uint64)
 	for rows.Next() {
-		data := struct {
-			CurrentBatchNum uint64 `db:"current_batch_num"`
-			NextBatchNum    uint64 `db:"next_batch_num"`
-		}{}
+		var data row
 		if err = rows.StructScan(&data); err != nil {
 			return nil, err
 		}
