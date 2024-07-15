@@ -33,19 +33,19 @@ type SequencerTracker interface {
 // BatchSynchronizer watches for number events, checks if they are
 // "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client           etherman.Etherman
-	stop             chan struct{}
-	retry            time.Duration
-	rpcTimeout       time.Duration
-	blockBatchSize   uint
-	self             common.Address
-	db               db.DB
-	committee        *CommitteeMapSafe
-	syncLock         sync.Mutex
-	reorgs           <-chan BlockReorg
-	events           chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
-	sequencer        SequencerTracker
-	rpcClientFactory client.Factory
+	client               etherman.Etherman
+	stop                 chan struct{}
+	retry                time.Duration
+	rpcTimeout           time.Duration
+	blockBatchSize       uint
+	self                 common.Address
+	db                   db.DB
+	committee            *CommitteeMapSafe
+	syncLock             sync.Mutex
+	reorgs               <-chan BlockReorg
+	events               chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
+	sequencer            SequencerTracker
+	rpcClientFactory     client.Factory
 	offchainDataGaps     map[uint64]uint64
 	offchainDataGapsLock sync.Mutex
 }
