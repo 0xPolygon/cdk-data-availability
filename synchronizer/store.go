@@ -43,13 +43,6 @@ func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64, syncT
 	return db.StoreLastProcessedBlock(ctx, block, string(syncTask))
 }
 
-func listOffchainData(parentCtx context.Context, db dbTypes.DB, keys []common.Hash) ([]types.OffChainData, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
-	defer cancel()
-
-	return db.ListOffChainData(ctx, keys)
-}
-
 func storeUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
@@ -71,9 +64,23 @@ func deleteUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []
 	return db.DeleteUnresolvedBatchKeys(ctx, keys)
 }
 
+func listOffchainData(parentCtx context.Context, db dbTypes.DB, keys []common.Hash) ([]types.OffChainData, error) {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
+	defer cancel()
+
+	return db.ListOffChainData(ctx, keys)
+}
+
 func storeOffchainData(parentCtx context.Context, db dbTypes.DB, data []types.OffChainData) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
 	return db.StoreOffChainData(ctx, data)
+}
+
+func detectOffchainDataGaps(parentCtx context.Context, db dbTypes.DB) (map[uint64]uint64, error) {
+	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
+	defer cancel()
+
+	return db.DetectOffchainDataGaps(ctx)
 }

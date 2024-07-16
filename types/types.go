@@ -17,10 +17,11 @@ const (
 
 // DACStatus contains DAC status info
 type DACStatus struct {
-	Uptime           string `json:"uptime"`
-	Version          string `json:"version"`
-	KeyCount         uint64 `json:"key_count"`
-	BackfillProgress uint64 `json:"backfill_progress"`
+	Uptime                string `json:"uptime"`
+	Version               string `json:"version"`
+	KeyCount              uint64 `json:"key_count"`
+	BackfillProgress      uint64 `json:"backfill_progress"`
+	OffchainDataGapsExist bool   `json:"offchain_data_gaps_exist"`
 }
 
 // BatchKey is the pairing of batch number and data hash of a batch

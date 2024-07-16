@@ -52,7 +52,11 @@ func TestEndpoints_GetStatus(t *testing.T) {
 			dbMock.On("GetLastProcessedBlock", mock.Anything, mock.Anything).
 				Return(tt.getLastProcessedBlock, tt.getLastProcessedBlockErr)
 
-			statusEndpoints := NewEndpoints(dbMock)
+			gapDetectorMock := mocks.NewGapsDetector(t)
+
+			gapDetectorMock.On("Gaps").Return(map[uint64]uint64{1: 1})
+
+			statusEndpoints := NewEndpoints(dbMock, gapDetectorMock)
 
 			actual, err := statusEndpoints.GetStatus()
 
@@ -69,6 +73,7 @@ func TestEndpoints_GetStatus(t *testing.T) {
 				require.Equal(t, "v0.1.0", dacStatus.Version)
 				require.Equal(t, tt.countOffchainData, dacStatus.KeyCount)
 				require.Equal(t, tt.getLastProcessedBlock, dacStatus.BackfillProgress)
+				require.True(t, dacStatus.OffchainDataGapsExist)
 			}
 		})
 	}

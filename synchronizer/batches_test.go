@@ -724,7 +724,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 	})*/
 }
 
-func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
+func TestBatchSynchronizer_HandleReorgs(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
@@ -801,6 +801,77 @@ func TestBatchSyncronizer_HandleReorgs(t *testing.T) {
 			reorg: BlockReorg{
 				Number: 15,
 			},
+		})
+	})
+}
+
+func TestBatchSynchronizer_detectOffchainDataGaps(t *testing.T) {
+	t.Parallel()
+
+	type testConfig struct {
+		// db mock
+		detectOffchainDataGapsArgs    []interface{}
+		detectOffchainDataGapsReturns []interface{}
+
+		expectedGaps    map[uint64]uint64
+		isErrorExpected bool
+	}
+
+	testFn := func(t *testing.T, config testConfig) {
+		t.Helper()
+
+		dbMock := mocks.NewDB(t)
+
+		if config.detectOffchainDataGapsArgs != nil && config.detectOffchainDataGapsReturns != nil {
+			dbMock.On("DetectOffchainDataGaps", config.detectOffchainDataGapsArgs...).Return(
+				config.detectOffchainDataGapsReturns...).Once()
+		}
+
+		batchSynronizer := &BatchSynchronizer{
+			db: dbMock,
+		}
+
+		err := batchSynronizer.detectOffchainDataGaps(context.Background())
+		if config.isErrorExpected {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+			require.Equal(t, config.expectedGaps, batchSynronizer.Gaps())
+		}
+
+		dbMock.AssertExpectations(t)
+	}
+
+	t.Run("no gaps detected", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
+			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{}, nil},
+			expectedGaps:                  map[uint64]uint64{},
+			isErrorExpected:               false,
+		})
+	})
+
+	t.Run("one gap detected", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
+			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{1: 3}, nil},
+			expectedGaps:                  map[uint64]uint64{1: 3},
+			isErrorExpected:               false,
+		})
+	})
+
+	t.Run("failed to detect gaps", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
+			detectOffchainDataGapsReturns: []interface{}{nil, errors.New("test error")},
+			expectedGaps:                  map[uint64]uint64{},
+			isErrorExpected:               true,
 		})
 	})
 }

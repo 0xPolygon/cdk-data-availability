@@ -128,6 +128,64 @@ func (_c *DB_DeleteUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// DetectOffchainDataGaps provides a mock function with given fields: ctx
+func (_m *DB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DetectOffchainDataGaps")
+	}
+
+	var r0 map[uint64]uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (map[uint64]uint64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) map[uint64]uint64); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[uint64]uint64)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_DetectOffchainDataGaps_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DetectOffchainDataGaps'
+type DB_DetectOffchainDataGaps_Call struct {
+	*mock.Call
+}
+
+// DetectOffchainDataGaps is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *DB_Expecter) DetectOffchainDataGaps(ctx interface{}) *DB_DetectOffchainDataGaps_Call {
+	return &DB_DetectOffchainDataGaps_Call{Call: _e.mock.On("DetectOffchainDataGaps", ctx)}
+}
+
+func (_c *DB_DetectOffchainDataGaps_Call) Run(run func(ctx context.Context)) *DB_DetectOffchainDataGaps_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *DB_DetectOffchainDataGaps_Call) Return(_a0 map[uint64]uint64, _a1 error) *DB_DetectOffchainDataGaps_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_DetectOffchainDataGaps_Call) RunAndReturn(run func(context.Context) (map[uint64]uint64, error)) *DB_DetectOffchainDataGaps_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetLastProcessedBlock provides a mock function with given fields: ctx, task
 func (_m *DB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
 	ret := _m.Called(ctx, task)
