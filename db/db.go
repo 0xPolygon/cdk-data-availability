@@ -11,6 +11,75 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	// storeLastProcessedBlockSQL is a query that stores the last processed block for a given task
+	storeLastProcessedBlockSQL = `
+		INSERT INTO data_node.sync_tasks (task, block) 
+		VALUES ($1, $2)
+		ON CONFLICT (task) DO UPDATE 
+		SET block = EXCLUDED.block, processed = NOW();`
+
+	// getLastProcessedBlockSQL is a query that returns the last processed block for a given task
+	getLastProcessedBlockSQL = `SELECT block FROM data_node.sync_tasks WHERE task = $1;`
+
+	// storeUnresolvedBatchesSQL is a query that stores unresolved batches in the database
+	storeUnresolvedBatchesSQL = `
+		INSERT INTO data_node.unresolved_batches (num, hash)
+		VALUES ($1, $2)
+		ON CONFLICT (num, hash) DO NOTHING;
+	`
+
+	// getUnresolvedBatchKeysSQL is a query that returns the unresolved batch keys from the database
+	getUnresolvedBatchKeysSQL = `SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;`
+
+	// deleteUnresolvedBatchKeysSQL is a query that deletes the unresolved batch keys from the database
+	deleteUnresolvedBatchKeysSQL = `DELETE FROM data_node.unresolved_batches WHERE num = $1 AND hash = $2;`
+
+	// storeOffChainDataSQL is a query that stores offchain data in the database
+	storeOffChainDataSQL = `
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
+	`
+
+	// getOffchainDataSQL is a query that returns the offchain data for a given key
+	getOffchainDataSQL = `
+		SELECT key, value, batch_num
+		FROM data_node.offchain_data 
+		WHERE key = $1 LIMIT 1;
+	`
+
+	// listOffchainDataSQL is a query that returns the offchain data for a given list of keys
+	listOffchainDataSQL = `
+		SELECT key, value, batch_num
+		FROM data_node.offchain_data 
+		WHERE key IN (?);
+	`
+
+	// countOffchainDataSQL is a query that returns the count of rows in the offchain_data table
+	countOffchainDataSQL = "SELECT COUNT(*) FROM data_node.offchain_data;"
+
+	// selectOffchainDataGapsSQL is a query that returns the gaps in the offchain_data table
+	selectOffchainDataGapsSQL = `
+		WITH numbered_batches AS (
+			SELECT
+				batch_num,
+				ROW_NUMBER() OVER (ORDER BY batch_num) AS row_number
+			FROM data_node.offchain_data
+		)
+		SELECT
+			nb1.batch_num AS current_batch_num,
+			nb2.batch_num AS next_batch_num
+		FROM
+			numbered_batches nb1
+				LEFT JOIN numbered_batches nb2 ON nb1.row_number = nb2.row_number - 1
+		WHERE
+			nb1.batch_num IS NOT NULL
+		  AND nb2.batch_num IS NOT NULL
+		  AND nb1.batch_num + 1 <> nb2.batch_num;`
+)
+
 var (
 	// ErrStateNotSynchronized indicates the state database may be empty
 	ErrStateNotSynchronized = errors.New("state not synchronized")
@@ -46,13 +115,6 @@ func New(pg *sqlx.DB) DB {
 
 // StoreLastProcessedBlock stores a record of a block processed by the synchronizer for named task
 func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, block uint64, task string) error {
-	const storeLastProcessedBlockSQL = `
-		INSERT INTO data_node.sync_tasks (task, block) 
-		VALUES ($1, $2)
-		ON CONFLICT (task) DO UPDATE 
-		SET block = EXCLUDED.block, processed = NOW();
-	`
-
 	if _, err := db.pg.ExecContext(ctx, storeLastProcessedBlockSQL, task, block); err != nil {
 		return err
 	}
@@ -62,8 +124,6 @@ func (db *pgDB) StoreLastProcessedBlock(ctx context.Context, block uint64, task 
 
 // GetLastProcessedBlock returns the latest block successfully processed by the synchronizer for named task
 func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64, error) {
-	const getLastProcessedBlockSQL = "SELECT block FROM data_node.sync_tasks WHERE task = $1;"
-
 	var (
 		lastBlock uint64
 	)
@@ -77,12 +137,6 @@ func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64,
 
 // StoreUnresolvedBatchKeys stores unresolved batch keys in the database
 func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	const storeUnresolvedBatchesSQL = `
-		INSERT INTO data_node.unresolved_batches (num, hash)
-		VALUES ($1, $2)
-		ON CONFLICT (num, hash) DO NOTHING;
-	`
-
 	tx, err := db.pg.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -107,8 +161,6 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 
 // GetUnresolvedBatchKeys returns the unresolved batch keys from the database
 func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
-	const getUnresolvedBatchKeysSQL = "SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;"
-
 	rows, err := db.pg.QueryxContext(ctx, getUnresolvedBatchKeysSQL, limit)
 	if err != nil {
 		return nil, err
@@ -137,11 +189,6 @@ func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types
 
 // DeleteUnresolvedBatchKeys deletes the unresolved batch keys from the database
 func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	const deleteUnresolvedBatchKeysSQL = `
-		DELETE FROM data_node.unresolved_batches
-		WHERE num = $1 AND hash = $2;
-	`
-
 	tx, err := db.pg.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -166,13 +213,6 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 
 // StoreOffChainData stores and array of key values in the Db
 func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
-	const storeOffChainDataSQL = `
-		INSERT INTO data_node.offchain_data (key, value, batch_num)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (key) DO UPDATE 
-		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
-	`
-
 	tx, err := db.pg.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -198,12 +238,6 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) 
 
 // GetOffChainData returns the value identified by the key
 func (db *pgDB) GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error) {
-	const getOffchainDataSQL = `
-		SELECT key, value, batch_num
-		FROM data_node.offchain_data 
-		WHERE key = $1 LIMIT 1;
-	`
-
 	data := struct {
 		Key      string `db:"key"`
 		Value    string `db:"value"`
@@ -230,12 +264,6 @@ func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) ([]typ
 	if len(keys) == 0 {
 		return nil, nil
 	}
-
-	const listOffchainDataSQL = `
-		SELECT key, value, batch_num
-		FROM data_node.offchain_data 
-		WHERE key IN (?);
-	`
 
 	preparedKeys := make([]string, len(keys))
 	for i, key := range keys {
@@ -280,10 +308,8 @@ func (db *pgDB) ListOffChainData(ctx context.Context, keys []common.Hash) ([]typ
 
 // CountOffchainData returns the count of rows in the offchain_data table
 func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
-	const countQuery = "SELECT COUNT(*) FROM data_node.offchain_data;"
-
 	var count uint64
-	if err := db.pg.QueryRowContext(ctx, countQuery).Scan(&count); err != nil {
+	if err := db.pg.QueryRowContext(ctx, countOffchainDataSQL).Scan(&count); err != nil {
 		return 0, err
 	}
 
@@ -292,9 +318,7 @@ func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
 
 // DetectOffchainDataGaps returns the number of gaps in the offchain_data table
 func (db *pgDB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, error) {
-	const detectBatchNumGapQuery = "SELECT * FROM vw_batch_num_gaps;"
-
-	rows, err := db.pg.QueryxContext(ctx, detectBatchNumGapQuery)
+	rows, err := db.pg.QueryxContext(ctx, selectOffchainDataGapsSQL)
 	if err != nil {
 		return nil, err
 	}

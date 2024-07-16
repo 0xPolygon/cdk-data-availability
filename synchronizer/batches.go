@@ -47,7 +47,7 @@ type BatchSynchronizer struct {
 	sequencer            SequencerTracker
 	rpcClientFactory     client.Factory
 	offchainDataGaps     map[uint64]uint64
-	offchainDataGapsLock sync.Mutex
+	offchainDataGapsLock sync.RWMutex
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -115,12 +115,12 @@ func (bs *BatchSynchronizer) Stop() {
 
 // Gaps returns the offchain data gaps
 func (bs *BatchSynchronizer) Gaps() map[uint64]uint64 {
-	bs.offchainDataGapsLock.Lock()
+	bs.offchainDataGapsLock.RLock()
 	gaps := make(map[uint64]uint64, len(bs.offchainDataGaps))
 	for key, value := range bs.offchainDataGaps {
 		gaps[key] = value
 	}
-	bs.offchainDataGapsLock.Unlock()
+	bs.offchainDataGapsLock.RUnlock()
 	return gaps
 }
 
@@ -485,23 +485,20 @@ func (bs *BatchSynchronizer) detectOffchainDataGaps(ctx context.Context) error {
 		return nil
 	}
 
-	// Log the detected gaps
+	// Log the detected gaps and store the detected gaps in the service state
 	gapsRaw := new(bytes.Buffer)
-	for key, value := range gaps {
-		if _, err = fmt.Fprintf(gapsRaw, "%d=>%d\n", key, value); err != nil {
-			log.Errorf("failed to write offchain data gaps: %v", err)
-		}
-	}
-
-	log.Warnf("detected offchain data gaps (current batch number => expected batch number): %s", gapsRaw.String())
-
-	// Store the detected gaps in the service state
 	bs.offchainDataGapsLock.Lock()
 	bs.offchainDataGaps = make(map[uint64]uint64, len(gaps))
 	for key, value := range gaps {
 		bs.offchainDataGaps[key] = value
+
+		if _, err = fmt.Fprintf(gapsRaw, "%d=>%d\n", key, value); err != nil {
+			log.Errorf("failed to write offchain data gaps: %v", err)
+		}
 	}
 	bs.offchainDataGapsLock.Unlock()
+
+	log.Warnf("detected offchain data gaps (current batch number => expected batch number): %s", gapsRaw.String())
 
 	return nil
 }
