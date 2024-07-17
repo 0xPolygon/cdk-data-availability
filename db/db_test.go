@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
+	"regexp"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -12,6 +13,22 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
+
+func Test_New(t *testing.T) {
+	t.Parallel()
+
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	constructorExpect(mock)
+
+	wdb := sqlx.NewDb(db, "postgres")
+
+	_, err = New(context.Background(), wdb)
+	require.NoError(t, err)
+}
 
 func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 	t.Parallel()
@@ -46,6 +63,8 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			expected := mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
 				WithArgs(tt.task, tt.block)
 			if tt.returnErr != nil {
@@ -56,7 +75,8 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			dbPG := New(wdb)
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.block, tt.task)
 			if tt.returnErr != nil {
@@ -103,6 +123,8 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
 				WithArgs(tt.task, tt.block).
 				WillReturnResult(sqlmock.NewResult(1, 1))
@@ -118,7 +140,8 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			dbPG := New(wdb)
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			err = dbPG.StoreLastProcessedBlock(context.Background(), tt.block, tt.task)
 			require.NoError(t, err)
@@ -183,11 +206,24 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 			db, mock, err := sqlmock.New()
 			require.NoError(t, err)
 
+			wdb := sqlx.NewDb(db, "postgres")
+
+			mock.ExpectPrepare(regexp.QuoteMeta(storeLastProcessedBlockSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(getLastProcessedBlockSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(getUnresolvedBatchKeysSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(getOffchainDataSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(countOffchainDataSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(selectOffchainDataGapsSQL))
+
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
+
 			defer db.Close()
 
 			mock.ExpectBegin()
+			mock.ExpectPrepare(regexp.QuoteMeta(storeUnresolvedBatchesSQL))
 			for _, o := range tt.bk {
-				expected := mock.ExpectExec(`INSERT INTO data_node\.unresolved_batches \(num, hash\) VALUES \(\$1, \$2\) ON CONFLICT \(num, hash\) DO NOTHING`).
+				expected := mock.ExpectExec(regexp.QuoteMeta(storeUnresolvedBatchesSQL)).
 					WithArgs(o.Number, o.Hash.Hex())
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
@@ -200,10 +236,6 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 			} else {
 				mock.ExpectRollback()
 			}
-
-			wdb := sqlx.NewDb(db, "postgres")
-
-			dbPG := New(wdb)
 
 			err = dbPG.StoreUnresolvedBatchKeys(context.Background(), tt.bk)
 			if tt.returnErr != nil {
@@ -253,10 +285,14 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			// Seed data
-			seedUnresolvedBatchKeys(t, wdb, mock, tt.bks)
+			seedUnresolvedBatchKeys(t, dbPG, mock, tt.bks)
 
 			var limit = uint(10)
 			expected := mock.ExpectQuery(`SELECT num, hash FROM data_node\.unresolved_batches LIMIT \$1\;`).WithArgs(limit)
@@ -268,8 +304,6 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 					expected.WillReturnRows(sqlmock.NewRows([]string{"num", "hash"}).AddRow(bk.Number, bk.Hash.Hex()))
 				}
 			}
-
-			dbPG := New(wdb)
 
 			data, err := dbPG.GetUnresolvedBatchKeys(context.Background(), limit)
 			if tt.returnErr != nil {
@@ -320,9 +354,12 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			mock.ExpectBegin()
+			mock.ExpectPrepare(regexp.QuoteMeta(deleteUnresolvedBatchKeysSQL))
 			for _, bk := range tt.bks {
-				expected := mock.ExpectExec(`DELETE FROM data_node\.unresolved_batches WHERE num = \$1 AND hash = \$2`).
+				expected := mock.ExpectExec(regexp.QuoteMeta(deleteUnresolvedBatchKeysSQL)).
 					WithArgs(bk.Number, bk.Hash.Hex())
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
@@ -338,7 +375,8 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 
 			wdb := sqlx.NewDb(db, "postgres")
 
-			dbPG := New(wdb)
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			err = dbPG.DeleteUnresolvedBatchKeys(context.Background(), tt.bks)
 			if tt.returnErr != nil {
@@ -399,11 +437,18 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 			db, mock, err := sqlmock.New()
 			require.NoError(t, err)
 
+			constructorExpect(mock)
+
+			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
+
 			defer db.Close()
 
 			mock.ExpectBegin()
+			mock.ExpectPrepare(regexp.QuoteMeta(storeOffChainDataSQL))
 			for _, o := range tt.od {
-				expected := mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value, batch_num\) VALUES \(\$1, \$2, \$3\) ON CONFLICT \(key\) DO UPDATE SET value = EXCLUDED\.value, batch_num = EXCLUDED\.batch_num`).
+				expected := mock.ExpectExec(regexp.QuoteMeta(storeOffChainDataSQL)).
 					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum)
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
@@ -416,10 +461,6 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 			} else {
 				mock.ExpectRollback()
 			}
-
-			wdb := sqlx.NewDb(db, "postgres")
-
-			dbPG := New(wdb)
 
 			err = dbPG.StoreOffChainData(context.Background(), tt.od)
 			if tt.returnErr != nil {
@@ -486,14 +527,18 @@ func Test_DB_GetOffChainData(t *testing.T) {
 			db, mock, err := sqlmock.New()
 			require.NoError(t, err)
 
-			defer db.Close()
+			constructorExpect(mock)
 
 			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
+
+			defer db.Close()
 
 			// Seed data
-			seedOffchainData(t, wdb, mock, tt.od)
+			seedOffchainData(t, dbPG, mock, tt.od)
 
-			expected := mock.ExpectQuery(`SELECT key, value, batch_num FROM data_node\.offchain_data WHERE key = \$1 LIMIT 1`).
+			expected := mock.ExpectQuery(regexp.QuoteMeta(getOffchainDataSQL)).
 				WithArgs(tt.key.Hex())
 
 			if tt.returnErr != nil {
@@ -502,8 +547,6 @@ func Test_DB_GetOffChainData(t *testing.T) {
 				expected.WillReturnRows(sqlmock.NewRows([]string{"key", "value", "batch_num"}).
 					AddRow(tt.expected.Key.Hex(), common.Bytes2Hex(tt.expected.Value), tt.expected.BatchNum))
 			}
-
-			dbPG := New(wdb)
 
 			data, err := dbPG.GetOffChainData(context.Background(), tt.key)
 			if tt.returnErr != nil {
@@ -613,10 +656,14 @@ func Test_DB_ListOffChainData(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			// Seed data
-			seedOffchainData(t, wdb, mock, tt.od)
+			seedOffchainData(t, dbPG, mock, tt.od)
 
 			preparedKeys := make([]driver.Value, len(tt.keys))
 			for i, key := range tt.keys {
@@ -637,8 +684,6 @@ func Test_DB_ListOffChainData(t *testing.T) {
 
 				expected.WillReturnRows(returnData)
 			}
-
-			dbPG := New(wdb)
 
 			data, err := dbPG.ListOffChainData(context.Background(), tt.keys)
 			if tt.returnErr != nil {
@@ -698,20 +743,22 @@ func Test_DB_CountOffchainData(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			// Seed data
-			seedOffchainData(t, wdb, mock, tt.od)
+			seedOffchainData(t, dbPG, mock, tt.od)
 
-			expected := mock.ExpectQuery(`SELECT COUNT\(\*\) FROM data_node\.offchain_data`)
+			expected := mock.ExpectQuery(regexp.QuoteMeta(countOffchainDataSQL))
 
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
 			} else {
 				expected.WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(tt.count))
 			}
-
-			dbPG := New(wdb)
 
 			actual, err := dbPG.CountOffchainData(context.Background())
 			if tt.returnErr != nil {
@@ -775,27 +822,16 @@ func Test_DB_DetectOffchainDataGaps(t *testing.T) {
 
 			defer db.Close()
 
+			constructorExpect(mock)
+
 			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
 
 			// Seed data
-			seedOffchainData(t, wdb, mock, tt.seed)
+			seedOffchainData(t, dbPG, mock, tt.seed)
 
-			expected := mock.ExpectQuery(`WITH numbered_batches AS \(
-															SELECT
-																batch_num,
-																ROW_NUMBER\(\) OVER \(ORDER BY batch_num\) AS row_number
-															FROM data_node\.offchain_data
-														\)
-														SELECT
-															nb1\.batch_num AS current_batch_num,
-															nb2\.batch_num AS next_batch_num
-														FROM
-															numbered_batches nb1
-																LEFT JOIN numbered_batches nb2 ON nb1\.row_number = nb2\.row_number - 1
-														WHERE
-															nb1\.batch_num IS NOT NULL
-														  AND nb2\.batch_num IS NOT NULL
-														  AND nb1\.batch_num \+ 1 <> nb2\.batch_num`)
+			expected := mock.ExpectQuery(regexp.QuoteMeta(selectOffchainDataGapsSQL))
 
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
@@ -806,8 +842,6 @@ func Test_DB_DetectOffchainDataGaps(t *testing.T) {
 				}
 				expected.WillReturnRows(rows)
 			}
-
-			dbPG := New(wdb)
 
 			actual, err := dbPG.DetectOffchainDataGaps(context.Background())
 			if tt.returnErr != nil {
@@ -822,32 +856,43 @@ func Test_DB_DetectOffchainDataGaps(t *testing.T) {
 	}
 }
 
-func seedOffchainData(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
+func constructorExpect(mock sqlmock.Sqlmock) {
+	mock.ExpectPrepare(regexp.QuoteMeta(storeLastProcessedBlockSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(getLastProcessedBlockSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(getUnresolvedBatchKeysSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(getOffchainDataSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(countOffchainDataSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(selectOffchainDataGapsSQL))
+}
+
+func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
 	t.Helper()
 
 	mock.ExpectBegin()
+	mock.ExpectPrepare(regexp.QuoteMeta(storeOffChainDataSQL))
 	for i, o := range od {
-		mock.ExpectExec(`INSERT INTO data_node\.offchain_data \(key, value, batch_num\) VALUES \(\$1, \$2, \$3\) ON CONFLICT \(key\) DO UPDATE SET value = EXCLUDED\.value, batch_num = EXCLUDED\.batch_num`).
+		mock.ExpectExec(regexp.QuoteMeta(storeOffChainDataSQL)).
 			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum).
 			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
 	}
 	mock.ExpectCommit()
 
-	err := New(db).StoreOffChainData(context.Background(), od)
+	err := db.StoreOffChainData(context.Background(), od)
 	require.NoError(t, err)
 }
 
-func seedUnresolvedBatchKeys(t *testing.T, db *sqlx.DB, mock sqlmock.Sqlmock, bk []types.BatchKey) {
+func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bk []types.BatchKey) {
 	t.Helper()
 
 	mock.ExpectBegin()
+	mock.ExpectPrepare(regexp.QuoteMeta(storeUnresolvedBatchesSQL))
 	for i, o := range bk {
-		mock.ExpectExec(`INSERT INTO data_node\.unresolved_batches \(num, hash\) VALUES \(\$1, \$2\) ON CONFLICT \(num, hash\) DO NOTHING`).
+		mock.ExpectExec(regexp.QuoteMeta(storeUnresolvedBatchesSQL)).
 			WithArgs(o.Number, o.Hash.Hex()).
 			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
 	}
 	mock.ExpectCommit()
 
-	err := New(db).StoreUnresolvedBatchKeys(context.Background(), bk)
+	err := db.StoreUnresolvedBatchKeys(context.Background(), bk)
 	require.NoError(t, err)
 }
