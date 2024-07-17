@@ -14,6 +14,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func Test_New(t *testing.T) {
+	t.Parallel()
+
+	db, mock, err := sqlmock.New()
+	require.NoError(t, err)
+
+	defer db.Close()
+
+	constructorExpect(mock)
+
+	wdb := sqlx.NewDb(db, "postgres")
+
+	_, err = New(context.Background(), wdb)
+	require.NoError(t, err)
+}
+
 func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 	t.Parallel()
 
