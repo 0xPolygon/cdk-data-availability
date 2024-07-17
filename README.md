@@ -37,6 +37,11 @@ The off-chain data is stored in a distributed manner and managed by a data avail
 
 Instructions on how to run this software can be found [here](./docs/running.md)
 
+## Contact
+
+For more discussions, please head to the [R&D Discord](https://discord.gg/0xPolygonRnD)
+
+
 ## License
 
 The cdk-validium-node project is licensed under the [GNU Affero General Public License](LICENSE) free software license.
