@@ -87,7 +87,10 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	storage := db.New(pg)
+	storage, err := db.New(cliCtx.Context, pg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Load private key
 	pk, err := config.NewKeyFromKeystore(c.PrivateKey)
