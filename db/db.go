@@ -23,23 +23,8 @@ const (
 	// getLastProcessedBlockSQL is a query that returns the last processed block for a given task
 	getLastProcessedBlockSQL = `SELECT block FROM data_node.sync_tasks WHERE task = $1;`
 
-	// storeUnresolvedBatchesSQL is a query that stores unresolved batches in the database
-	storeUnresolvedBatchesSQL = `
-		INSERT INTO data_node.unresolved_batches (num, hash)
-		VALUES ($1, $2)
-		ON CONFLICT (num, hash) DO NOTHING;
-	`
-
 	// getUnresolvedBatchKeysSQL is a query that returns the unresolved batch keys from the database
 	getUnresolvedBatchKeysSQL = `SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;`
-
-	// storeOffChainDataSQL is a query that stores offchain data in the database
-	storeOffChainDataSQL = `
-		INSERT INTO data_node.offchain_data (key, value, batch_num)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (key) DO UPDATE 
-		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
-	`
 
 	// getOffchainDataSQL is a query that returns the offchain data for a given key
 	getOffchainDataSQL = `
@@ -179,10 +164,10 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 
 	args := make([]interface{}, len(bks)*2)
 	values := make([]string, len(bks))
-	for i, _ := range bks {
+	for i, bk := range bks {
 		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bks[i].Number
-		args[i*2+1] = bks[i].Hash.Hex()
+		args[i*2] = bk.Number
+		args[i*2+1] = bk.Hash.Hex()
 	}
 
 	query := fmt.Sprintf(`
@@ -236,10 +221,10 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 
 	args := make([]interface{}, len(bks)*2)
 	values := make([]string, len(bks))
-	for i, _ := range bks {
+	for i, bk := range bks {
 		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bks[i].Number
-		args[i*2+1] = bks[i].Hash.Hex()
+		args[i*2] = bk.Number
+		args[i*2+1] = bk.Hash.Hex()
 	}
 
 	query := fmt.Sprintf(`

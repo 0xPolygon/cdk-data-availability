@@ -909,19 +909,19 @@ func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, ods []types.Off
 	require.NoError(t, err)
 }
 
-func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bk []types.BatchKey) {
+func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []types.BatchKey) {
 	t.Helper()
 
-	if len(bk) == 0 {
+	if len(bks) == 0 {
 		return
 	}
 
-	args := make([]driver.Value, len(bk)*2)
-	values := make([]string, len(bk))
-	for i, _ := range bk {
+	args := make([]driver.Value, len(bks)*2)
+	values := make([]string, len(bks))
+	for i, bk := range bks {
 		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bk[i].Number
-		args[i*2+1] = bk[i].Hash.Hex()
+		args[i*2] = bk.Number
+		args[i*2+1] = bk.Hash.Hex()
 	}
 
 	query := fmt.Sprintf(`
@@ -931,8 +931,8 @@ func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bk []typ
 	`, strings.Join(values, ","))
 
 	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(args...).
-		WillReturnResult(sqlmock.NewResult(int64(len(bk)), int64(len(bk))))
+		WillReturnResult(sqlmock.NewResult(int64(len(bks)), int64(len(bks))))
 
-	err := db.StoreUnresolvedBatchKeys(context.Background(), bk)
+	err := db.StoreUnresolvedBatchKeys(context.Background(), bks)
 	require.NoError(t, err)
 }
