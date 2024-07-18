@@ -162,12 +162,14 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 		return nil
 	}
 
-	args := make([]interface{}, len(bks)*2)
+	const columnsAffected = 2
+
+	args := make([]interface{}, len(bks)*columnsAffected)
 	values := make([]string, len(bks))
 	for i, bk := range bks {
-		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bk.Number
-		args[i*2+1] = bk.Hash.Hex()
+		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
+		args[i*columnsAffected] = bk.Number
+		args[i*columnsAffected+1] = bk.Hash.Hex()
 	}
 
 	query := fmt.Sprintf(`
@@ -219,12 +221,14 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 		return nil
 	}
 
-	args := make([]interface{}, len(bks)*2)
+	const columnsAffected = 2
+
+	args := make([]interface{}, len(bks)*columnsAffected)
 	values := make([]string, len(bks))
 	for i, bk := range bks {
-		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bk.Number
-		args[i*2+1] = bk.Hash.Hex()
+		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
+		args[i*columnsAffected] = bk.Number
+		args[i*columnsAffected+1] = bk.Hash.Hex()
 	}
 
 	query := fmt.Sprintf(`
@@ -244,13 +248,15 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, ods []types.OffChainData)
 		return nil
 	}
 
-	args := make([]interface{}, len(ods)*3)
+	const columnsAffected = 3
+
+	args := make([]interface{}, len(ods)*columnsAffected)
 	values := make([]string, len(ods))
 	for i, od := range ods {
-		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
-		args[i*3] = od.Key.Hex()
-		args[i*3+1] = common.Bytes2Hex(od.Value)
-		args[i*3+2] = od.BatchNum
+		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*columnsAffected+1, i*columnsAffected+2, i*columnsAffected+3) //nolint:mnd
+		args[i*columnsAffected] = od.Key.Hex()
+		args[i*columnsAffected+1] = common.Bytes2Hex(od.Value)
+		args[i*columnsAffected+2] = od.BatchNum
 	}
 
 	query := fmt.Sprintf(`
