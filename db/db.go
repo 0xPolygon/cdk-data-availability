@@ -162,21 +162,7 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 		return nil
 	}
 
-	const columnsAffected = 2
-
-	args := make([]interface{}, len(bks)*columnsAffected)
-	values := make([]string, len(bks))
-	for i, bk := range bks {
-		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
-		args[i*columnsAffected] = bk.Number
-		args[i*columnsAffected+1] = bk.Hash.Hex()
-	}
-
-	query := fmt.Sprintf(`
-		INSERT INTO data_node.unresolved_batches (num, hash)
-		VALUES %s
-		ON CONFLICT (num, hash) DO NOTHING;
-	`, strings.Join(values, ","))
+	query, args := buildBatchKeysInsertQuery(bks)
 
 	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("failed to store unresolved batches: %w", err)
@@ -248,24 +234,7 @@ func (db *pgDB) StoreOffChainData(ctx context.Context, ods []types.OffChainData)
 		return nil
 	}
 
-	const columnsAffected = 3
-
-	args := make([]interface{}, len(ods)*columnsAffected)
-	values := make([]string, len(ods))
-	for i, od := range ods {
-		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*columnsAffected+1, i*columnsAffected+2, i*columnsAffected+3) //nolint:mnd
-		args[i*columnsAffected] = od.Key.Hex()
-		args[i*columnsAffected+1] = common.Bytes2Hex(od.Value)
-		args[i*columnsAffected+2] = od.BatchNum
-	}
-
-	query := fmt.Sprintf(`
-		INSERT INTO data_node.offchain_data (key, value, batch_num)
-		VALUES %s
-		ON CONFLICT (key) DO UPDATE 
-		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
-	`, strings.Join(values, ","))
-
+	query, args := buildOffchainDataInsertQuery(ods)
 	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("failed to store offchain data: %w", err)
 	}
@@ -380,4 +349,44 @@ func (db *pgDB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, 
 	}
 
 	return gaps, nil
+}
+
+// buildBatchKeysInsertQuery builds the query to insert unresolved batch keys
+func buildBatchKeysInsertQuery(bks []types.BatchKey) (string, []interface{}) {
+	const columnsAffected = 2
+
+	args := make([]interface{}, len(bks)*columnsAffected)
+	values := make([]string, len(bks))
+	for i, bk := range bks {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
+		args[i*columnsAffected] = bk.Number
+		args[i*columnsAffected+1] = bk.Hash.Hex()
+	}
+
+	return fmt.Sprintf(`
+		INSERT INTO data_node.unresolved_batches (num, hash)
+		VALUES %s
+		ON CONFLICT (num, hash) DO NOTHING;
+	`, strings.Join(values, ",")), args
+}
+
+// buildOffchainDataInsertQuery builds the query to insert offchain data
+func buildOffchainDataInsertQuery(ods []types.OffChainData) (string, []interface{}) {
+	const columnsAffected = 3
+
+	args := make([]interface{}, len(ods)*columnsAffected)
+	values := make([]string, len(ods))
+	for i, od := range ods {
+		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*columnsAffected+1, i*columnsAffected+2, i*columnsAffected+3) //nolint:mnd
+		args[i*columnsAffected] = od.Key.Hex()
+		args[i*columnsAffected+1] = common.Bytes2Hex(od.Value)
+		args[i*columnsAffected+2] = od.BatchNum
+	}
+
+	return fmt.Sprintf(`
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES %s
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
+	`, strings.Join(values, ",")), args
 }

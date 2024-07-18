@@ -4,9 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
-	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -886,23 +884,14 @@ func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, ods []types.Off
 		return
 	}
 
-	args := make([]driver.Value, len(ods)*3)
-	values := make([]string, len(ods))
-	for i, od := range ods {
-		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
-		args[i*3] = od.Key.Hex()
-		args[i*3+1] = common.Bytes2Hex(od.Value)
-		args[i*3+2] = od.BatchNum
+	query, args := buildOffchainDataInsertQuery(ods)
+
+	argValues := make([]driver.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = arg
 	}
 
-	query := fmt.Sprintf(`
-		INSERT INTO data_node.offchain_data (key, value, batch_num)
-		VALUES %s
-		ON CONFLICT (key) DO UPDATE 
-		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
-	`, strings.Join(values, ","))
-
-	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(args...).
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(argValues...).
 		WillReturnResult(sqlmock.NewResult(int64(len(ods)), int64(len(ods))))
 
 	err := db.StoreOffChainData(context.Background(), ods)
@@ -916,21 +905,14 @@ func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []ty
 		return
 	}
 
-	args := make([]driver.Value, len(bks)*2)
-	values := make([]string, len(bks))
-	for i, bk := range bks {
-		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
-		args[i*2] = bk.Number
-		args[i*2+1] = bk.Hash.Hex()
+	query, args := buildBatchKeysInsertQuery(bks)
+
+	argValues := make([]driver.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = arg
 	}
 
-	query := fmt.Sprintf(`
-		INSERT INTO data_node.unresolved_batches (num, hash)
-		VALUES %s
-		ON CONFLICT (num, hash) DO NOTHING;
-	`, strings.Join(values, ","))
-
-	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(args...).
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(argValues...).
 		WillReturnResult(sqlmock.NewResult(int64(len(bks)), int64(len(bks))))
 
 	err := db.StoreUnresolvedBatchKeys(context.Background(), bks)
