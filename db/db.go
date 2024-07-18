@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -22,26 +23,8 @@ const (
 	// getLastProcessedBlockSQL is a query that returns the last processed block for a given task
 	getLastProcessedBlockSQL = `SELECT block FROM data_node.sync_tasks WHERE task = $1;`
 
-	// storeUnresolvedBatchesSQL is a query that stores unresolved batches in the database
-	storeUnresolvedBatchesSQL = `
-		INSERT INTO data_node.unresolved_batches (num, hash)
-		VALUES ($1, $2)
-		ON CONFLICT (num, hash) DO NOTHING;
-	`
-
 	// getUnresolvedBatchKeysSQL is a query that returns the unresolved batch keys from the database
 	getUnresolvedBatchKeysSQL = `SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;`
-
-	// deleteUnresolvedBatchKeysSQL is a query that deletes the unresolved batch keys from the database
-	deleteUnresolvedBatchKeysSQL = `DELETE FROM data_node.unresolved_batches WHERE num = $1 AND hash = $2;`
-
-	// storeOffChainDataSQL is a query that stores offchain data in the database
-	storeOffChainDataSQL = `
-		INSERT INTO data_node.offchain_data (key, value, batch_num)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (key) DO UPDATE 
-		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
-	`
 
 	// getOffchainDataSQL is a query that returns the offchain data for a given key
 	getOffchainDataSQL = `
@@ -175,27 +158,17 @@ func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64,
 
 // StoreUnresolvedBatchKeys stores unresolved batch keys in the database
 func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+	if len(bks) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, storeUnresolvedBatchesSQL)
-	if err != nil {
-		return err
+	query, args := buildBatchKeysInsertQuery(bks)
+
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to store unresolved batches: %w", err)
 	}
 
-	for _, bk := range bks {
-		if _, err = stmt.ExecContext(ctx, bk.Number, bk.Hash.Hex()); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
-
-			return err
-		}
-	}
-
-	return tx.Commit()
+	return nil
 }
 
 // GetUnresolvedBatchKeys returns the unresolved batch keys from the database
@@ -230,52 +203,43 @@ func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types
 
 // DeleteUnresolvedBatchKeys deletes the unresolved batch keys from the database
 func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+	if len(bks) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, deleteUnresolvedBatchKeysSQL)
-	if err != nil {
-		return err
+	const columnsAffected = 2
+
+	args := make([]interface{}, len(bks)*columnsAffected)
+	values := make([]string, len(bks))
+	for i, bk := range bks {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
+		args[i*columnsAffected] = bk.Number
+		args[i*columnsAffected+1] = bk.Hash.Hex()
 	}
 
-	for _, bk := range bks {
-		if _, err = stmt.ExecContext(ctx, bk.Number, bk.Hash.Hex()); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
+	query := fmt.Sprintf(`
+		DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (%s);
+	`, strings.Join(values, ","))
 
-			return err
-		}
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to delete unresolved batches: %w", err)
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+func (db *pgDB) StoreOffChainData(ctx context.Context, ods []types.OffChainData) error {
+	if len(ods) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, storeOffChainDataSQL)
-	if err != nil {
-		return err
+	query, args := buildOffchainDataInsertQuery(ods)
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to store offchain data: %w", err)
 	}
 
-	for _, d := range od {
-		if _, err = stmt.ExecContext(ctx, d.Key.Hex(), common.Bytes2Hex(d.Value), d.BatchNum); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
-
-			return err
-		}
-	}
-
-	return tx.Commit()
+	return nil
 }
 
 // GetOffChainData returns the value identified by the key
@@ -385,4 +349,44 @@ func (db *pgDB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, 
 	}
 
 	return gaps, nil
+}
+
+// buildBatchKeysInsertQuery builds the query to insert unresolved batch keys
+func buildBatchKeysInsertQuery(bks []types.BatchKey) (string, []interface{}) {
+	const columnsAffected = 2
+
+	args := make([]interface{}, len(bks)*columnsAffected)
+	values := make([]string, len(bks))
+	for i, bk := range bks {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
+		args[i*columnsAffected] = bk.Number
+		args[i*columnsAffected+1] = bk.Hash.Hex()
+	}
+
+	return fmt.Sprintf(`
+		INSERT INTO data_node.unresolved_batches (num, hash)
+		VALUES %s
+		ON CONFLICT (num, hash) DO NOTHING;
+	`, strings.Join(values, ",")), args
+}
+
+// buildOffchainDataInsertQuery builds the query to insert offchain data
+func buildOffchainDataInsertQuery(ods []types.OffChainData) (string, []interface{}) {
+	const columnsAffected = 3
+
+	args := make([]interface{}, len(ods)*columnsAffected)
+	values := make([]string, len(ods))
+	for i, od := range ods {
+		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*columnsAffected+1, i*columnsAffected+2, i*columnsAffected+3) //nolint:mnd
+		args[i*columnsAffected] = od.Key.Hex()
+		args[i*columnsAffected+1] = common.Bytes2Hex(od.Value)
+		args[i*columnsAffected+2] = od.BatchNum
+	}
+
+	return fmt.Sprintf(`
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES %s
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
+	`, strings.Join(values, ",")), args
 }

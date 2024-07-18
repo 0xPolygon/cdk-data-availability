@@ -219,8 +219,8 @@ func (h *Handler) registerService(service Service) {
 func (h *Handler) getFnHandler(req Request) (*serviceData, *funcData, Error) {
 	methodNotFoundErrorMessage := fmt.Sprintf("the method %s does not exist/is not available", req.Method)
 
-	callName := strings.SplitN(req.Method, "_", 2) //nolint:gomnd
-	if len(callName) != 2 {                        //nolint:gomnd
+	callName := strings.SplitN(req.Method, "_", 2) //nolint:mnd
+	if len(callName) != 2 {                        //nolint:mnd
 		return nil, nil, NewRPCError(NotFoundErrorCode, methodNotFoundErrorMessage)
 	}
 

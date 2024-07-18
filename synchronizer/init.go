@@ -66,7 +66,7 @@ func findCode(ctx context.Context, em etherman.Etherman, address common.Address,
 	if startBlock == endBlock {
 		return startBlock
 	}
-	midBlock := (startBlock + endBlock) / 2 //nolint:gomnd
+	midBlock := (startBlock + endBlock) / 2 //nolint:mnd
 	if codeLen := codeLen(ctx, em, address, midBlock); codeLen > minCodeLen {
 		return findCode(ctx, em, address, startBlock, midBlock)
 	} else {

@@ -14,7 +14,7 @@ linters:
   - gosec # Security problems
   - gci
   - misspell # Misspelled English words in comments
-  - gomnd
+  - mnd
   - gofmt # Whether the code was gofmt-ed
   - goimports # Unused imports
   - revive

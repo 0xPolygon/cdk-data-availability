@@ -163,9 +163,10 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
-		name      string
-		bk        []types.BatchKey
-		returnErr error
+		name          string
+		bk            []types.BatchKey
+		expectedQuery string
+		returnErr     error
 	}{
 		{
 			name: "no values inserted",
@@ -176,6 +177,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.HexToHash("key1"),
 			}},
+			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
 		},
 		{
 			name: "several values inserted",
@@ -186,6 +188,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 2,
 				Hash:   common.HexToHash("key2"),
 			}},
+			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2),($3, $4) ON CONFLICT (num, hash) DO NOTHING`,
 		},
 		{
 			name: "error returned",
@@ -193,7 +196,8 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.HexToHash("key1"),
 			}},
-			returnErr: errors.New("test error"),
+			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
+			returnErr:     errors.New("test error"),
 		},
 	}
 
@@ -220,21 +224,18 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
-			mock.ExpectPrepare(regexp.QuoteMeta(storeUnresolvedBatchesSQL))
-			for _, o := range tt.bk {
-				expected := mock.ExpectExec(regexp.QuoteMeta(storeUnresolvedBatchesSQL)).
-					WithArgs(o.Number, o.Hash.Hex())
+			if tt.expectedQuery != "" {
+				args := make([]driver.Value, 0, len(tt.bk)*2)
+				for _, o := range tt.bk {
+					args = append(args, o.Number, o.Hash.Hex())
+				}
+
+				expected := mock.ExpectExec(regexp.QuoteMeta(tt.expectedQuery)).WithArgs(args...)
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
 				} else {
 					expected.WillReturnResult(sqlmock.NewResult(int64(len(tt.bk)), int64(len(tt.bk))))
 				}
-			}
-			if tt.returnErr == nil {
-				mock.ExpectCommit()
-			} else {
-				mock.ExpectRollback()
 			}
 
 			err = dbPG.StoreUnresolvedBatchKeys(context.Background(), tt.bk)
@@ -322,9 +323,10 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
-		name      string
-		bks       []types.BatchKey
-		returnErr error
+		name          string
+		bks           []types.BatchKey
+		expectedQuery string
+		returnErr     error
 	}{
 		{
 			name: "value deleted",
@@ -332,6 +334,18 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.HexToHash("key1"),
 			}},
+			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
+		},
+		{
+			name: "multiple values deleted",
+			bks: []types.BatchKey{{
+				Number: 1,
+				Hash:   common.HexToHash("key1"),
+			}, {
+				Number: 2,
+				Hash:   common.HexToHash("key2"),
+			}},
+			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2),($3, $4))`,
 		},
 		{
 			name: "error returned",
@@ -339,7 +353,8 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.HexToHash("key1"),
 			}},
-			returnErr: errors.New("test error"),
+			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
+			returnErr:     errors.New("test error"),
 		},
 	}
 
@@ -352,31 +367,27 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 			db, mock, err := sqlmock.New()
 			require.NoError(t, err)
 
-			defer db.Close()
-
 			constructorExpect(mock)
 
-			mock.ExpectBegin()
-			mock.ExpectPrepare(regexp.QuoteMeta(deleteUnresolvedBatchKeysSQL))
-			for _, bk := range tt.bks {
-				expected := mock.ExpectExec(regexp.QuoteMeta(deleteUnresolvedBatchKeysSQL)).
-					WithArgs(bk.Number, bk.Hash.Hex())
+			wdb := sqlx.NewDb(db, "postgres")
+			dbPG, err := New(context.Background(), wdb)
+			require.NoError(t, err)
+
+			defer db.Close()
+
+			if tt.expectedQuery != "" {
+				args := make([]driver.Value, 0, len(tt.bks)*2)
+				for _, o := range tt.bks {
+					args = append(args, o.Number, o.Hash.Hex())
+				}
+
+				expected := mock.ExpectExec(regexp.QuoteMeta(tt.expectedQuery)).WithArgs(args...)
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
 				} else {
 					expected.WillReturnResult(sqlmock.NewResult(int64(len(tt.bks)), int64(len(tt.bks))))
 				}
 			}
-			if tt.returnErr != nil {
-				mock.ExpectRollback()
-			} else {
-				mock.ExpectCommit()
-			}
-
-			wdb := sqlx.NewDb(db, "postgres")
-
-			dbPG, err := New(context.Background(), wdb)
-			require.NoError(t, err)
 
 			err = dbPG.DeleteUnresolvedBatchKeys(context.Background(), tt.bks)
 			if tt.returnErr != nil {
@@ -394,37 +405,41 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
-		name      string
-		od        []types.OffChainData
-		returnErr error
+		name          string
+		ods           []types.OffChainData
+		expectedQuery string
+		returnErr     error
 	}{
 		{
 			name: "no values inserted",
 		},
 		{
 			name: "one value inserted",
-			od: []types.OffChainData{{
+			ods: []types.OffChainData{{
 				Key:   common.HexToHash("key1"),
 				Value: []byte("value1"),
 			}},
+			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
 		},
 		{
 			name: "several values inserted",
-			od: []types.OffChainData{{
+			ods: []types.OffChainData{{
 				Key:   common.HexToHash("key1"),
 				Value: []byte("value1"),
 			}, {
 				Key:   common.HexToHash("key2"),
 				Value: []byte("value2"),
 			}},
+			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3),($4, $5, $6) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
 		},
 		{
 			name: "error returned",
-			od: []types.OffChainData{{
+			ods: []types.OffChainData{{
 				Key:   common.HexToHash("key1"),
 				Value: []byte("value1"),
 			}},
-			returnErr: errors.New("test error"),
+			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
+			returnErr:     errors.New("test error"),
 		},
 	}
 
@@ -445,24 +460,21 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 
 			defer db.Close()
 
-			mock.ExpectBegin()
-			mock.ExpectPrepare(regexp.QuoteMeta(storeOffChainDataSQL))
-			for _, o := range tt.od {
-				expected := mock.ExpectExec(regexp.QuoteMeta(storeOffChainDataSQL)).
-					WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum)
+			if tt.expectedQuery != "" {
+				args := make([]driver.Value, 0, len(tt.ods)*3)
+				for _, od := range tt.ods {
+					args = append(args, od.Key.Hex(), common.Bytes2Hex(od.Value), od.BatchNum)
+				}
+
+				expected := mock.ExpectExec(regexp.QuoteMeta(tt.expectedQuery)).WithArgs(args...)
 				if tt.returnErr != nil {
 					expected.WillReturnError(tt.returnErr)
 				} else {
-					expected.WillReturnResult(sqlmock.NewResult(int64(len(tt.od)), int64(len(tt.od))))
+					expected.WillReturnResult(sqlmock.NewResult(int64(len(tt.ods)), int64(len(tt.ods))))
 				}
 			}
-			if tt.returnErr == nil {
-				mock.ExpectCommit()
-			} else {
-				mock.ExpectRollback()
-			}
 
-			err = dbPG.StoreOffChainData(context.Background(), tt.od)
+			err = dbPG.StoreOffChainData(context.Background(), tt.ods)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -865,34 +877,44 @@ func constructorExpect(mock sqlmock.Sqlmock) {
 	mock.ExpectPrepare(regexp.QuoteMeta(selectOffchainDataGapsSQL))
 }
 
-func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
+func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, ods []types.OffChainData) {
 	t.Helper()
 
-	mock.ExpectBegin()
-	mock.ExpectPrepare(regexp.QuoteMeta(storeOffChainDataSQL))
-	for i, o := range od {
-		mock.ExpectExec(regexp.QuoteMeta(storeOffChainDataSQL)).
-			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum).
-			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
+	if len(ods) == 0 {
+		return
 	}
-	mock.ExpectCommit()
 
-	err := db.StoreOffChainData(context.Background(), od)
+	query, args := buildOffchainDataInsertQuery(ods)
+
+	argValues := make([]driver.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = arg
+	}
+
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(argValues...).
+		WillReturnResult(sqlmock.NewResult(int64(len(ods)), int64(len(ods))))
+
+	err := db.StoreOffChainData(context.Background(), ods)
 	require.NoError(t, err)
 }
 
-func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bk []types.BatchKey) {
+func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []types.BatchKey) {
 	t.Helper()
 
-	mock.ExpectBegin()
-	mock.ExpectPrepare(regexp.QuoteMeta(storeUnresolvedBatchesSQL))
-	for i, o := range bk {
-		mock.ExpectExec(regexp.QuoteMeta(storeUnresolvedBatchesSQL)).
-			WithArgs(o.Number, o.Hash.Hex()).
-			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
+	if len(bks) == 0 {
+		return
 	}
-	mock.ExpectCommit()
 
-	err := db.StoreUnresolvedBatchKeys(context.Background(), bk)
+	query, args := buildBatchKeysInsertQuery(bks)
+
+	argValues := make([]driver.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = arg
+	}
+
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(argValues...).
+		WillReturnResult(sqlmock.NewResult(int64(len(bks)), int64(len(bks))))
+
+	err := db.StoreUnresolvedBatchKeys(context.Background(), bks)
 	require.NoError(t, err)
 }
