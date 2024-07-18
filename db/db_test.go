@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
@@ -877,33 +879,59 @@ func constructorExpect(mock sqlmock.Sqlmock) {
 	mock.ExpectPrepare(regexp.QuoteMeta(selectOffchainDataGapsSQL))
 }
 
-func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, od []types.OffChainData) {
+func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, ods []types.OffChainData) {
 	t.Helper()
 
-	mock.ExpectBegin()
-	mock.ExpectPrepare(regexp.QuoteMeta(storeOffChainDataSQL))
-	for i, o := range od {
-		mock.ExpectExec(regexp.QuoteMeta(storeOffChainDataSQL)).
-			WithArgs(o.Key.Hex(), common.Bytes2Hex(o.Value), o.BatchNum).
-			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
+	if len(ods) == 0 {
+		return
 	}
-	mock.ExpectCommit()
 
-	err := db.StoreOffChainData(context.Background(), od)
+	args := make([]driver.Value, len(ods)*3)
+	values := make([]string, len(ods))
+	for i, od := range ods {
+		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
+		args[i*3] = od.Key.Hex()
+		args[i*3+1] = common.Bytes2Hex(od.Value)
+		args[i*3+2] = od.BatchNum
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES %s
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
+	`, strings.Join(values, ","))
+
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(args...).
+		WillReturnResult(sqlmock.NewResult(int64(len(ods)), int64(len(ods))))
+
+	err := db.StoreOffChainData(context.Background(), ods)
 	require.NoError(t, err)
 }
 
 func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bk []types.BatchKey) {
 	t.Helper()
 
-	mock.ExpectBegin()
-	mock.ExpectPrepare(regexp.QuoteMeta(storeUnresolvedBatchesSQL))
-	for i, o := range bk {
-		mock.ExpectExec(regexp.QuoteMeta(storeUnresolvedBatchesSQL)).
-			WithArgs(o.Number, o.Hash.Hex()).
-			WillReturnResult(sqlmock.NewResult(int64(i+1), int64(i+1)))
+	if len(bk) == 0 {
+		return
 	}
-	mock.ExpectCommit()
+
+	args := make([]driver.Value, len(bk)*2)
+	values := make([]string, len(bk))
+	for i, _ := range bk {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
+		args[i*2] = bk[i].Number
+		args[i*2+1] = bk[i].Hash.Hex()
+	}
+
+	query := fmt.Sprintf(`
+		INSERT INTO data_node.unresolved_batches (num, hash)
+		VALUES %s
+		ON CONFLICT (num, hash) DO NOTHING;
+	`, strings.Join(values, ","))
+
+	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(args...).
+		WillReturnResult(sqlmock.NewResult(int64(len(bk)), int64(len(bk))))
 
 	err := db.StoreUnresolvedBatchKeys(context.Background(), bk)
 	require.NoError(t, err)
