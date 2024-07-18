@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,9 +32,6 @@ const (
 
 	// getUnresolvedBatchKeysSQL is a query that returns the unresolved batch keys from the database
 	getUnresolvedBatchKeysSQL = `SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;`
-
-	// deleteUnresolvedBatchKeysSQL is a query that deletes the unresolved batch keys from the database
-	deleteUnresolvedBatchKeysSQL = `DELETE FROM data_node.unresolved_batches WHERE num = $1 AND hash = $2;`
 
 	// storeOffChainDataSQL is a query that stores offchain data in the database
 	storeOffChainDataSQL = `
@@ -175,27 +173,29 @@ func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64,
 
 // StoreUnresolvedBatchKeys stores unresolved batch keys in the database
 func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+	if len(bks) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, storeUnresolvedBatchesSQL)
-	if err != nil {
-		return err
+	args := make([]interface{}, len(bks)*2)
+	values := make([]string, len(bks))
+	for i, _ := range bks {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
+		args[i*2] = bks[i].Number
+		args[i*2+1] = bks[i].Hash.Hex()
 	}
 
-	for _, bk := range bks {
-		if _, err = stmt.ExecContext(ctx, bk.Number, bk.Hash.Hex()); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
+	query := fmt.Sprintf(`
+		INSERT INTO data_node.unresolved_batches (num, hash)
+		VALUES %s
+		ON CONFLICT (num, hash) DO NOTHING;
+	`, strings.Join(values, ","))
 
-			return err
-		}
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to store unresolved batches: %w", err)
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // GetUnresolvedBatchKeys returns the unresolved batch keys from the database
@@ -230,52 +230,56 @@ func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types
 
 // DeleteUnresolvedBatchKeys deletes the unresolved batch keys from the database
 func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+	if len(bks) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, deleteUnresolvedBatchKeysSQL)
-	if err != nil {
-		return err
+	args := make([]interface{}, len(bks)*2)
+	values := make([]string, len(bks))
+	for i, _ := range bks {
+		values[i] = fmt.Sprintf("($%d, $%d)", i*2+1, i*2+2)
+		args[i*2] = bks[i].Number
+		args[i*2+1] = bks[i].Hash.Hex()
 	}
 
-	for _, bk := range bks {
-		if _, err = stmt.ExecContext(ctx, bk.Number, bk.Hash.Hex()); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
+	query := fmt.Sprintf(`
+		DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (%s);
+	`, strings.Join(values, ","))
 
-			return err
-		}
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to delete unresolved batches: %w", err)
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // StoreOffChainData stores and array of key values in the Db
-func (db *pgDB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
-	tx, err := db.pg.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
+func (db *pgDB) StoreOffChainData(ctx context.Context, ods []types.OffChainData) error {
+	if len(ods) == 0 {
+		return nil
 	}
 
-	stmt, err := tx.PreparexContext(ctx, storeOffChainDataSQL)
-	if err != nil {
-		return err
+	args := make([]interface{}, len(ods)*3)
+	values := make([]string, len(ods))
+	for i, od := range ods {
+		values[i] = fmt.Sprintf("($%d, $%d, $%d)", i*3+1, i*3+2, i*3+3)
+		args[i*3] = od.Key.Hex()
+		args[i*3+1] = common.Bytes2Hex(od.Value)
+		args[i*3+2] = od.BatchNum
 	}
 
-	for _, d := range od {
-		if _, err = stmt.ExecContext(ctx, d.Key.Hex(), common.Bytes2Hex(d.Value), d.BatchNum); err != nil {
-			if txErr := tx.Rollback(); txErr != nil {
-				return fmt.Errorf("%v: rollback caused by %v", txErr, err)
-			}
+	query := fmt.Sprintf(`
+		INSERT INTO data_node.offchain_data (key, value, batch_num)
+		VALUES %s
+		ON CONFLICT (key) DO UPDATE 
+		SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num;
+	`, strings.Join(values, ","))
 
-			return err
-		}
+	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("failed to store offchain data: %w", err)
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // GetOffChainData returns the value identified by the key
