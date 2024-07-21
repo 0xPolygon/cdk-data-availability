@@ -107,7 +107,7 @@ WriteTimeout = "60s"
 MaxRequestsPerIPAndSecond = 500
 ```
 
-3. Now you can generate a file for the Ethereum private key of the committee member. Note that this private key should be representing one of the address of the committee. To generate the private key, run: 
+3. Now you can generate a file for the Ethereum private key of the committee member. Note that this private key should be representing one of the addresses of the committee. To generate the private key, run: 
 
 ```docker run -d -v .:/key hermeznetwork/zkevm-node /app/zkevm-node encryptKey --pk **** --pw **** -o /key``` 
 
