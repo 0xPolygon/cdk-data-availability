@@ -84,3 +84,13 @@ func (s *SignedSequence) OffChainData() []OffChainData {
 func (s *SignedSequence) Sign(privateKey *ecdsa.PrivateKey) (ArgBytes, error) {
 	return s.Sequence.Sign(privateKey)
 }
+
+// SetSignature set signature
+func (s *SignedSequence) SetSignature(sign []byte) {
+	s.Signature = sign
+}
+
+// GetSignature returns signature
+func (s *SignedSequence) GetSignature() []byte {
+	return s.Signature
+}

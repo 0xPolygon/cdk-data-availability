@@ -11,4 +11,6 @@ type SignedSequenceInterface interface {
 	Signer() (common.Address, error)
 	OffChainData() []OffChainData
 	Sign(privateKey *ecdsa.PrivateKey) (ArgBytes, error)
+	SetSignature([]byte)
+	GetSignature() []byte
 }
