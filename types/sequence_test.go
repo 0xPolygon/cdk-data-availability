@@ -56,3 +56,10 @@ func TestSigning(t *testing.T) {
 		}
 	}
 }
+
+func TestGetSetSignature(t *testing.T) {
+	sut := SignedSequence{}
+	signature := []byte{1, 2, 3}
+	sut.SetSignature(signature)
+	assert.Equal(t, signature, sut.GetSignature())
+}
