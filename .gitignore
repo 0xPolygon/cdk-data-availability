@@ -4,6 +4,3 @@ dist
 
 test/gethData
 test/coverage.out
-
-db/db-packr.go
-packrd/
