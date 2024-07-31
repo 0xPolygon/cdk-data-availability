@@ -11,7 +11,7 @@ import (
 
 var (
 	// ErrNonCanonicalSignature is returned when the signature is not canonical.
-	ErrNonCanonicalSignature = errors.New("received non-custodial signature")
+	ErrNonCanonicalSignature = errors.New("received non-canonical signature")
 )
 
 // Sign the hashToSIgn with the given privateKey.
