@@ -2,42 +2,30 @@ package types
 
 import (
 	"crypto/ecdsa"
-	"math/big"
+	"errors"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// Sign the hashToSIgn
+var (
+	// ErrNonCanonicalSignature is returned when the signature is not canonical.
+	ErrNonCanonicalSignature = errors.New("received non-canonical signature")
+)
+
+// Sign the hashToSIgn with the given privateKey.
 func Sign(privateKey *ecdsa.PrivateKey, hashToSign []byte) ([]byte, error) {
 	sig, err := crypto.Sign(hashToSign, privateKey)
 	if err != nil {
 		return nil, err
 	}
 
-	rBytes := sig[:32]
-	sBytes := sig[32:64]
-	vByte := sig[64]
-
-	if strings.ToUpper(common.Bytes2Hex(sBytes)) > "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0" {
-		magicNumber := common.Hex2Bytes("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141")
-		sBig := big.NewInt(0).SetBytes(sBytes)
-		magicBig := big.NewInt(0).SetBytes(magicNumber)
-		s1 := magicBig.Sub(magicBig, sBig)
-		sBytes = s1.Bytes()
-		if vByte == 0 {
-			vByte = 1
-		} else {
-			vByte = 0
-		}
+	if strings.ToUpper(common.Bytes2Hex(sig[32:64])) > "7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0" {
+		return nil, ErrNonCanonicalSignature
 	}
-	vByte += 27
 
-	actualSignature := []byte{}
-	actualSignature = append(actualSignature, rBytes...)
-	actualSignature = append(actualSignature, sBytes...)
-	actualSignature = append(actualSignature, vByte)
+	sig[64] += 27
 
-	return actualSignature, nil
+	return sig, nil
 }
