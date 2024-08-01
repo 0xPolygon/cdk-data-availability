@@ -37,7 +37,7 @@ func (f *factory) New(url string) Client {
 	return New(url)
 }
 
-// Client wraps all the available endpoints of the data abailability committee node server
+// Client wraps all the available endpoints of the data availability committee node server
 type client struct {
 	url string
 }
