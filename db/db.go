@@ -374,6 +374,9 @@ func buildBatchKeysInsertQuery(bks []types.BatchKey) (string, []interface{}) {
 func buildOffchainDataInsertQuery(ods []types.OffChainData) (string, []interface{}) {
 	const columnsAffected = 3
 
+	// Remove duplicates from the given offchain data
+	ods = types.RemoveDuplicateOffChainData(ods)
+
 	args := make([]interface{}, len(ods)*columnsAffected)
 	values := make([]string, len(ods))
 	for i, od := range ods {

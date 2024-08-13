@@ -55,19 +55,6 @@ func (d *Endpoints) signSequence(signedSequence types.SignedSequenceInterface) (
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
 
-	// Make sure there are no duplicates in the given offchain data list
-	existingData := make(map[string]struct{})
-	offChainData := signedSequence.OffChainData()
-	for _, data := range offChainData {
-		key := data.Key.Hex()
-		if _, ok := existingData[key]; ok {
-			// The given key already exist in the offchain data list
-			return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Sprintf("duplicate key: %s", key))
-		}
-
-		existingData[key] = struct{}{}
-	}
-
 	// Store off-chain data by hash (hash(L2Data): L2Data)
 	if err = d.db.StoreOffChainData(context.Background(), signedSequence.OffChainData()); err != nil {
 		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode,

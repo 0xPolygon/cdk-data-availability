@@ -135,19 +135,6 @@ func TestDataCom_SignSequence(t *testing.T) {
 		})
 	})
 
-	t.Run("Duplicates found", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			sender:        otherPrivateKey,
-			expectedError: "duplicate key: 0x49d03a195e239b52779866b33024210fc7dc66e9c2998975c0aa45c1702549d5",
-			sequence: types.Sequence{
-				types.ArgBytes{0, 1},
-				types.ArgBytes{0, 1},
-			},
-		})
-	})
-
 	t.Run("Fail to store off chain data", func(t *testing.T) {
 		t.Parallel()
 
