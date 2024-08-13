@@ -25,12 +25,8 @@ func TestDataCom_SignSequence(t *testing.T) {
 		storeOffChainDataReturns []interface{}
 		sender                   *ecdsa.PrivateKey
 		signer                   *ecdsa.PrivateKey
+		sequence                 types.Sequence
 		expectedError            string
-	}
-
-	sequence := types.Sequence{
-		types.ArgBytes([]byte{0, 1}),
-		types.ArgBytes([]byte{2, 3}),
 	}
 
 	privateKey, err := crypto.GenerateKey()
@@ -51,7 +47,7 @@ func TestDataCom_SignSequence(t *testing.T) {
 		dbMock := mocks.NewDB(t)
 
 		if len(cfg.storeOffChainDataReturns) > 0 {
-			dbMock.On("StoreOffChainData", mock.Anything, sequence.OffChainData()).Return(
+			dbMock.On("StoreOffChainData", mock.Anything, cfg.sequence.OffChainData()).Return(
 				cfg.storeOffChainDataReturns...).Once()
 		}
 
@@ -68,15 +64,15 @@ func TestDataCom_SignSequence(t *testing.T) {
 		sqr.Start(context.Background())
 
 		if cfg.sender != nil {
-			signature, err := sequence.Sign(cfg.sender)
+			signature, err := cfg.sequence.Sign(cfg.sender)
 			require.NoError(t, err)
 			signedSequence = &types.SignedSequence{
-				Sequence:  sequence,
+				Sequence:  cfg.sequence,
 				Signature: signature,
 			}
 		} else {
 			signedSequence = &types.SignedSequence{
-				Sequence:  sequence,
+				Sequence:  cfg.sequence,
 				Signature: []byte{},
 			}
 		}
@@ -106,6 +102,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 
 		testFn(t, testConfig{
 			expectedError: "failed to verify sender",
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
 		})
 	})
 
@@ -115,6 +115,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 		testFn(t, testConfig{
 			sender:        privateKey,
 			expectedError: "unauthorized",
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
 		})
 	})
 
@@ -124,6 +128,23 @@ func TestDataCom_SignSequence(t *testing.T) {
 		testFn(t, testConfig{
 			sender:        privateKey,
 			expectedError: "unauthorized",
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
+		})
+	})
+
+	t.Run("Duplicates found", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			sender:        otherPrivateKey,
+			expectedError: "duplicate key: 0x49d03a195e239b52779866b33024210fc7dc66e9c2998975c0aa45c1702549d5",
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{0, 1},
+			},
 		})
 	})
 
@@ -134,6 +155,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 			sender:                   otherPrivateKey,
 			expectedError:            "failed to store offchain data",
 			storeOffChainDataReturns: []interface{}{errors.New("error")},
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
 		})
 	})
 
@@ -150,6 +175,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 			signer:                   key,
 			storeOffChainDataReturns: []interface{}{nil},
 			expectedError:            "failed to sign",
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
 		})
 	})
 
@@ -159,6 +188,10 @@ func TestDataCom_SignSequence(t *testing.T) {
 		testFn(t, testConfig{
 			sender:                   otherPrivateKey,
 			storeOffChainDataReturns: []interface{}{nil},
+			sequence: types.Sequence{
+				types.ArgBytes{0, 1},
+				types.ArgBytes{2, 3},
+			},
 		})
 	})
 }
