@@ -375,9 +375,7 @@ func buildOffchainDataInsertQuery(ods []types.OffChainData) (string, []interface
 	const columnsAffected = 3
 
 	// Remove duplicates from the given offchain data
-	fmt.Println("ods 1", ods)
 	ods = types.RemoveDuplicateOffChainData(ods)
-	fmt.Println("ods 2", ods)
 
 	args := make([]interface{}, len(ods)*columnsAffected)
 	values := make([]string, len(ods))
