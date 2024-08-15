@@ -36,11 +36,11 @@ func (s *SequenceBanana) HashToSign() []byte {
 		v2 := b.L2Data
 		var v3, v4 []byte
 		if b.ForcedTimestamp > 0 {
-			v3 = s.L1InfoRoot.Bytes()
-			v4 = big.NewInt(0).SetUint64(uint64(s.MaxSequenceTimestamp)).Bytes()
-		} else {
 			v3 = b.ForcedGER.Bytes()
 			v4 = big.NewInt(0).SetUint64(uint64(b.ForcedTimestamp)).Bytes()
+		} else {
+			v3 = s.L1InfoRoot.Bytes()
+			v4 = big.NewInt(0).SetUint64(uint64(s.MaxSequenceTimestamp)).Bytes()
 		}
 		v5 := b.Coinbase.Bytes()
 		v6 := b.ForcedBlockHashL1.Bytes()
