@@ -6,7 +6,7 @@ require (
 	github.com/0xPolygon/cdk-contracts-tooling v0.0.0-20240426091844-5cd6921eed9f
 	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/didip/tollbooth/v6 v6.1.2
-	github.com/ethereum/go-ethereum v1.13.14
+	github.com/ethereum/go-ethereum v1.13.15
 	github.com/gorilla/websocket v1.5.0
 	github.com/hermeznetwork/tracerr v0.3.2
 	github.com/iden3/go-iden3-crypto v0.0.16
