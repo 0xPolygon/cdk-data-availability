@@ -6,9 +6,11 @@ import (
 	"fmt"
 
 	"github.com/0xPolygon/cdk-data-availability/db"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/0xPolygon/cdk-data-availability/rpc"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
 	"github.com/0xPolygon/cdk-data-availability/types"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // APIDATACOM is the namespace of the datacom service
@@ -41,6 +43,7 @@ func (d *Endpoints) SignSequence(signedSequence types.SignedSequence) (interface
 // After storing the data that will be sent hashed to the contract, it returns the signature.
 // This endpoint is only accessible to the sequencer
 func (d *Endpoints) SignSequenceBanana(signedSequence types.SignedSequenceBanana) (interface{}, rpc.Error) {
+	log.Debugf("signing sequence, hash to sign: %s", common.BytesToHash(signedSequence.Sequence.HashToSign()))
 	return d.signSequence(&signedSequence)
 }
 

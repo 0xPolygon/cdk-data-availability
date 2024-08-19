@@ -3,10 +3,11 @@ package types
 import (
 	"crypto/ecdsa"
 	"errors"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	solsha3 "github.com/miguelmota/go-solidity-sha3"
+	"github.com/iden3/go-iden3-crypto/keccak256"
 )
 
 // Batch represents the batch data that the sequencer will send to L1
@@ -30,39 +31,41 @@ type SequenceBanana struct {
 // HashToSign returns the accumulated input hash of the sequence.
 // Note that this is equivalent to what happens on the smart contract
 func (s *SequenceBanana) HashToSign() []byte {
-	currentHash := s.OldAccInputHash.Bytes()
+	v1 := s.OldAccInputHash.Bytes()
 	for _, b := range s.Batches {
-		types := []string{
-			"bytes32", // oldAccInputHash
-			"bytes32", // currentTransactionsHash
-			"bytes32", // forcedGlobalExitRoot or l1InfoRoot
-			"uint64",  // forcedTimestamp
-			"address", // coinbase
-			"bytes32", // forcedBlockHashL1
-		}
-		var values []interface{}
+		v2 := b.L2Data
+		var v3, v4 []byte
 		if b.ForcedTimestamp > 0 {
-			values = []interface{}{
-				currentHash,
-				crypto.Keccak256(b.L2Data),
-				b.ForcedGER,
-				b.ForcedTimestamp,
-				b.Coinbase,
-				b.ForcedBlockHashL1,
-			}
+			v3 = b.ForcedGER.Bytes()
+			v4 = big.NewInt(0).SetUint64(uint64(b.ForcedTimestamp)).Bytes()
 		} else {
-			values = []interface{}{
-				currentHash,
-				crypto.Keccak256(b.L2Data),
-				s.L1InfoRoot,
-				s.MaxSequenceTimestamp,
-				b.Coinbase,
-				common.Hash{},
-			}
+			v3 = s.L1InfoRoot.Bytes()
+			v4 = big.NewInt(0).SetUint64(uint64(s.MaxSequenceTimestamp)).Bytes()
 		}
-		currentHash = solsha3.SoliditySHA3(types, values)
+		v5 := b.Coinbase.Bytes()
+		v6 := b.ForcedBlockHashL1.Bytes()
+
+		// Add 0s to make values 32 bytes long
+		for len(v1) < 32 {
+			v1 = append([]byte{0}, v1...)
+		}
+		v2 = keccak256.Hash(v2)
+		for len(v3) < 32 {
+			v3 = append([]byte{0}, v3...)
+		}
+		for len(v4) < 8 {
+			v4 = append([]byte{0}, v4...)
+		}
+		for len(v5) < 20 {
+			v5 = append([]byte{0}, v5...)
+		}
+		for len(v6) < 32 {
+			v6 = append([]byte{0}, v6...)
+		}
+		v1 = keccak256.Hash(v1, v2, v3, v4, v5, v6)
 	}
-	return currentHash
+
+	return v1
 }
 
 // Sign returns a signed sequence by the private key.
