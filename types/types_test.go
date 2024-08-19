@@ -3,6 +3,8 @@ package types
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,6 +38,62 @@ func TestIsHexValid(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.want, IsHexValid(tt.s))
+		})
+	}
+}
+
+func TestRemoveDuplicateOffChainData(t *testing.T) {
+	type args struct {
+		ods []OffChainData
+	}
+	tests := []struct {
+		name string
+		args args
+		want []OffChainData
+	}{
+		{
+			name: "no duplicates",
+			args: args{
+				ods: []OffChainData{
+					{
+						Key: common.BytesToHash([]byte("key1")),
+					},
+					{
+						Key: common.BytesToHash([]byte("key2")),
+					},
+				},
+			},
+			want: []OffChainData{
+				{
+					Key: common.BytesToHash([]byte("key1")),
+				},
+				{
+					Key: common.BytesToHash([]byte("key2")),
+				},
+			},
+		},
+		{
+			name: "with duplicates",
+			args: args{
+				ods: []OffChainData{
+					{
+						Key: common.BytesToHash([]byte("key1")),
+					},
+					{
+						Key: common.BytesToHash([]byte("key1")),
+					},
+				},
+			},
+			want: []OffChainData{
+				{
+					Key: common.BytesToHash([]byte("key1")),
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, RemoveDuplicateOffChainData(tt.args.ods), "RemoveDuplicateOffChainData(%v)", tt.args.ods)
 		})
 	}
 }

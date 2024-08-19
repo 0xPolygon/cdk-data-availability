@@ -3,9 +3,9 @@ package backoff
 import "time"
 
 // Exponential performs exponential backoff attempts on a given action
-func Exponential(action func() error, max uint, wait time.Duration) error {
+func Exponential(action func() error, attempts uint, wait time.Duration) error {
 	var err error
-	for i := uint(0); i < max; i++ {
+	for i := uint(0); i < attempts; i++ {
 		if err = action(); err == nil {
 			return nil
 		}

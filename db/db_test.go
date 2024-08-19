@@ -175,7 +175,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 			name: "one value inserted",
 			bk: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
 		},
@@ -183,10 +183,10 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 			name: "several values inserted",
 			bk: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}, {
 				Number: 2,
-				Hash:   common.HexToHash("key2"),
+				Hash:   common.BytesToHash([]byte("key2")),
 			}},
 			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2),($3, $4) ON CONFLICT (num, hash) DO NOTHING`,
 		},
@@ -194,7 +194,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 			name: "error returned",
 			bk: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
 			returnErr:     errors.New("test error"),
@@ -262,14 +262,14 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 			name: "successfully selected data",
 			bks: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 		},
 		{
 			name: "error returned",
 			bks: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 			returnErr: errors.New("test error"),
 		},
@@ -332,7 +332,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 			name: "value deleted",
 			bks: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
 		},
@@ -340,10 +340,10 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 			name: "multiple values deleted",
 			bks: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}, {
 				Number: 2,
-				Hash:   common.HexToHash("key2"),
+				Hash:   common.BytesToHash([]byte("key2")),
 			}},
 			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2),($3, $4))`,
 		},
@@ -351,7 +351,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 			name: "error returned",
 			bks: []types.BatchKey{{
 				Number: 1,
-				Hash:   common.HexToHash("key1"),
+				Hash:   common.BytesToHash([]byte("key1")),
 			}},
 			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
 			returnErr:     errors.New("test error"),
@@ -416,7 +416,7 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 		{
 			name: "one value inserted",
 			ods: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
@@ -424,10 +424,10 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 		{
 			name: "several values inserted",
 			ods: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}, {
-				Key:   common.HexToHash("key2"),
+				Key:   common.BytesToHash([]byte("key2")),
 				Value: []byte("value2"),
 			}},
 			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3),($4, $5, $6) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
@@ -435,7 +435,7 @@ func Test_DB_StoreOffChainData(t *testing.T) {
 		{
 			name: "error returned",
 			ods: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			expectedQuery: `INSERT INTO data_node.offchain_data (key, value, batch_num) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, batch_num = EXCLUDED.batch_num`,
@@ -499,13 +499,13 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		{
 			name: "successfully selected value",
 			od: []types.OffChainData{{
-				Key:      common.HexToHash("key1"),
+				Key:      common.BytesToHash([]byte("key1")),
 				Value:    []byte("value1"),
 				BatchNum: 1,
 			}},
 			key: common.BytesToHash([]byte("key1")),
 			expected: &types.OffChainData{
-				Key:      common.HexToHash("key1"),
+				Key:      common.BytesToHash([]byte("key1")),
 				Value:    []byte("value1"),
 				BatchNum: 1,
 			},
@@ -513,7 +513,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		{
 			name: "error returned",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			key:       common.BytesToHash([]byte("key1")),
@@ -522,7 +522,7 @@ func Test_DB_GetOffChainData(t *testing.T) {
 		{
 			name: "no rows",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			key:       common.BytesToHash([]byte("undefined")),
@@ -587,7 +587,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		{
 			name: "successfully selected one value",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			keys: []common.Hash{
@@ -605,11 +605,11 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		{
 			name: "successfully selected two values",
 			od: []types.OffChainData{{
-				Key:      common.HexToHash("key1"),
+				Key:      common.BytesToHash([]byte("key1")),
 				Value:    []byte("value1"),
 				BatchNum: 1,
 			}, {
-				Key:      common.HexToHash("key2"),
+				Key:      common.BytesToHash([]byte("key2")),
 				Value:    []byte("value2"),
 				BatchNum: 2,
 			}},
@@ -634,7 +634,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		{
 			name: "error returned",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			keys: []common.Hash{
@@ -646,7 +646,7 @@ func Test_DB_ListOffChainData(t *testing.T) {
 		{
 			name: "no rows",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			keys: []common.Hash{
@@ -722,10 +722,10 @@ func Test_DB_CountOffchainData(t *testing.T) {
 		{
 			name: "two values found",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}, {
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value2"),
 			}},
 			count: 2,
@@ -737,7 +737,7 @@ func Test_DB_CountOffchainData(t *testing.T) {
 		{
 			name: "error returned",
 			od: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			returnErr: errors.New("test error"),
@@ -797,11 +797,11 @@ func Test_DB_DetectOffchainDataGaps(t *testing.T) {
 		{
 			name: "one gap found",
 			seed: []types.OffChainData{{
-				Key:      common.HexToHash("key1"),
+				Key:      common.BytesToHash([]byte("key1")),
 				Value:    []byte("value1"),
 				BatchNum: 1,
 			}, {
-				Key:      common.HexToHash("key2"),
+				Key:      common.BytesToHash([]byte("key2")),
 				Value:    []byte("value2"),
 				BatchNum: 2,
 			}, {
@@ -816,7 +816,7 @@ func Test_DB_DetectOffchainDataGaps(t *testing.T) {
 		{
 			name: "error returned",
 			seed: []types.OffChainData{{
-				Key:   common.HexToHash("key1"),
+				Key:   common.BytesToHash([]byte("key1")),
 				Value: []byte("value1"),
 			}},
 			returnErr: errors.New("test error"),

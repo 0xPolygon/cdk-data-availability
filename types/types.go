@@ -37,6 +37,19 @@ type OffChainData struct {
 	BatchNum uint64
 }
 
+// RemoveDuplicateOffChainData removes duplicate off chain data
+func RemoveDuplicateOffChainData(ods []OffChainData) []OffChainData {
+	seen := make(map[common.Hash]struct{})
+	result := []OffChainData{}
+	for _, od := range ods {
+		if _, ok := seen[od.Key]; !ok {
+			seen[od.Key] = struct{}{}
+			result = append(result, od)
+		}
+	}
+	return result
+}
+
 // ArgUint64 helps to marshal uint64 values provided in the RPC requests
 type ArgUint64 uint64
 
