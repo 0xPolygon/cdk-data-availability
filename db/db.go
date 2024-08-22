@@ -209,12 +209,11 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 
 	const columnsAffected = 2
 
-	args := make([]interface{}, len(bks)*columnsAffected)
+	args := make([]interface{}, 0, len(bks)*columnsAffected)
 	values := make([]string, len(bks))
 	for i, bk := range bks {
 		values[i] = fmt.Sprintf("($%d, $%d)", i*columnsAffected+1, i*columnsAffected+2) //nolint:mnd
-		args[i*columnsAffected] = bk.Number
-		args[i*columnsAffected+1] = bk.Hash.Hex()
+		args = append(args, bk.Number, bk.Hash.Hex())
 	}
 
 	query := fmt.Sprintf(`
