@@ -245,21 +245,6 @@ func handleError(w http.ResponseWriter, err error) {
 	}
 }
 
-// RPCErrorResponse formats error to be returned through RPC
-func RPCErrorResponse(code int, message string, err error) (interface{}, Error) {
-	return RPCErrorResponseWithData(code, message, nil, err)
-}
-
-// RPCErrorResponseWithData formats error to be returned through RPC
-func RPCErrorResponseWithData(code int, message string, data *[]byte, err error) (interface{}, Error) {
-	if err != nil {
-		log.Errorf("%v: %v", message, err.Error())
-	} else {
-		log.Error(message)
-	}
-	return nil, NewRPCErrorWithData(code, message, data)
-}
-
 func combinedLog(r *http.Request, start time.Time, httpStatus, dataLen int) {
 	log.Infof("%s - - %s \"%s %s %s\" %d %d \"%s\" \"%s\"",
 		r.RemoteAddr,
