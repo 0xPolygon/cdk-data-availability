@@ -148,6 +148,8 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 }
 
 func generateRandomHashes(t *testing.T, numOfHashes int) []types.ArgHash {
+	t.Helper()
+
 	hashes := make([]types.ArgHash, numOfHashes)
 	for i := 0; i < numOfHashes; i++ {
 		hashes[i] = types.ArgHash(generateRandomHash(t))
@@ -157,6 +159,8 @@ func generateRandomHashes(t *testing.T, numOfHashes int) []types.ArgHash {
 }
 
 func generateRandomHash(t *testing.T) common.Hash {
+	t.Helper()
+
 	randomData := make([]byte, 32)
 
 	_, err := rand.Read(randomData)
