@@ -133,6 +133,7 @@ func (st *Tracker) trackAddrChanges(ctx context.Context) {
 			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
 				log.Warnf("context cancelled: %v", ctx.Err())
 			}
+			return
 		case <-st.stop:
 			return
 		}
@@ -227,6 +228,7 @@ func (st *Tracker) trackUrlChanges(ctx context.Context) {
 			if ctx.Err() != nil && ctx.Err() != context.DeadlineExceeded {
 				log.Warnf("context cancelled: %v", ctx.Err())
 			}
+			return
 		case <-st.stop:
 			return
 		}

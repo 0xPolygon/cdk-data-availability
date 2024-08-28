@@ -2,12 +2,14 @@ package sync
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
 	"testing"
 
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,7 +83,7 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 	}{
 		{
 			name:   "successfully got offchain data",
-			hashes: []types.ArgHash{},
+			hashes: generateRandomHashes(t, 1),
 			data: []types.OffChainData{{
 				Key:      common.BytesToHash(nil),
 				Value:    types.ArgBytes("offchaindata"),
@@ -99,6 +101,11 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 			dbErr: errors.New("test error"),
 			err:   errors.New("failed to list the requested data"),
 		},
+		{
+			name:   "too many hashes requested",
+			hashes: generateRandomHashes(t, maxListHashes+1),
+			err:    errors.New("too many hashes requested"),
+		},
 	}
 	for _, tt := range tests {
 		tt := tt
@@ -113,17 +120,19 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 				keys[i] = hash.Hash()
 			}
 
-			dbMock.On("ListOffChainData", context.Background(), keys).
-				Return(tt.data, tt.dbErr)
+			if tt.data != nil {
+				dbMock.On("ListOffChainData", context.Background(), keys).
+					Return(tt.data, tt.dbErr)
 
-			defer dbMock.AssertExpectations(t)
+				defer dbMock.AssertExpectations(t)
+			}
 
 			z := &Endpoints{db: dbMock}
 
 			got, err := z.ListOffChainData(tt.hashes)
 			if tt.err != nil {
 				require.Error(t, err)
-				require.EqualError(t, tt.err, err.Error())
+				require.ErrorContains(t, tt.err, err.Error())
 			} else {
 				require.NoError(t, err)
 
@@ -136,4 +145,26 @@ func TestSyncEndpoints_ListOffChainData(t *testing.T) {
 			}
 		})
 	}
+}
+
+func generateRandomHashes(t *testing.T, numOfHashes int) []types.ArgHash {
+	t.Helper()
+
+	hashes := make([]types.ArgHash, numOfHashes)
+	for i := 0; i < numOfHashes; i++ {
+		hashes[i] = types.ArgHash(generateRandomHash(t))
+	}
+
+	return hashes
+}
+
+func generateRandomHash(t *testing.T) common.Hash {
+	t.Helper()
+
+	randomData := make([]byte, 32)
+
+	_, err := rand.Read(randomData)
+	require.NoError(t, err)
+
+	return crypto.Keccak256Hash(randomData)
 }

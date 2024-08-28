@@ -41,10 +41,10 @@ func (rd *ReorgDetector) Subscribe() <-chan BlockReorg {
 }
 
 // Start starts the ReorgDetector tracking for reorg events
-func (rd *ReorgDetector) Start() error {
+func (rd *ReorgDetector) Start(ctx context.Context) error {
 	log.Info("starting block reorganization detector")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	rd.cancel = cancel
 
 	blocks := make(chan *ethgo.Block)

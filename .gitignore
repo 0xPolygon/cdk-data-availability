@@ -4,3 +4,4 @@ dist
 
 test/gethData
 test/coverage.out
+coverage.out
