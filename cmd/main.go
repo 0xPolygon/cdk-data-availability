@@ -127,7 +127,7 @@ func start(cliCtx *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	if err = detector.Start(); err != nil {
+	if err = detector.Start(cliCtx.Context); err != nil {
 		log.Fatal(err)
 	}
 
