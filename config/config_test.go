@@ -15,8 +15,6 @@ import (
 )
 
 func Test_Defaults(t *testing.T) {
-	t.Parallel()
-
 	tcs := []struct {
 		path          string
 		expectedValue interface{}
@@ -51,8 +49,6 @@ func Test_Defaults(t *testing.T) {
 	for _, tc := range tcs {
 		tc := tc
 		t.Run(tc.path, func(t *testing.T) {
-			t.Parallel()
-
 			actual := getValueFromStruct(tc.path, cfg)
 			require.Equal(t, tc.expectedValue, actual)
 		})
@@ -60,8 +56,6 @@ func Test_Defaults(t *testing.T) {
 }
 
 func Test_ConfigFileNotFound(t *testing.T) {
-	t.Parallel()
-
 	flags := flag.FlagSet{}
 	flags.String("cfg", "/fictitious-file/foo.cfg", "")
 
@@ -71,8 +65,6 @@ func Test_ConfigFileNotFound(t *testing.T) {
 }
 
 func Test_ConfigFileOverride(t *testing.T) {
-	t.Parallel()
-
 	tempDir := t.TempDir()
 	overrides := filepath.Join(tempDir, "overrides.toml")
 	f, err := os.Create(overrides)
