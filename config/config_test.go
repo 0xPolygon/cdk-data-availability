@@ -124,7 +124,7 @@ func Test_NewKeyFromKeystore(t *testing.T) {
 		}
 
 		key, err := NewKeyFromKeystore(cfg)
-		require.Error(t, err)
+		require.ErrorContains(t, err, "no such file or directory")
 		require.Nil(t, key)
 	})
 

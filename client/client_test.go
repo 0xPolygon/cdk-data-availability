@@ -405,6 +405,8 @@ func TestClient_SignSequenceBanana(t *testing.T) {
 }
 
 func TestClient_Factory_New(t *testing.T) {
+	t.Parallel()
+
 	url := "http://example.com"
 	f := NewFactory()
 
