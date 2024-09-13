@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"strings"
 
+	bananaValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/banana/polygonvalidiumetrog"
 	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
 	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
+	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -23,6 +25,10 @@ var (
 	// methodIDSequenceBatchesValidiumElderberry is sequenceBatchesValidium method id in Elderberry fork (0xdb5b0ed7)
 	methodIDSequenceBatchesValidiumElderberry = crypto.Keccak256(
 		[]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],uint64,uint64,address,bytes)"),
+	)[:methodIDLen]
+	// methodIDSequenceBatchesValidiumBanana is sequenceBatchesValidium method id in Banana fork (0x165e8a8d)
+	methodIDSequenceBatchesValidiumBanana = crypto.Keccak256(
+		[]byte("sequenceBatchesValidium((bytes32,bytes32,uint64,bytes32)[],uint32,uint64,bytes32,address,bytes)"),
 	)[:methodIDLen]
 )
 
@@ -50,6 +56,11 @@ func UnpackTxData(txData []byte) ([]common.Hash, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else if bytes.Equal(methodID, methodIDSequenceBatchesValidiumBanana) {
+		a, err = abi.JSON(strings.NewReader(bananaValidium.PolygonvalidiumetrogMetaData.ABI))
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		return nil, fmt.Errorf("unrecognized method id: %s", hex.EncodeToString(methodID))
 	}
@@ -61,16 +72,19 @@ func UnpackTxData(txData []byte) ([]common.Hash, error) {
 
 	data, err := method.Inputs.Unpack(txData[methodIDLen:])
 	if err != nil {
+		log.Errorf("error Unpack data: %v", err)
 		return nil, err
 	}
 
 	bytes, err := json.Marshal(data[0])
 	if err != nil {
+		log.Errorf("error marshalling data: %v", err)
 		return nil, err
 	}
 
 	var batches []etrogValidium.PolygonValidiumEtrogValidiumBatchData
 	if err = json.Unmarshal(bytes, &batches); err != nil {
+		log.Errorf("error Unmarshal data: %v", err)
 		return nil, err
 	}
 

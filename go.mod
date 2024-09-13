@@ -3,7 +3,7 @@ module github.com/0xPolygon/cdk-data-availability
 go 1.21.3
 
 require (
-	github.com/0xPolygon/cdk-contracts-tooling v0.0.0-20240426091844-5cd6921eed9f
+	github.com/0xPolygon/cdk-contracts-tooling v0.0.0-20240826154954-f6182d2b17a2
 	github.com/DATA-DOG/go-sqlmock v1.5.1
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/ethereum/go-ethereum v1.13.14
