@@ -258,7 +258,7 @@ func (bs *BatchSynchronizer) handleEvent(
 	var batchKeys []types.BatchKey
 	for i, j := 0, len(keys)-1; i < len(keys); i, j = i+1, j-1 {
 		batchKeys = append(batchKeys, types.BatchKey{
-			Number: event.NumBatch - uint64(i),
+			Number: event.NumBatch - uint64(i), //nolint:gosec
 			Hash:   keys[j],
 		})
 	}
