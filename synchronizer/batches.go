@@ -228,7 +228,7 @@ func (bs *BatchSynchronizer) filterEvents(ctx context.Context) error {
 	// Handle events
 	for _, event := range events {
 		if err = bs.handleEvent(ctx, event); err != nil {
-			log.Errorf("failed to handle event: %v", err)
+			log.Errorf("failed to handleEvent: %v", err)
 			return setStartBlock(ctx, bs.db, event.Raw.BlockNumber-1, L1SyncTask)
 		}
 	}
