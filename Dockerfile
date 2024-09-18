@@ -1,5 +1,5 @@
 # CONTAINER FOR BUILDING BINARY
-FROM golang:1.21 AS build
+FROM golang:1.22 AS build
 
 WORKDIR $GOPATH/src/github.com/0xPolygon/cdk-data-availability
 
