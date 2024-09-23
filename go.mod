@@ -2,7 +2,6 @@ module github.com/0xPolygon/cdk-data-availability
 
 go 1.22.4
 
-toolchain go1.22.7
 
 require (
 	github.com/0xPolygon/cdk v0.1.0
