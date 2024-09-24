@@ -3,11 +3,11 @@ package types
 import (
 	"crypto/ecdsa"
 	"errors"
-	"math/big"
 
+	cdkCommon "github.com/0xPolygon/cdk/common"
+	cdkLog "github.com/0xPolygon/cdk/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/iden3/go-iden3-crypto/keccak256"
 )
 
 // Batch represents the batch data that the sequencer will send to L1
@@ -31,41 +31,19 @@ type SequenceBanana struct {
 // HashToSign returns the accumulated input hash of the sequence.
 // Note that this is equivalent to what happens on the smart contract
 func (s *SequenceBanana) HashToSign() []byte {
-	v1 := s.OldAccInputHash.Bytes()
+	accInputHash := s.OldAccInputHash
 	for _, b := range s.Batches {
-		v2 := b.L2Data
-		var v3, v4 []byte
-		if b.ForcedTimestamp > 0 {
-			v3 = b.ForcedGER.Bytes()
-			v4 = big.NewInt(0).SetUint64(uint64(b.ForcedTimestamp)).Bytes()
-		} else {
-			v3 = s.L1InfoRoot.Bytes()
-			v4 = big.NewInt(0).SetUint64(uint64(s.MaxSequenceTimestamp)).Bytes()
-		}
-		v5 := b.Coinbase.Bytes()
-		v6 := b.ForcedBlockHashL1.Bytes()
-
-		// Add 0s to make values 32 bytes long
-		for len(v1) < 32 {
-			v1 = append([]byte{0}, v1...)
-		}
-		v2 = keccak256.Hash(v2)
-		for len(v3) < 32 {
-			v3 = append([]byte{0}, v3...)
-		}
-		for len(v4) < 8 {
-			v4 = append([]byte{0}, v4...)
-		}
-		for len(v5) < 20 {
-			v5 = append([]byte{0}, v5...)
-		}
-		for len(v6) < 32 {
-			v6 = append([]byte{0}, v6...)
-		}
-		v1 = keccak256.Hash(v1, v2, v3, v4, v5, v6)
+		accInputHash = cdkCommon.CalculateAccInputHash(
+			cdkLog.GetDefaultLogger(),
+			accInputHash,
+			b.L2Data,
+			s.L1InfoRoot,
+			uint64(s.MaxSequenceTimestamp),
+			b.Coinbase, b.ForcedBlockHashL1,
+		)
 	}
 
-	return v1
+	return accInputHash.Bytes()
 }
 
 // Sign returns a signed sequence by the private key.
