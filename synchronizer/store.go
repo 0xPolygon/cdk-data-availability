@@ -77,10 +77,3 @@ func storeOffchainData(parentCtx context.Context, db dbTypes.DB, data []types.Of
 
 	return db.StoreOffChainData(ctx, data)
 }
-
-func detectOffchainDataGaps(parentCtx context.Context, db dbTypes.DB) (map[uint64]uint64, error) {
-	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
-	defer cancel()
-
-	return db.DetectOffchainDataGaps(ctx)
-}

@@ -558,49 +558,9 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 			},
 			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
 			listOffchainDataReturns: []interface{}{[]types.OffChainData{{
-				Key:      txHash,
-				Value:    batchL2Data,
-				BatchNum: 10,
+				Key:   txHash,
+				Value: batchL2Data,
 			}}, nil},
-			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				mock.Anything,
-			},
-			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
-			isErrorExpected:                  false,
-		})
-	})
-
-	t.Run("Unresolved batch key already resolved with no batch number", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				nil,
-			},
-			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
-			listOffchainDataReturns: []interface{}{[]types.OffChainData{{
-				Key:      txHash,
-				Value:    batchL2Data,
-				BatchNum: 0,
-			}}, nil},
-			storeOffChainDataArgs: []interface{}{mock.Anything,
-				[]types.OffChainData{{
-					Key:      txHash,
-					Value:    batchL2Data,
-					BatchNum: 10,
-				}},
-				mock.Anything,
-			},
-			storeOffChainDataReturns: []interface{}{nil},
 			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
 				[]types.BatchKey{{
 					Number: 10,
@@ -629,11 +589,9 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 			listOffchainDataReturns: []interface{}{nil, nil},
 			storeOffChainDataArgs: []interface{}{mock.Anything,
 				[]types.OffChainData{{
-					Key:      txHash,
-					Value:    batchL2Data,
-					BatchNum: 10,
+					Key:   txHash,
+					Value: batchL2Data,
 				}},
-				mock.Anything,
 			},
 			storeOffChainDataReturns: []interface{}{nil},
 			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
@@ -801,77 +759,6 @@ func TestBatchSynchronizer_HandleReorgs(t *testing.T) {
 			reorg: BlockReorg{
 				Number: 15,
 			},
-		})
-	})
-}
-
-func TestBatchSynchronizer_detectOffchainDataGaps(t *testing.T) {
-	t.Parallel()
-
-	type testConfig struct {
-		// db mock
-		detectOffchainDataGapsArgs    []interface{}
-		detectOffchainDataGapsReturns []interface{}
-
-		expectedGaps    map[uint64]uint64
-		isErrorExpected bool
-	}
-
-	testFn := func(t *testing.T, config testConfig) {
-		t.Helper()
-
-		dbMock := mocks.NewDB(t)
-
-		if config.detectOffchainDataGapsArgs != nil && config.detectOffchainDataGapsReturns != nil {
-			dbMock.On("DetectOffchainDataGaps", config.detectOffchainDataGapsArgs...).Return(
-				config.detectOffchainDataGapsReturns...).Once()
-		}
-
-		batchSynronizer := &BatchSynchronizer{
-			db: dbMock,
-		}
-
-		err := batchSynronizer.detectOffchainDataGaps(context.Background())
-		if config.isErrorExpected {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, config.expectedGaps, batchSynronizer.Gaps())
-		}
-
-		dbMock.AssertExpectations(t)
-	}
-
-	t.Run("no gaps detected", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{}, nil},
-			expectedGaps:                  map[uint64]uint64{},
-			isErrorExpected:               false,
-		})
-	})
-
-	t.Run("one gap detected", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{1: 3}, nil},
-			expectedGaps:                  map[uint64]uint64{1: 3},
-			isErrorExpected:               false,
-		})
-	})
-
-	t.Run("failed to detect gaps", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{nil, errors.New("test error")},
-			expectedGaps:                  map[uint64]uint64{},
-			isErrorExpected:               true,
 		})
 	})
 }

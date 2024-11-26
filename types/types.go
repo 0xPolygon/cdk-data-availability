@@ -17,11 +17,10 @@ const (
 
 // DACStatus contains DAC status info
 type DACStatus struct {
-	Uptime                string `json:"uptime"`
-	Version               string `json:"version"`
-	KeyCount              uint64 `json:"key_count"`
-	BackfillProgress      uint64 `json:"backfill_progress"`
-	OffchainDataGapsExist bool   `json:"offchain_data_gaps_exist"`
+	Uptime           string `json:"uptime"`
+	Version          string `json:"version"`
+	KeyCount         uint64 `json:"key_count"`
+	BackfillProgress uint64 `json:"backfill_progress"`
 }
 
 // BatchKey is the pairing of batch number and data hash of a batch
@@ -32,9 +31,8 @@ type BatchKey struct {
 
 // OffChainData represents some data that is not stored on chain and should be preserved
 type OffChainData struct {
-	Key      common.Hash
-	Value    []byte
-	BatchNum uint64
+	Key   common.Hash
+	Value []byte
 }
 
 // RemoveDuplicateOffChainData removes duplicate off chain data
