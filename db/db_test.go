@@ -159,7 +159,7 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 	}
 }
 
-func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
+func Test_DB_StoreMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
@@ -177,7 +177,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.BytesToHash([]byte("key1")),
 			}},
-			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
+			expectedQuery: `INSERT INTO data_node.missing_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
 		},
 		{
 			name: "several values inserted",
@@ -188,7 +188,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 2,
 				Hash:   common.BytesToHash([]byte("key2")),
 			}},
-			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2),($3, $4) ON CONFLICT (num, hash) DO NOTHING`,
+			expectedQuery: `INSERT INTO data_node.missing_batches (num, hash) VALUES ($1, $2),($3, $4) ON CONFLICT (num, hash) DO NOTHING`,
 		},
 		{
 			name: "error returned",
@@ -196,7 +196,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.BytesToHash([]byte("key1")),
 			}},
-			expectedQuery: `INSERT INTO data_node.unresolved_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
+			expectedQuery: `INSERT INTO data_node.missing_batches (num, hash) VALUES ($1, $2) ON CONFLICT (num, hash) DO NOTHING`,
 			returnErr:     errors.New("test error"),
 		},
 	}
@@ -214,7 +214,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 
 			mock.ExpectPrepare(regexp.QuoteMeta(storeLastProcessedBlockSQL))
 			mock.ExpectPrepare(regexp.QuoteMeta(getLastProcessedBlockSQL))
-			mock.ExpectPrepare(regexp.QuoteMeta(getUnresolvedBatchKeysSQL))
+			mock.ExpectPrepare(regexp.QuoteMeta(getMissingBatchKeysSQL))
 			mock.ExpectPrepare(regexp.QuoteMeta(getOffchainDataSQL))
 			mock.ExpectPrepare(regexp.QuoteMeta(countOffchainDataSQL))
 
@@ -237,7 +237,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 				}
 			}
 
-			err = dbPG.StoreUnresolvedBatchKeys(context.Background(), tt.bk)
+			err = dbPG.StoreMissingBatchKeys(context.Background(), tt.bk)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -249,7 +249,7 @@ func Test_DB_StoreUnresolvedBatchKeys(t *testing.T) {
 	}
 }
 
-func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
+func Test_DB_GetMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
@@ -292,10 +292,10 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 			require.NoError(t, err)
 
 			// Seed data
-			seedUnresolvedBatchKeys(t, dbPG, mock, tt.bks)
+			seedMissingBatchKeys(t, dbPG, mock, tt.bks)
 
 			var limit = uint(10)
-			expected := mock.ExpectQuery(`SELECT num, hash FROM data_node\.unresolved_batches LIMIT \$1\;`).WithArgs(limit)
+			expected := mock.ExpectQuery(`SELECT num, hash FROM data_node\.missing_batches LIMIT \$1\;`).WithArgs(limit)
 
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
@@ -305,7 +305,7 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 				}
 			}
 
-			data, err := dbPG.GetUnresolvedBatchKeys(context.Background(), limit)
+			data, err := dbPG.GetMissingBatchKeys(context.Background(), limit)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -318,7 +318,7 @@ func Test_DB_GetUnresolvedBatchKeys(t *testing.T) {
 	}
 }
 
-func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
+func Test_DB_DeleteMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testTable := []struct {
@@ -333,7 +333,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.BytesToHash([]byte("key1")),
 			}},
-			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
+			expectedQuery: `DELETE FROM data_node.missing_batches WHERE (num, hash) IN (($1, $2))`,
 		},
 		{
 			name: "multiple values deleted",
@@ -344,7 +344,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				Number: 2,
 				Hash:   common.BytesToHash([]byte("key2")),
 			}},
-			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2),($3, $4))`,
+			expectedQuery: `DELETE FROM data_node.missing_batches WHERE (num, hash) IN (($1, $2),($3, $4))`,
 		},
 		{
 			name: "error returned",
@@ -352,7 +352,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				Number: 1,
 				Hash:   common.BytesToHash([]byte("key1")),
 			}},
-			expectedQuery: `DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (($1, $2))`,
+			expectedQuery: `DELETE FROM data_node.missing_batches WHERE (num, hash) IN (($1, $2))`,
 			returnErr:     errors.New("test error"),
 		},
 	}
@@ -388,7 +388,7 @@ func Test_DB_DeleteUnresolvedBatchKeys(t *testing.T) {
 				}
 			}
 
-			err = dbPG.DeleteUnresolvedBatchKeys(context.Background(), tt.bks)
+			err = dbPG.DeleteMissingBatchKeys(context.Background(), tt.bks)
 			if tt.returnErr != nil {
 				require.ErrorIs(t, err, tt.returnErr)
 			} else {
@@ -780,7 +780,7 @@ func Test_DB_CountOffchainData(t *testing.T) {
 func constructorExpect(mock sqlmock.Sqlmock) {
 	mock.ExpectPrepare(regexp.QuoteMeta(storeLastProcessedBlockSQL))
 	mock.ExpectPrepare(regexp.QuoteMeta(getLastProcessedBlockSQL))
-	mock.ExpectPrepare(regexp.QuoteMeta(getUnresolvedBatchKeysSQL))
+	mock.ExpectPrepare(regexp.QuoteMeta(getMissingBatchKeysSQL))
 	mock.ExpectPrepare(regexp.QuoteMeta(getOffchainDataSQL))
 	mock.ExpectPrepare(regexp.QuoteMeta(countOffchainDataSQL))
 }
@@ -806,7 +806,7 @@ func seedOffchainData(t *testing.T, db DB, mock sqlmock.Sqlmock, ods []types.Off
 	require.NoError(t, err)
 }
 
-func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []types.BatchKey) {
+func seedMissingBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []types.BatchKey) {
 	t.Helper()
 
 	if len(bks) == 0 {
@@ -823,6 +823,6 @@ func seedUnresolvedBatchKeys(t *testing.T, db DB, mock sqlmock.Sqlmock, bks []ty
 	mock.ExpectExec(regexp.QuoteMeta(query)).WithArgs(argValues...).
 		WillReturnResult(sqlmock.NewResult(int64(len(bks)), int64(len(bks))))
 
-	err := db.StoreUnresolvedBatchKeys(context.Background(), bks)
+	err := db.StoreMissingBatchKeys(context.Background(), bks)
 	require.NoError(t, err)
 }

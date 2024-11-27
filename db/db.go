@@ -23,8 +23,8 @@ const (
 	// getLastProcessedBlockSQL is a query that returns the last processed block for a given task
 	getLastProcessedBlockSQL = `SELECT block FROM data_node.sync_tasks WHERE task = $1;`
 
-	// getUnresolvedBatchKeysSQL is a query that returns the unresolved batch keys from the database
-	getUnresolvedBatchKeysSQL = `SELECT num, hash FROM data_node.unresolved_batches LIMIT $1;`
+	// getMissingBatchKeysSQL is a query that returns the missing batch keys from the database
+	getMissingBatchKeysSQL = `SELECT num, hash FROM data_node.missing_batches LIMIT $1;`
 
 	// getOffchainDataSQL is a query that returns the offchain data for a given key
 	getOffchainDataSQL = `
@@ -54,9 +54,9 @@ type DB interface {
 	StoreLastProcessedBlock(ctx context.Context, block uint64, task string) error
 	GetLastProcessedBlock(ctx context.Context, task string) (uint64, error)
 
-	StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
-	GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
-	DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error
+	StoreMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error
+	GetMissingBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error)
+	DeleteMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error
 
 	GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error)
 	ListOffChainData(ctx context.Context, keys []common.Hash) ([]types.OffChainData, error)
@@ -70,7 +70,7 @@ type pgDB struct {
 
 	storeLastProcessedBlockStmt *sqlx.Stmt
 	getLastProcessedBlockStmt   *sqlx.Stmt
-	getUnresolvedBatchKeysStmt  *sqlx.Stmt
+	getMissingBatchKeysStmt     *sqlx.Stmt
 	getOffChainDataStmt         *sqlx.Stmt
 	countOffChainDataStmt       *sqlx.Stmt
 }
@@ -87,9 +87,9 @@ func New(ctx context.Context, pg *sqlx.DB) (DB, error) {
 		return nil, fmt.Errorf("failed to prepare the get last processed block statement: %w", err)
 	}
 
-	getUnresolvedBatchKeysStmt, err := pg.PreparexContext(ctx, getUnresolvedBatchKeysSQL)
+	getMissingBatchKeysStmt, err := pg.PreparexContext(ctx, getMissingBatchKeysSQL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to prepare the get unresolved batch keys statement: %w", err)
+		return nil, fmt.Errorf("failed to prepare the get missing batch keys statement: %w", err)
 	}
 
 	getOffChainDataStmt, err := pg.PreparexContext(ctx, getOffchainDataSQL)
@@ -106,7 +106,7 @@ func New(ctx context.Context, pg *sqlx.DB) (DB, error) {
 		pg:                          pg,
 		storeLastProcessedBlockStmt: storeLastProcessedBlockStmt,
 		getLastProcessedBlockStmt:   getLastProcessedBlockStmt,
-		getUnresolvedBatchKeysStmt:  getUnresolvedBatchKeysStmt,
+		getMissingBatchKeysStmt:     getMissingBatchKeysStmt,
 		getOffChainDataStmt:         getOffChainDataStmt,
 		countOffChainDataStmt:       countOffChainDataStmt,
 	}, nil
@@ -129,8 +129,8 @@ func (db *pgDB) GetLastProcessedBlock(ctx context.Context, task string) (uint64,
 	return lastBlock, nil
 }
 
-// StoreUnresolvedBatchKeys stores unresolved batch keys in the database
-func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+// StoreMissingBatchKeys stores missing batch keys in the database
+func (db *pgDB) StoreMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error {
 	if len(bks) == 0 {
 		return nil
 	}
@@ -138,15 +138,15 @@ func (db *pgDB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchK
 	query, args := buildBatchKeysInsertQuery(bks)
 
 	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("failed to store unresolved batches: %w", err)
+		return fmt.Errorf("failed to store misisng batches: %w", err)
 	}
 
 	return nil
 }
 
-// GetUnresolvedBatchKeys returns the unresolved batch keys from the database
-func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
-	rows, err := db.getUnresolvedBatchKeysStmt.QueryxContext(ctx, limit)
+// GetMissingBatchKeys returns the missing batch keys that is not yet present in offchain table
+func (db *pgDB) GetMissingBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
+	rows, err := db.getMissingBatchKeysStmt.QueryxContext(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func (db *pgDB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types
 	return bks, nil
 }
 
-// DeleteUnresolvedBatchKeys deletes the unresolved batch keys from the database
-func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+// DeleteMissingBatchKeys deletes the missing batch keys from the missing_batch table in the db
+func (db *pgDB) DeleteMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error {
 	if len(bks) == 0 {
 		return nil
 	}
@@ -191,11 +191,11 @@ func (db *pgDB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.Batch
 	}
 
 	query := fmt.Sprintf(`
-		DELETE FROM data_node.unresolved_batches WHERE (num, hash) IN (%s);
+		DELETE FROM data_node.missing_batches WHERE (num, hash) IN (%s);
 	`, strings.Join(values, ","))
 
 	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("failed to delete unresolved batches: %w", err)
+		return fmt.Errorf("failed to delete missing batches: %w", err)
 	}
 
 	return nil
@@ -293,7 +293,7 @@ func (db *pgDB) CountOffchainData(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
-// buildBatchKeysInsertQuery builds the query to insert unresolved batch keys
+// buildBatchKeysInsertQuery builds the query to insert missing batch keys
 func buildBatchKeysInsertQuery(bks []types.BatchKey) (string, []interface{}) {
 	const columnsAffected = 2
 
@@ -306,7 +306,7 @@ func buildBatchKeysInsertQuery(bks []types.BatchKey) (string, []interface{}) {
 	}
 
 	return fmt.Sprintf(`
-		INSERT INTO data_node.unresolved_batches (num, hash)
+		INSERT INTO data_node.missing_batches (num, hash)
 		VALUES %s
 		ON CONFLICT (num, hash) DO NOTHING;
 	`, strings.Join(values, ",")), args

@@ -43,25 +43,25 @@ func setStartBlock(parentCtx context.Context, db dbTypes.DB, block uint64, syncT
 	return db.StoreLastProcessedBlock(ctx, block, string(syncTask))
 }
 
-func storeUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
+func storeMissingBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	return db.StoreUnresolvedBatchKeys(ctx, keys)
+	return db.StoreMissingBatchKeys(ctx, keys)
 }
 
-func getUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB) ([]types.BatchKey, error) {
+func getMissingBatchKeys(parentCtx context.Context, db dbTypes.DB) ([]types.BatchKey, error) {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	return db.GetUnresolvedBatchKeys(ctx, maxUnprocessedBatch)
+	return db.GetMissingBatchKeys(ctx, maxUnprocessedBatch)
 }
 
-func deleteUnresolvedBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
+func deleteMissingBatchKeys(parentCtx context.Context, db dbTypes.DB, keys []types.BatchKey) error {
 	ctx, cancel := context.WithTimeout(parentCtx, dbTimeout)
 	defer cancel()
 
-	return db.DeleteUnresolvedBatchKeys(ctx, keys)
+	return db.DeleteMissingBatchKeys(ctx, keys)
 }
 
 func listOffchainData(parentCtx context.Context, db dbTypes.DB, keys []common.Hash) ([]types.OffChainData, error) {
