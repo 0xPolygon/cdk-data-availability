@@ -381,6 +381,18 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 	})
 
+	t.Run("Error getting offchain data", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getTxArgs:               []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:            []interface{}{tx, true, nil},
+			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{nil, errors.New("error")},
+			isErrorExpected:         true,
+		})
+	})
+
 	t.Run("doesn't have batch in storage - successfully stored (Elderberry fork)", func(t *testing.T) {
 		t.Parallel()
 
@@ -460,6 +472,25 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			storeMissingBatchKeysReturns: []interface{}{errors.New("error")},
 			getTxArgs:                    []interface{}{mock.Anything, event.Raw.TxHash},
 			getTxReturns:                 []interface{}{tx, true, nil},
+		})
+	})
+
+	t.Run("have batch in storage already no error", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			isErrorExpected:      false,
+			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{
+				[]types.OffChainData{
+					{
+						Key:   txHash,
+						Value: batchL2Data,
+					},
+				}, nil,
+			},
+			getTxArgs:    []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns: []interface{}{tx, true, nil},
 		})
 	})
 }
