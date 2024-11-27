@@ -15,10 +15,9 @@ import (
 const (
 	// storeLastProcessedBlockSQL is a query that stores the last processed block for a given task
 	storeLastProcessedBlockSQL = `
-		INSERT INTO data_node.sync_tasks (task, block) 
-		VALUES ($1, $2)
-		ON CONFLICT (task) DO UPDATE 
-		SET block = EXCLUDED.block, processed = NOW();`
+		UPDATE data_node.sync_tasks
+    	SET block = $2, processed = NOW()
+    	WHERE task = $1;`
 
 	// getLastProcessedBlockSQL is a query that returns the last processed block for a given task
 	getLastProcessedBlockSQL = `SELECT block FROM data_node.sync_tasks WHERE task = $1;`
