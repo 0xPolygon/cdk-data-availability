@@ -65,7 +65,7 @@ func Test_DB_StoreLastProcessedBlock(t *testing.T) {
 
 			constructorExpect(mock)
 
-			expected := mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
+			expected := mock.ExpectExec(`UPDATE data_node\.sync_tasks SET block = \$2, processed = NOW\(\) WHERE task = \$1;`).
 				WithArgs(tt.task, tt.block)
 			if tt.returnErr != nil {
 				expected.WillReturnError(tt.returnErr)
@@ -125,7 +125,7 @@ func Test_DB_GetLastProcessedBlock(t *testing.T) {
 
 			constructorExpect(mock)
 
-			mock.ExpectExec(`INSERT INTO data_node\.sync_tasks \(task, block\) VALUES \(\$1, \$2\) ON CONFLICT \(task\) DO UPDATE SET block = EXCLUDED\.block, processed = NOW\(\)`).
+			mock.ExpectExec(`UPDATE data_node\.sync_tasks SET block = \$2, processed = NOW\(\) WHERE task = \$1;`).
 				WithArgs(tt.task, tt.block).
 				WillReturnResult(sqlmock.NewResult(1, 1))
 
