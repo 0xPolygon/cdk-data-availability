@@ -617,6 +617,34 @@ func TestBatchSynchronizer_HandleMissingBatches(t *testing.T) {
 		})
 	})
 
+	t.Run("DB error while storing missing batch", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getMissingBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				nil,
+			},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+			},
+			storeOffChainDataReturns: []interface{}{errors.New("error")},
+			getSequenceBatchArgs:     []interface{}{context.Background(), uint64(10)},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      types.ArgUint64(10),
+				BatchL2Data: types.ArgBytes(batchL2Data),
+			}, nil},
+			isErrorExpected: true,
+		})
+	})
+
 	/*t.Run("Invalid tx data", func(t *testing.T) {
 		t.Parallel()
 
