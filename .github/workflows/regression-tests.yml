@@ -46,8 +46,8 @@ jobs:
           kurtosis run --enclave cdk . '{"args": {"zkevm_da_image": "cdk-data-availability:local", "consensus_contract_type": "cdk-validium"}}'
 
       - name: Set executable permissions for the script
-        working-directory: ./cdk-data-availability
-        run: sudo chmod +x .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh
+        working-directory: ./kurtosis-cdk
+        run: sudo chmod +x .github/scripts/monitor-cdk-verified-batches/monitor-verified-batches.sh
 
       - name: Monitor verified batches
         working-directory: ./kurtosis-cdk
