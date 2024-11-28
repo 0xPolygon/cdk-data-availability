@@ -43,7 +43,7 @@ jobs:
       - name: Deploy Kurtosis CDK package
         working-directory: ./kurtosis-cdk
         run: >
-          kurtosis run --enclave cdk . '{"args": {"zkevm_da_image": "cdk-data-availability:local"}}'
+          kurtosis run --enclave cdk . '{"args": {"zkevm_da_image": "cdk-data-availability:local", "consensus_contract_type": "cdk-validium"}}'
 
       - name: Set executable permissions for the script
         working-directory: ./cdk-data-availability
