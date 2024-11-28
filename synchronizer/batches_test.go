@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
 	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
@@ -493,6 +494,28 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			getTxReturns: []interface{}{tx, true, nil},
 		})
 	})
+}
+
+func TestBatchSynchronizer_ProcessMissingBatches(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	dbMock := mocks.NewDB(t)
+	dbMock.On("GetMissingBatchKeys", mock.Anything, mock.Anything).Return(
+		[]types.BatchKey{}, nil)
+
+	batchSynronizer := &BatchSynchronizer{
+		db:    dbMock,
+		retry: time.Millisecond * 100,
+		stop:  make(chan struct{}),
+	}
+	go batchSynronizer.processMissingBatches(ctx)
+
+	// Wait for the retry interval and then signal to stop
+	time.Sleep(time.Millisecond * 200)
+	batchSynronizer.stop <- struct{}{}
+	dbMock.AssertExpectations(t)
 }
 
 func TestBatchSynchronizer_HandleMissingBatches(t *testing.T) {
