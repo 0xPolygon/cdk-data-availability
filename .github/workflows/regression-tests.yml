@@ -33,9 +33,6 @@ jobs:
           ref: "v0.2.15"
           path: kurtosis-cdk
 
-      # - name: Install Kurtosis CDK tools
-      #   uses: ./kurtosis-cdk/.github/actions/setup-kurtosis-cdk
-
       - name: Install kurtosis
         shell: bash
         run: |
@@ -57,16 +54,6 @@ jobs:
       - name: Build docker image
         working-directory: ./cdk-data-availability
         run: docker build -t cdk-data-availability:local --file Dockerfile .
-
-      # - name: Configure Kurtosis CDK
-      #   working-directory: ./kurtosis-cdk
-      #   run: |
-      #     yq -Y --in-place '.args.data_availability_mode = "cdk-validium"' params.yml
-      #     yq -Y --in-place '.args.zkevm_da_image = "cdk-data-availability:local"' params.yml
-
-      # - name: Deploy Kurtosis CDK package
-      #   working-directory: ./kurtosis-cdk
-      #   run: kurtosis run --enclace cdk . '{"args": {"zkevm_da_image": "cdk-data-availability:local"}}'
 
       - name: Deploy Kurtosis CDK package
         working-directory: ./kurtosis-cdk

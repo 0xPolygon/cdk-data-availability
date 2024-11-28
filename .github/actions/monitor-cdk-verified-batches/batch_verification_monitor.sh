@@ -12,7 +12,7 @@ timeout="$2"
 start_time=$(date +%s)
 end_time=$((start_time + timeout))
 
-rpc_url="$(kurtosis port print cdk-v1 cdk-erigon-node-001 http-rpc)"
+rpc_url="$(kurtosis port print cdk cdk-erigon-rpc-001 rpc)"
 while true; do
   verified_batches="$(cast to-dec "$(cast rpc --rpc-url "$rpc_url" zkevm_verifiedBatchNumber | sed 's/"//g')")"
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Verified Batches: $verified_batches"
