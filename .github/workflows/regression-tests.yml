@@ -8,8 +8,19 @@ on:
 
 jobs:
   deploy_devnet:
+    strategy: 
+      matrix:
+        go-version: [ 1.22.x ]
+        goarch: [ "amd64" ]
     runs-on: ubuntu-latest
     steps:
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+        env:
+          GOARCH: ${{ matrix.goarch }}
+
       - name: Checkout cdk-data-availability
         uses: actions/checkout@v4
         with:
@@ -19,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 0xPolygon/kurtosis-cdk
-          ref: main
+          ref: "v0.2.22"
           path: kurtosis-cdk
 
       - name: Install Kurtosis CDK tools
@@ -29,21 +40,19 @@ jobs:
         working-directory: ./cdk-data-availability
         run: docker build -t cdk-data-availability:local --file Dockerfile .
 
-      - name: Configure Kurtosis CDK
-        working-directory: ./kurtosis-cdk
-        run: |
-          yq -Y --in-place '.args.data_availability_mode = "cdk-validium"' params.yml
-          yq -Y --in-place '.args.zkevm_da_image = "cdk-data-availability:local"' params.yml
-
       - name: Deploy Kurtosis CDK package
         working-directory: ./kurtosis-cdk
-        run: kurtosis run --enclave cdk-v1 --args-file params.yml --image-download always .
+        run: >
+          kurtosis run --enclave cdk . '{"args": {"zkevm_da_image": "cdk-data-availability:local", "consensus_contract_type": "cdk-validium"}}'
 
       - name: Set executable permissions for the script
-        working-directory: ./cdk-data-availability
-        run: sudo chmod +x .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh
+        working-directory: ./kurtosis-cdk
+        run: sudo chmod +x .github/scripts/monitor-verified-batches.sh
 
       - name: Monitor verified batches
-        working-directory: ./cdk-data-availability
+        working-directory: ./kurtosis-cdk
         shell: bash
-        run: .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh 19 600
+        run: |
+          rpc_url="$(kurtosis port print cdk cdk-erigon-rpc-001 rpc)"
+          echo "Using RPC URL: $rpc_url"
+          .github/scripts/monitor-verified-batches.sh --enclave cdk --rpc-url "$rpc_url" --target 19 --timeout 600
