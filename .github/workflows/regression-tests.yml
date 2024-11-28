@@ -50,6 +50,9 @@ jobs:
         run: sudo chmod +x .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh
 
       - name: Monitor verified batches
-        working-directory: ./cdk-data-availability
+        working-directory: ./kurtosis-cdk
         shell: bash
-        run: .github/actions/monitor-cdk-verified-batches/batch_verification_monitor.sh 19 600
+        run: |
+          rpc_url="$(kurtosis port print cdk cdk-erigon-rpc-001 rpc)"
+          echo "Using RPC URL: $rpc_url"
+          .github/scripts/monitor-cdk-verified-batches/monitor-verified-batches.sh --enclave cdk --rpc-url "$rpc_url" --target 19 --timeout 600
