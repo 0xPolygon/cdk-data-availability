@@ -1,4 +1,4 @@
-PrivateKey = {Path = "config/test-member.keystore", Password = "testonly"}
+PrivateKey = {Path = "test/config/test-member.keystore", Password = "testonly"}
 
 [L1]
 RpcURL = "ws://127.0.0.1:8546"

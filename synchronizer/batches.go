@@ -1,7 +1,6 @@
 package synchronizer
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"math/rand"
@@ -33,21 +32,19 @@ type SequencerTracker interface {
 // BatchSynchronizer watches for number events, checks if they are
 // "locally" stored, then retrieves and stores missing data
 type BatchSynchronizer struct {
-	client               etherman.Etherman
-	stop                 chan struct{}
-	retry                time.Duration
-	rpcTimeout           time.Duration
-	blockBatchSize       uint
-	self                 common.Address
-	db                   db.DB
-	committee            *CommitteeMapSafe
-	syncLock             sync.Mutex
-	reorgs               <-chan BlockReorg
-	events               chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
-	sequencer            SequencerTracker
-	rpcClientFactory     client.Factory
-	offchainDataGaps     map[uint64]uint64
-	offchainDataGapsLock sync.RWMutex
+	client           etherman.Etherman
+	stop             chan struct{}
+	retry            time.Duration
+	rpcTimeout       time.Duration
+	blockBatchSize   uint
+	self             common.Address
+	db               db.DB
+	committee        *CommitteeMapSafe
+	syncLock         sync.Mutex
+	reorgs           <-chan BlockReorg
+	events           chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches
+	sequencer        SequencerTracker
+	rpcClientFactory client.Factory
 }
 
 // NewBatchSynchronizer creates the BatchSynchronizer
@@ -76,7 +73,6 @@ func NewBatchSynchronizer(
 		events:           make(chan *polygonvalidiumetrog.PolygonvalidiumetrogSequenceBatches),
 		sequencer:        sequencer,
 		rpcClientFactory: rpcClientFactory,
-		offchainDataGaps: make(map[uint64]uint64),
 	}
 	return synchronizer, synchronizer.resolveCommittee()
 }
@@ -102,26 +98,14 @@ func (bs *BatchSynchronizer) resolveCommittee() error {
 // Start starts the synchronizer
 func (bs *BatchSynchronizer) Start(ctx context.Context) {
 	log.Infof("starting batch synchronizer, DAC addr: %v", bs.self)
-	go bs.processUnresolvedBatches(ctx)
+	go bs.processMissingBatches(ctx)
 	go bs.produceEvents(ctx)
 	go bs.handleReorgs(ctx)
-	go bs.startOffchainDataGapsDetection(ctx)
 }
 
 // Stop stops the synchronizer
 func (bs *BatchSynchronizer) Stop() {
 	close(bs.stop)
-}
-
-// Gaps returns the offchain data gaps
-func (bs *BatchSynchronizer) Gaps() map[uint64]uint64 {
-	bs.offchainDataGapsLock.RLock()
-	gaps := make(map[uint64]uint64, len(bs.offchainDataGaps))
-	for key, value := range bs.offchainDataGaps {
-		gaps[key] = value
-	}
-	bs.offchainDataGapsLock.RUnlock()
-	return gaps
 }
 
 func (bs *BatchSynchronizer) handleReorgs(ctx context.Context) {
@@ -263,43 +247,14 @@ func (bs *BatchSynchronizer) handleEvent(
 		})
 	}
 
-	// Store batch keys. Already handled batch keys are going to be ignored based on the DB logic.
-	return storeUnresolvedBatchKeys(ctx, bs.db, batchKeys)
+	// Store batch keys in missing_batches table that are not already present offchain_data table
+	return bs.findMissingBatches(ctx, batchKeys)
 }
 
-func (bs *BatchSynchronizer) processUnresolvedBatches(ctx context.Context) {
-	log.Info("starting handling unresolved batches")
-	for {
-		delay := time.NewTimer(bs.retry)
-		select {
-		case <-delay.C:
-			if err := bs.handleUnresolvedBatches(ctx); err != nil {
-				log.Error(err)
-			}
-		case <-bs.stop:
-			return
-		}
-	}
-}
-
-// handleUnresolvedBatches handles unresolved batches that were collected by the event consumer
-func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error {
-	// Get unresolved batches
-	batchKeys, err := getUnresolvedBatchKeys(ctx, bs.db)
-	if err != nil {
-		return fmt.Errorf("failed to get unresolved batch keys: %v", err)
-	}
-
-	if len(batchKeys) == 0 {
-		return nil
-	}
-
-	// Collect list of keys
+func (bs *BatchSynchronizer) findMissingBatches(ctx context.Context, batchKeys []types.BatchKey) error {
 	keys := make([]common.Hash, len(batchKeys))
-	hashToKeys := make(map[common.Hash]types.BatchKey)
 	for i, key := range batchKeys {
 		keys[i] = key.Hash
-		hashToKeys[key.Hash] = key
 	}
 
 	// Get the existing offchain data by the given list of keys
@@ -308,55 +263,69 @@ func (bs *BatchSynchronizer) handleUnresolvedBatches(ctx context.Context) error 
 		return fmt.Errorf("failed to list offchain data: %v", err)
 	}
 
-	// Resolve the unresolved data
-	data := make([]types.OffChainData, 0)
-	resolved := make([]types.BatchKey, 0)
-
-	// Go over existing keys and mark them as resolved if they exist.
-	// Update the batch number if it is zero.
+	hashToKeys := make(map[common.Hash]struct{})
 	for _, extData := range existingOffchainData {
-		batchKey, ok := hashToKeys[extData.Key]
-		if !ok {
-			// This should not happen, but log it just in case
-			log.Errorf("unexpected key %s in the offchain data", extData.Key.Hex())
-			continue
-		}
-
-		// If the batch number is zero, update it
-		if extData.BatchNum == 0 {
-			extData.BatchNum = batchKey.Number
-			data = append(data, extData)
-		}
-
-		// Mark the batch as resolved
-		resolved = append(resolved, batchKey)
-
-		// Remove the key from the map
-		delete(hashToKeys, extData.Key)
+		hashToKeys[extData.Key] = struct{}{}
 	}
 
-	// Resolve the remaining unresolved data
-	for _, key := range hashToKeys {
+	missingData := make([]types.BatchKey, 0)
+	for _, batchKey := range batchKeys {
+		_, ok := hashToKeys[batchKey.Hash]
+		if !ok {
+			missingData = append(missingData, batchKey)
+		}
+	}
+
+	if len(missingData) > 0 {
+		return storeMissingBatchKeys(ctx, bs.db, missingData)
+	}
+
+	return nil
+}
+
+func (bs *BatchSynchronizer) processMissingBatches(ctx context.Context) {
+	log.Info("starting handling missing batches")
+	for {
+		delay := time.NewTimer(bs.retry)
+		select {
+		case <-delay.C:
+			if err := bs.handleMissingBatches(ctx); err != nil {
+				log.Error(err)
+			}
+		case <-bs.stop:
+			return
+		}
+	}
+}
+
+// handleMissingBatches handles missing batches that were collected by the event consumer
+func (bs *BatchSynchronizer) handleMissingBatches(ctx context.Context) error {
+	// Get missing batches
+	batchKeys, err := getMissingBatchKeys(ctx, bs.db)
+	if err != nil {
+		return fmt.Errorf("failed to get missing batch keys: %v", err)
+	}
+
+	if len(batchKeys) == 0 {
+		return nil
+	}
+
+	data := make([]types.OffChainData, 0)
+	for _, key := range batchKeys {
 		value, err := bs.resolve(ctx, key)
 		if err != nil {
 			log.Errorf("failed to resolve batch %s: %v", key.Hash.Hex(), err)
 			continue
 		}
-
-		resolved = append(resolved, key)
 		data = append(data, *value)
 	}
 
-	// Store data of the batches to the DB
 	if len(data) > 0 {
 		if err = storeOffchainData(ctx, bs.db, data); err != nil {
 			return fmt.Errorf("failed to store offchain data: %v", err)
 		}
-	}
 
-	// Mark batches as resolved
-	if len(resolved) > 0 {
-		if err = deleteUnresolvedBatchKeys(ctx, bs.db, resolved); err != nil {
+		if err = deleteMissingBatchKeys(ctx, bs.db, batchKeys); err != nil {
 			return fmt.Errorf("failed to delete successfully resolved batch keys: %v", err)
 		}
 	}
@@ -393,7 +362,7 @@ func (bs *BatchSynchronizer) resolve(ctx context.Context, batch types.BatchKey) 
 			continue // malformed committee, skip what is known to be wrong
 		}
 
-		value, err := bs.resolveWithMember(ctx, batch, member)
+		value, err := bs.resolveWithMember(ctx, batch.Hash, member)
 		if err != nil {
 			log.Warnf("error resolving, continuing: %v", err)
 			bs.committee.Delete(member.Addr)
@@ -422,15 +391,14 @@ func (bs *BatchSynchronizer) trySequencer(ctx context.Context, batch types.Batch
 	}
 
 	return &types.OffChainData{
-		Key:      batch.Hash,
-		Value:    seqBatch.BatchL2Data,
-		BatchNum: batch.Number,
+		Key:   batch.Hash,
+		Value: seqBatch.BatchL2Data,
 	}
 }
 
 func (bs *BatchSynchronizer) resolveWithMember(
 	parentCtx context.Context,
-	batch types.BatchKey,
+	batch common.Hash,
 	member etherman.DataCommitteeMember,
 ) (*types.OffChainData, error) {
 	cm := bs.rpcClientFactory.New(member.URL)
@@ -438,67 +406,20 @@ func (bs *BatchSynchronizer) resolveWithMember(
 	ctx, cancel := context.WithTimeout(parentCtx, bs.rpcTimeout)
 	defer cancel()
 
-	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, batch.Hash.Hex())
+	log.Debugf("trying member %v at %v for key %v", member.Addr.Hex(), member.URL, batch.Hex())
 
-	bytes, err := cm.GetOffChainData(ctx, batch.Hash)
+	bytes, err := cm.GetOffChainData(ctx, batch)
 	if err != nil {
 		return nil, err
 	}
 
 	expectKey := crypto.Keccak256Hash(bytes)
-	if batch.Hash.Cmp(expectKey) != 0 {
+	if batch.Cmp(expectKey) != 0 {
 		return nil, fmt.Errorf("unexpected key gotten from member: %v. Key: %v", member.Addr.Hex(), expectKey.Hex())
 	}
 
 	return &types.OffChainData{
-		Key:      batch.Hash,
-		Value:    bytes,
-		BatchNum: batch.Number,
+		Key:   batch,
+		Value: bytes,
 	}, nil
-}
-
-func (bs *BatchSynchronizer) startOffchainDataGapsDetection(ctx context.Context) {
-	log.Info("starting handling unresolved batches")
-	for {
-		delay := time.NewTimer(time.Minute)
-		select {
-		case <-delay.C:
-			if err := bs.detectOffchainDataGaps(ctx); err != nil {
-				log.Error(err)
-			}
-		case <-bs.stop:
-			return
-		}
-	}
-}
-
-// detectOffchainDataGaps detects offchain data gaps and reports them in logs and the service state.
-func (bs *BatchSynchronizer) detectOffchainDataGaps(ctx context.Context) error {
-	// Detect offchain data gaps
-	gaps, err := detectOffchainDataGaps(ctx, bs.db)
-	if err != nil {
-		return fmt.Errorf("failed to detect offchain data gaps: %v", err)
-	}
-
-	// No gaps found, all good
-	if len(gaps) == 0 {
-		return nil
-	}
-
-	// Log the detected gaps and store the detected gaps in the service state
-	gapsRaw := new(bytes.Buffer)
-	bs.offchainDataGapsLock.Lock()
-	bs.offchainDataGaps = make(map[uint64]uint64, len(gaps))
-	for key, value := range gaps {
-		bs.offchainDataGaps[key] = value
-
-		if _, err = fmt.Fprintf(gapsRaw, "%d=>%d\n", key, value); err != nil {
-			log.Errorf("failed to write offchain data gaps: %v", err)
-		}
-	}
-	bs.offchainDataGapsLock.Unlock()
-
-	log.Warnf("detected offchain data gaps (current batch number => expected batch number): %s", gapsRaw.String())
-
-	return nil
 }

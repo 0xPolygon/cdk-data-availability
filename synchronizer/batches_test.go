@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
 	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
@@ -272,8 +273,10 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		getTxArgs    []interface{}
 		getTxReturns []interface{}
 		// db mock
-		storeUnresolvedBatchKeysArgs    []interface{}
-		storeUnresolvedBatchKeysReturns []interface{}
+		listOffchainDataArgs         []interface{}
+		listOffchainDataReturns      []interface{}
+		storeMissingBatchKeysArgs    []interface{}
+		storeMissingBatchKeysReturns []interface{}
 
 		isErrorExpected bool
 	}
@@ -324,9 +327,14 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 				config.getTxReturns...).Once()
 		}
 
-		if config.storeUnresolvedBatchKeysArgs != nil && config.storeUnresolvedBatchKeysReturns != nil {
-			dbMock.On("StoreUnresolvedBatchKeys", config.storeUnresolvedBatchKeysArgs...).Return(
-				config.storeUnresolvedBatchKeysReturns...).Once()
+		if config.listOffchainDataArgs != nil && config.listOffchainDataReturns != nil {
+			dbMock.On("ListOffChainData", config.listOffchainDataArgs...).Return(
+				config.listOffchainDataReturns...).Once()
+		}
+
+		if config.storeMissingBatchKeysArgs != nil && config.storeMissingBatchKeysReturns != nil {
+			dbMock.On("StoreMissingBatchKeys", config.storeMissingBatchKeysArgs...).Return(
+				config.storeMissingBatchKeysReturns...).Once()
 		}
 
 		batchSynronizer := &BatchSynchronizer{
@@ -374,6 +382,18 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		})
 	})
 
+	t.Run("Error getting offchain data", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getTxArgs:               []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:            []interface{}{tx, true, nil},
+			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{nil, errors.New("error")},
+			isErrorExpected:         true,
+		})
+	})
+
 	t.Run("doesn't have batch in storage - successfully stored (Elderberry fork)", func(t *testing.T) {
 		t.Parallel()
 
@@ -397,9 +417,11 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 			})
 
 		testFn(t, testConfig{
-			getTxArgs:    []interface{}{mock.Anything, event.Raw.TxHash},
-			getTxReturns: []interface{}{localTx, true, nil},
-			storeUnresolvedBatchKeysArgs: []interface{}{
+			getTxArgs:               []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:            []interface{}{localTx, true, nil},
+			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{nil, nil},
+			storeMissingBatchKeysArgs: []interface{}{
 				mock.Anything,
 				[]types.BatchKey{{
 					Number: 10,
@@ -407,8 +429,8 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 				}},
 				mock.Anything,
 			},
-			storeUnresolvedBatchKeysReturns: []interface{}{nil},
-			isErrorExpected:                 false,
+			storeMissingBatchKeysReturns: []interface{}{nil},
+			isErrorExpected:              false,
 		})
 	})
 
@@ -416,9 +438,11 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getTxArgs:    []interface{}{mock.Anything, event.Raw.TxHash},
-			getTxReturns: []interface{}{tx, true, nil},
-			storeUnresolvedBatchKeysArgs: []interface{}{
+			getTxArgs:               []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:            []interface{}{tx, true, nil},
+			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{nil, nil},
+			storeMissingBatchKeysArgs: []interface{}{
 				mock.Anything,
 				[]types.BatchKey{{
 					Number: 10,
@@ -426,8 +450,8 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 				}},
 				mock.Anything,
 			},
-			storeUnresolvedBatchKeysReturns: []interface{}{nil},
-			isErrorExpected:                 false,
+			storeMissingBatchKeysReturns: []interface{}{nil},
+			isErrorExpected:              false,
 		})
 	})
 
@@ -435,8 +459,10 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			isErrorExpected: true,
-			storeUnresolvedBatchKeysArgs: []interface{}{
+			isErrorExpected:         true,
+			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{nil, nil},
+			storeMissingBatchKeysArgs: []interface{}{
 				mock.Anything,
 				[]types.BatchKey{{
 					Number: 10,
@@ -444,26 +470,65 @@ func TestBatchSynchronizer_HandleEvent(t *testing.T) {
 				}},
 				mock.Anything,
 			},
-			storeUnresolvedBatchKeysReturns: []interface{}{errors.New("error")},
-			getTxArgs:                       []interface{}{mock.Anything, event.Raw.TxHash},
-			getTxReturns:                    []interface{}{tx, true, nil},
+			storeMissingBatchKeysReturns: []interface{}{errors.New("error")},
+			getTxArgs:                    []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns:                 []interface{}{tx, true, nil},
+		})
+	})
+
+	t.Run("have batch in storage already no error", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			isErrorExpected:      false,
+			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
+			listOffchainDataReturns: []interface{}{
+				[]types.OffChainData{
+					{
+						Key:   txHash,
+						Value: batchL2Data,
+					},
+				}, nil,
+			},
+			getTxArgs:    []interface{}{mock.Anything, event.Raw.TxHash},
+			getTxReturns: []interface{}{tx, true, nil},
 		})
 	})
 }
 
-func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
+func TestBatchSynchronizer_ProcessMissingBatches(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	dbMock := mocks.NewDB(t)
+	dbMock.On("GetMissingBatchKeys", mock.Anything, mock.Anything).Return(
+		[]types.BatchKey{}, nil)
+
+	batchSynronizer := &BatchSynchronizer{
+		db:    dbMock,
+		retry: time.Millisecond * 100,
+		stop:  make(chan struct{}),
+	}
+	go batchSynronizer.processMissingBatches(ctx)
+
+	// Wait for the retry interval and then signal to stop
+	time.Sleep(time.Millisecond * 200)
+	batchSynronizer.stop <- struct{}{}
+	dbMock.AssertExpectations(t)
+}
+
+func TestBatchSynchronizer_HandleMissingBatches(t *testing.T) {
 	t.Parallel()
 
 	type testConfig struct {
 		// db mock
-		getUnresolvedBatchKeysArgs       []interface{}
-		getUnresolvedBatchKeysReturns    []interface{}
-		listOffchainDataArgs             []interface{}
-		listOffchainDataReturns          []interface{}
-		storeOffChainDataArgs            []interface{}
-		storeOffChainDataReturns         []interface{}
-		deleteUnresolvedBatchKeysArgs    []interface{}
-		deleteUnresolvedBatchKeysReturns []interface{}
+		getMissingBatchKeysArgs       []interface{}
+		getMissingBatchKeysReturns    []interface{}
+		storeOffChainDataArgs         []interface{}
+		storeOffChainDataReturns      []interface{}
+		deleteMissingBatchKeysArgs    []interface{}
+		deleteMissingBatchKeysReturns []interface{}
 		// sequencer mocks
 		getSequenceBatchArgs    []interface{}
 		getSequenceBatchReturns []interface{}
@@ -481,14 +546,9 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		ethermanMock := mocks.NewEtherman(t)
 		sequencerMock := mocks.NewSequencerTracker(t)
 
-		if config.getUnresolvedBatchKeysArgs != nil && config.getUnresolvedBatchKeysReturns != nil {
-			dbMock.On("GetUnresolvedBatchKeys", config.getUnresolvedBatchKeysArgs...).Return(
-				config.getUnresolvedBatchKeysReturns...).Once()
-		}
-
-		if config.listOffchainDataArgs != nil && config.listOffchainDataReturns != nil {
-			dbMock.On("ListOffChainData", config.listOffchainDataArgs...).Return(
-				config.listOffchainDataReturns...).Once()
+		if config.getMissingBatchKeysArgs != nil && config.getMissingBatchKeysReturns != nil {
+			dbMock.On("GetMissingBatchKeys", config.getMissingBatchKeysArgs...).Return(
+				config.getMissingBatchKeysReturns...).Once()
 		}
 
 		if config.storeOffChainDataArgs != nil && config.storeOffChainDataReturns != nil {
@@ -496,9 +556,9 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 				config.storeOffChainDataReturns...).Once()
 		}
 
-		if config.deleteUnresolvedBatchKeysArgs != nil && config.deleteUnresolvedBatchKeysReturns != nil {
-			dbMock.On("DeleteUnresolvedBatchKeys", config.deleteUnresolvedBatchKeysArgs...).Return(
-				config.deleteUnresolvedBatchKeysReturns...).Once()
+		if config.deleteMissingBatchKeysArgs != nil && config.deleteMissingBatchKeysReturns != nil {
+			dbMock.On("DeleteMissingBatchKeys", config.deleteMissingBatchKeysArgs...).Return(
+				config.deleteMissingBatchKeysReturns...).Once()
 		}
 
 		if config.getSequenceBatchArgs != nil && config.getSequenceBatchReturns != nil {
@@ -512,7 +572,7 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 			sequencer: sequencerMock,
 		}
 
-		err := batchSynronizer.handleUnresolvedBatches(context.Background())
+		err := batchSynronizer.handleMissingBatches(context.Background())
 		if config.isErrorExpected {
 			require.Error(t, err)
 		} else {
@@ -524,132 +584,123 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 		sequencerMock.AssertExpectations(t)
 	}
 
-	t.Run("Could not get unresolved batch keys", func(t *testing.T) {
+	t.Run("Could not get missing batch keys", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{nil, errors.New("error")},
-			isErrorExpected:               true,
+			getMissingBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{nil, errors.New("error")},
+			isErrorExpected:            true,
 		})
 	})
 
-	t.Run("No unresolved batch keys found", func(t *testing.T) {
+	t.Run("No missing batch keys found", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{nil, nil},
-			isErrorExpected:               false,
+			getMissingBatchKeysArgs:    []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{nil, nil},
+			isErrorExpected:            false,
 		})
 	})
 
-	t.Run("Unresolved batch key already resolved", func(t *testing.T) {
+	t.Run("Missing batch key found", func(t *testing.T) {
 		t.Parallel()
 
 		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{
+			getMissingBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{
 				[]types.BatchKey{{
 					Number: 10,
 					Hash:   txHash,
 				}},
 				nil,
 			},
-			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
-			listOffchainDataReturns: []interface{}{[]types.OffChainData{{
-				Key:      txHash,
-				Value:    batchL2Data,
-				BatchNum: 10,
-			}}, nil},
-			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				mock.Anything,
-			},
-			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
-			isErrorExpected:                  false,
-		})
-	})
-
-	t.Run("Unresolved batch key already resolved with no batch number", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				nil,
-			},
-			listOffchainDataArgs: []interface{}{mock.Anything, []common.Hash{txHash}},
-			listOffchainDataReturns: []interface{}{[]types.OffChainData{{
-				Key:      txHash,
-				Value:    batchL2Data,
-				BatchNum: 0,
-			}}, nil},
 			storeOffChainDataArgs: []interface{}{mock.Anything,
 				[]types.OffChainData{{
-					Key:      txHash,
-					Value:    batchL2Data,
-					BatchNum: 10,
+					Key:   txHash,
+					Value: batchL2Data,
 				}},
-				mock.Anything,
 			},
 			storeOffChainDataReturns: []interface{}{nil},
-			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
+			deleteMissingBatchKeysArgs: []interface{}{mock.Anything,
 				[]types.BatchKey{{
 					Number: 10,
 					Hash:   txHash,
 				}},
 				mock.Anything,
 			},
-			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
-			isErrorExpected:                  false,
-		})
-	})
-
-	t.Run("Unresolved batch key found", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			getUnresolvedBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
-			getUnresolvedBatchKeysReturns: []interface{}{
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				nil,
-			},
-			listOffchainDataArgs:    []interface{}{mock.Anything, []common.Hash{txHash}},
-			listOffchainDataReturns: []interface{}{nil, nil},
-			storeOffChainDataArgs: []interface{}{mock.Anything,
-				[]types.OffChainData{{
-					Key:      txHash,
-					Value:    batchL2Data,
-					BatchNum: 10,
-				}},
-				mock.Anything,
-			},
-			storeOffChainDataReturns: []interface{}{nil},
-			deleteUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
-				[]types.BatchKey{{
-					Number: 10,
-					Hash:   txHash,
-				}},
-				mock.Anything,
-			},
-			deleteUnresolvedBatchKeysReturns: []interface{}{nil},
-			getSequenceBatchArgs:             []interface{}{context.Background(), uint64(10)},
+			deleteMissingBatchKeysReturns: []interface{}{nil},
+			getSequenceBatchArgs:          []interface{}{context.Background(), uint64(10)},
 			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
 				Number:      types.ArgUint64(10),
 				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 			isErrorExpected: false,
+		})
+	})
+
+	t.Run("DB error while storing missing batch", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getMissingBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				nil,
+			},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+			},
+			storeOffChainDataReturns: []interface{}{errors.New("error")},
+			getSequenceBatchArgs:     []interface{}{context.Background(), uint64(10)},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      types.ArgUint64(10),
+				BatchL2Data: types.ArgBytes(batchL2Data),
+			}, nil},
+			isErrorExpected: true,
+		})
+	})
+
+	t.Run("DB error while deleting missing batch entries", func(t *testing.T) {
+		t.Parallel()
+
+		testFn(t, testConfig{
+			getMissingBatchKeysArgs: []interface{}{mock.Anything, uint(100)},
+			getMissingBatchKeysReturns: []interface{}{
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				nil,
+			},
+			storeOffChainDataArgs: []interface{}{mock.Anything,
+				[]types.OffChainData{{
+					Key:   txHash,
+					Value: batchL2Data,
+				}},
+			},
+			storeOffChainDataReturns: []interface{}{nil},
+			deleteMissingBatchKeysArgs: []interface{}{mock.Anything,
+				[]types.BatchKey{{
+					Number: 10,
+					Hash:   txHash,
+				}},
+				mock.Anything,
+			},
+			deleteMissingBatchKeysReturns: []interface{}{errors.New("error")},
+			getSequenceBatchArgs:          []interface{}{context.Background(), uint64(10)},
+			getSequenceBatchReturns: []interface{}{&sequencer.SeqBatch{
+				Number:      types.ArgUint64(10),
+				BatchL2Data: types.ArgBytes(batchL2Data),
+			}, nil},
+			isErrorExpected: true,
 		})
 	})
 
@@ -684,14 +735,14 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 				BatchL2Data: types.ArgBytes(batchL2Data),
 			}, nil},
 			beginStateTransactionArgs: []interface{}{mock.Anything},
-			storeUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
+			storeMissingBatchKeysArgs: []interface{}{mock.Anything,
 				[]types.OffChainData{{
 					Key:   txHash,
 					Value: batchL2Data,
 				}},
 				mock.Anything,
 			},
-			storeUnresolvedBatchKeysReturns: []interface{}{nil},
+			storeMissingBatchKeysReturns: []interface{}{nil},
 			commitReturns:                   []interface{}{nil},
 			isErrorExpected:                 false,
 		})
@@ -702,14 +753,14 @@ func TestBatchSynchronizer_HandleUnresolvedBatches(t *testing.T) {
 
 		testFn(testConfig{
 			isErrorExpected: true,
-			storeUnresolvedBatchKeysArgs: []interface{}{mock.Anything,
+			storeMissingBatchKeysArgs: []interface{}{mock.Anything,
 				[]types.BatchKey{{
 					Number: 1,
 					Hash:   txHash,
 				}},
 				mock.Anything,
 			},
-			storeUnresolvedBatchKeysReturns: []interface{}{errors.New("error")},
+			storeMissingBatchKeysReturns: []interface{}{errors.New("error")},
 			beginStateTransactionArgs:       []interface{}{mock.Anything},
 			rollbackArgs:                    []interface{}{mock.Anything},
 			getTxArgs:                       []interface{}{mock.Anything, event.Raw.TxHash},
@@ -801,77 +852,6 @@ func TestBatchSynchronizer_HandleReorgs(t *testing.T) {
 			reorg: BlockReorg{
 				Number: 15,
 			},
-		})
-	})
-}
-
-func TestBatchSynchronizer_detectOffchainDataGaps(t *testing.T) {
-	t.Parallel()
-
-	type testConfig struct {
-		// db mock
-		detectOffchainDataGapsArgs    []interface{}
-		detectOffchainDataGapsReturns []interface{}
-
-		expectedGaps    map[uint64]uint64
-		isErrorExpected bool
-	}
-
-	testFn := func(t *testing.T, config testConfig) {
-		t.Helper()
-
-		dbMock := mocks.NewDB(t)
-
-		if config.detectOffchainDataGapsArgs != nil && config.detectOffchainDataGapsReturns != nil {
-			dbMock.On("DetectOffchainDataGaps", config.detectOffchainDataGapsArgs...).Return(
-				config.detectOffchainDataGapsReturns...).Once()
-		}
-
-		batchSynronizer := &BatchSynchronizer{
-			db: dbMock,
-		}
-
-		err := batchSynronizer.detectOffchainDataGaps(context.Background())
-		if config.isErrorExpected {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, config.expectedGaps, batchSynronizer.Gaps())
-		}
-
-		dbMock.AssertExpectations(t)
-	}
-
-	t.Run("no gaps detected", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{}, nil},
-			expectedGaps:                  map[uint64]uint64{},
-			isErrorExpected:               false,
-		})
-	})
-
-	t.Run("one gap detected", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{map[uint64]uint64{1: 3}, nil},
-			expectedGaps:                  map[uint64]uint64{1: 3},
-			isErrorExpected:               false,
-		})
-	})
-
-	t.Run("failed to detect gaps", func(t *testing.T) {
-		t.Parallel()
-
-		testFn(t, testConfig{
-			detectOffchainDataGapsArgs:    []interface{}{mock.Anything},
-			detectOffchainDataGapsReturns: []interface{}{nil, errors.New("test error")},
-			expectedGaps:                  map[uint64]uint64{},
-			isErrorExpected:               true,
 		})
 	})
 }

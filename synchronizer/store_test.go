@@ -125,7 +125,7 @@ func Test_setStartBlock(t *testing.T) {
 	}
 }
 
-func Test_storeUnresolvedBatchKeys(t *testing.T) {
+func Test_storeMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testError := errors.New("test error")
@@ -143,12 +143,12 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "StoreUnresolvedBatchKeys returns error",
+			name: "StoreMissingBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(testError)
+				mockDB.On("StoreMissingBatchKeys", mock.Anything, testData).Return(testError)
 
 				return mockDB
 			},
@@ -161,7 +161,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("StoreUnresolvedBatchKeys", mock.Anything, testData).Return(nil)
+				mockDB.On("StoreMissingBatchKeys", mock.Anything, testData).Return(nil)
 
 				return mockDB
 			},
@@ -176,7 +176,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 
 			testDB := tt.db(t)
 
-			if err := storeUnresolvedBatchKeys(context.Background(), testDB, tt.keys); tt.wantErr {
+			if err := storeMissingBatchKeys(context.Background(), testDB, tt.keys); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -185,7 +185,7 @@ func Test_storeUnresolvedBatchKeys(t *testing.T) {
 	}
 }
 
-func Test_getUnresolvedBatchKeys(t *testing.T) {
+func Test_getMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testError := errors.New("test error")
@@ -203,12 +203,12 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "GetUnresolvedBatchKeys returns error",
+			name: "GetMissingBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).
+				mockDB.On("GetMissingBatchKeys", mock.Anything, uint(100)).
 					Return(nil, testError)
 
 				return mockDB
@@ -221,7 +221,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("GetUnresolvedBatchKeys", mock.Anything, uint(100)).Return(testData, nil)
+				mockDB.On("GetMissingBatchKeys", mock.Anything, uint(100)).Return(testData, nil)
 
 				return mockDB
 			},
@@ -236,7 +236,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 
 			testDB := tt.db(t)
 
-			if keys, err := getUnresolvedBatchKeys(context.Background(), testDB); tt.wantErr {
+			if keys, err := getMissingBatchKeys(context.Background(), testDB); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -246,7 +246,7 @@ func Test_getUnresolvedBatchKeys(t *testing.T) {
 	}
 }
 
-func Test_deleteUnresolvedBatchKeys(t *testing.T) {
+func Test_deleteMissingBatchKeys(t *testing.T) {
 	t.Parallel()
 
 	testError := errors.New("test error")
@@ -263,12 +263,12 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "DeleteUnresolvedBatchKeys returns error",
+			name: "DeleteMissingBatchKeys returns error",
 			db: func(t *testing.T) db.DB {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
+				mockDB.On("DeleteMissingBatchKeys", mock.Anything, testData).
 					Return(testError)
 
 				return mockDB
@@ -281,7 +281,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 				t.Helper()
 				mockDB := mocks.NewDB(t)
 
-				mockDB.On("DeleteUnresolvedBatchKeys", mock.Anything, testData).
+				mockDB.On("DeleteMissingBatchKeys", mock.Anything, testData).
 					Return(nil)
 
 				return mockDB
@@ -296,7 +296,7 @@ func Test_deleteUnresolvedBatchKeys(t *testing.T) {
 
 			testDB := tt.db(t)
 
-			if err := deleteUnresolvedBatchKeys(context.Background(), testDB, testData); tt.wantErr {
+			if err := deleteMissingBatchKeys(context.Background(), testDB, testData); tt.wantErr {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
@@ -360,64 +360,6 @@ func Test_storeOffchainData(t *testing.T) {
 				require.ErrorIs(t, err, testError)
 			} else {
 				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func Test_detectOffchainDataGaps(t *testing.T) {
-	t.Parallel()
-
-	testError := errors.New("test error")
-
-	tests := []struct {
-		name    string
-		db      func(t *testing.T) db.DB
-		gaps    map[uint64]uint64
-		wantErr bool
-	}{
-		{
-			name: "DetectOffchainDataGaps returns error",
-			db: func(t *testing.T) db.DB {
-				t.Helper()
-
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(nil, testError)
-
-				return mockDB
-			},
-			gaps:    nil,
-			wantErr: true,
-		},
-		{
-			name: "all good",
-			db: func(t *testing.T) db.DB {
-				t.Helper()
-
-				mockDB := mocks.NewDB(t)
-
-				mockDB.On("DetectOffchainDataGaps", mock.Anything).Return(map[uint64]uint64{1: 3}, nil)
-
-				return mockDB
-			},
-			gaps:    map[uint64]uint64{1: 3},
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		tt := tt
-
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			testDB := tt.db(t)
-
-			if gaps, err := detectOffchainDataGaps(context.Background(), testDB); tt.wantErr {
-				require.ErrorIs(t, err, testError)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, tt.gaps, gaps)
 			}
 		})
 	}

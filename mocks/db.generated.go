@@ -81,12 +81,12 @@ func (_c *DB_CountOffchainData_Call) RunAndReturn(run func(context.Context) (uin
 	return _c
 }
 
-// DeleteUnresolvedBatchKeys provides a mock function with given fields: ctx, bks
-func (_m *DB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+// DeleteMissingBatchKeys provides a mock function with given fields: ctx, bks
+func (_m *DB) DeleteMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error {
 	ret := _m.Called(ctx, bks)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteUnresolvedBatchKeys")
+		panic("no return value specified for DeleteMissingBatchKeys")
 	}
 
 	var r0 error
@@ -99,89 +99,31 @@ func (_m *DB) DeleteUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKe
 	return r0
 }
 
-// DB_DeleteUnresolvedBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUnresolvedBatchKeys'
-type DB_DeleteUnresolvedBatchKeys_Call struct {
+// DB_DeleteMissingBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteMissingBatchKeys'
+type DB_DeleteMissingBatchKeys_Call struct {
 	*mock.Call
 }
 
-// DeleteUnresolvedBatchKeys is a helper method to define mock.On call
+// DeleteMissingBatchKeys is a helper method to define mock.On call
 //   - ctx context.Context
 //   - bks []types.BatchKey
-func (_e *DB_Expecter) DeleteUnresolvedBatchKeys(ctx interface{}, bks interface{}) *DB_DeleteUnresolvedBatchKeys_Call {
-	return &DB_DeleteUnresolvedBatchKeys_Call{Call: _e.mock.On("DeleteUnresolvedBatchKeys", ctx, bks)}
+func (_e *DB_Expecter) DeleteMissingBatchKeys(ctx interface{}, bks interface{}) *DB_DeleteMissingBatchKeys_Call {
+	return &DB_DeleteMissingBatchKeys_Call{Call: _e.mock.On("DeleteMissingBatchKeys", ctx, bks)}
 }
 
-func (_c *DB_DeleteUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_DeleteUnresolvedBatchKeys_Call {
+func (_c *DB_DeleteMissingBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_DeleteMissingBatchKeys_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].([]types.BatchKey))
 	})
 	return _c
 }
 
-func (_c *DB_DeleteUnresolvedBatchKeys_Call) Return(_a0 error) *DB_DeleteUnresolvedBatchKeys_Call {
+func (_c *DB_DeleteMissingBatchKeys_Call) Return(_a0 error) *DB_DeleteMissingBatchKeys_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *DB_DeleteUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_DeleteUnresolvedBatchKeys_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DetectOffchainDataGaps provides a mock function with given fields: ctx
-func (_m *DB) DetectOffchainDataGaps(ctx context.Context) (map[uint64]uint64, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DetectOffchainDataGaps")
-	}
-
-	var r0 map[uint64]uint64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (map[uint64]uint64, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) map[uint64]uint64); ok {
-		r0 = rf(ctx)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[uint64]uint64)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_DetectOffchainDataGaps_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DetectOffchainDataGaps'
-type DB_DetectOffchainDataGaps_Call struct {
-	*mock.Call
-}
-
-// DetectOffchainDataGaps is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *DB_Expecter) DetectOffchainDataGaps(ctx interface{}) *DB_DetectOffchainDataGaps_Call {
-	return &DB_DetectOffchainDataGaps_Call{Call: _e.mock.On("DetectOffchainDataGaps", ctx)}
-}
-
-func (_c *DB_DetectOffchainDataGaps_Call) Run(run func(ctx context.Context)) *DB_DetectOffchainDataGaps_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *DB_DetectOffchainDataGaps_Call) Return(_a0 map[uint64]uint64, _a1 error) *DB_DetectOffchainDataGaps_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_DetectOffchainDataGaps_Call) RunAndReturn(run func(context.Context) (map[uint64]uint64, error)) *DB_DetectOffchainDataGaps_Call {
+func (_c *DB_DeleteMissingBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_DeleteMissingBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -243,6 +185,65 @@ func (_c *DB_GetLastProcessedBlock_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// GetMissingBatchKeys provides a mock function with given fields: ctx, limit
+func (_m *DB) GetMissingBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
+	ret := _m.Called(ctx, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMissingBatchKeys")
+	}
+
+	var r0 []types.BatchKey
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) ([]types.BatchKey, error)); ok {
+		return rf(ctx, limit)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) []types.BatchKey); ok {
+		r0 = rf(ctx, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.BatchKey)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DB_GetMissingBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMissingBatchKeys'
+type DB_GetMissingBatchKeys_Call struct {
+	*mock.Call
+}
+
+// GetMissingBatchKeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - limit uint
+func (_e *DB_Expecter) GetMissingBatchKeys(ctx interface{}, limit interface{}) *DB_GetMissingBatchKeys_Call {
+	return &DB_GetMissingBatchKeys_Call{Call: _e.mock.On("GetMissingBatchKeys", ctx, limit)}
+}
+
+func (_c *DB_GetMissingBatchKeys_Call) Run(run func(ctx context.Context, limit uint)) *DB_GetMissingBatchKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *DB_GetMissingBatchKeys_Call) Return(_a0 []types.BatchKey, _a1 error) *DB_GetMissingBatchKeys_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *DB_GetMissingBatchKeys_Call) RunAndReturn(run func(context.Context, uint) ([]types.BatchKey, error)) *DB_GetMissingBatchKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetOffChainData provides a mock function with given fields: ctx, key
 func (_m *DB) GetOffChainData(ctx context.Context, key common.Hash) (*types.OffChainData, error) {
 	ret := _m.Called(ctx, key)
@@ -298,65 +299,6 @@ func (_c *DB_GetOffChainData_Call) Return(_a0 *types.OffChainData, _a1 error) *D
 }
 
 func (_c *DB_GetOffChainData_Call) RunAndReturn(run func(context.Context, common.Hash) (*types.OffChainData, error)) *DB_GetOffChainData_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetUnresolvedBatchKeys provides a mock function with given fields: ctx, limit
-func (_m *DB) GetUnresolvedBatchKeys(ctx context.Context, limit uint) ([]types.BatchKey, error) {
-	ret := _m.Called(ctx, limit)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetUnresolvedBatchKeys")
-	}
-
-	var r0 []types.BatchKey
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uint) ([]types.BatchKey, error)); ok {
-		return rf(ctx, limit)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uint) []types.BatchKey); ok {
-		r0 = rf(ctx, limit)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]types.BatchKey)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
-		r1 = rf(ctx, limit)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// DB_GetUnresolvedBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUnresolvedBatchKeys'
-type DB_GetUnresolvedBatchKeys_Call struct {
-	*mock.Call
-}
-
-// GetUnresolvedBatchKeys is a helper method to define mock.On call
-//   - ctx context.Context
-//   - limit uint
-func (_e *DB_Expecter) GetUnresolvedBatchKeys(ctx interface{}, limit interface{}) *DB_GetUnresolvedBatchKeys_Call {
-	return &DB_GetUnresolvedBatchKeys_Call{Call: _e.mock.On("GetUnresolvedBatchKeys", ctx, limit)}
-}
-
-func (_c *DB_GetUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, limit uint)) *DB_GetUnresolvedBatchKeys_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uint))
-	})
-	return _c
-}
-
-func (_c *DB_GetUnresolvedBatchKeys_Call) Return(_a0 []types.BatchKey, _a1 error) *DB_GetUnresolvedBatchKeys_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *DB_GetUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, uint) ([]types.BatchKey, error)) *DB_GetUnresolvedBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -468,6 +410,53 @@ func (_c *DB_StoreLastProcessedBlock_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// StoreMissingBatchKeys provides a mock function with given fields: ctx, bks
+func (_m *DB) StoreMissingBatchKeys(ctx context.Context, bks []types.BatchKey) error {
+	ret := _m.Called(ctx, bks)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StoreMissingBatchKeys")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey) error); ok {
+		r0 = rf(ctx, bks)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DB_StoreMissingBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreMissingBatchKeys'
+type DB_StoreMissingBatchKeys_Call struct {
+	*mock.Call
+}
+
+// StoreMissingBatchKeys is a helper method to define mock.On call
+//   - ctx context.Context
+//   - bks []types.BatchKey
+func (_e *DB_Expecter) StoreMissingBatchKeys(ctx interface{}, bks interface{}) *DB_StoreMissingBatchKeys_Call {
+	return &DB_StoreMissingBatchKeys_Call{Call: _e.mock.On("StoreMissingBatchKeys", ctx, bks)}
+}
+
+func (_c *DB_StoreMissingBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_StoreMissingBatchKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]types.BatchKey))
+	})
+	return _c
+}
+
+func (_c *DB_StoreMissingBatchKeys_Call) Return(_a0 error) *DB_StoreMissingBatchKeys_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *DB_StoreMissingBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_StoreMissingBatchKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // StoreOffChainData provides a mock function with given fields: ctx, od
 func (_m *DB) StoreOffChainData(ctx context.Context, od []types.OffChainData) error {
 	ret := _m.Called(ctx, od)
@@ -511,53 +500,6 @@ func (_c *DB_StoreOffChainData_Call) Return(_a0 error) *DB_StoreOffChainData_Cal
 }
 
 func (_c *DB_StoreOffChainData_Call) RunAndReturn(run func(context.Context, []types.OffChainData) error) *DB_StoreOffChainData_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// StoreUnresolvedBatchKeys provides a mock function with given fields: ctx, bks
-func (_m *DB) StoreUnresolvedBatchKeys(ctx context.Context, bks []types.BatchKey) error {
-	ret := _m.Called(ctx, bks)
-
-	if len(ret) == 0 {
-		panic("no return value specified for StoreUnresolvedBatchKeys")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []types.BatchKey) error); ok {
-		r0 = rf(ctx, bks)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DB_StoreUnresolvedBatchKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StoreUnresolvedBatchKeys'
-type DB_StoreUnresolvedBatchKeys_Call struct {
-	*mock.Call
-}
-
-// StoreUnresolvedBatchKeys is a helper method to define mock.On call
-//   - ctx context.Context
-//   - bks []types.BatchKey
-func (_e *DB_Expecter) StoreUnresolvedBatchKeys(ctx interface{}, bks interface{}) *DB_StoreUnresolvedBatchKeys_Call {
-	return &DB_StoreUnresolvedBatchKeys_Call{Call: _e.mock.On("StoreUnresolvedBatchKeys", ctx, bks)}
-}
-
-func (_c *DB_StoreUnresolvedBatchKeys_Call) Run(run func(ctx context.Context, bks []types.BatchKey)) *DB_StoreUnresolvedBatchKeys_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]types.BatchKey))
-	})
-	return _c
-}
-
-func (_c *DB_StoreUnresolvedBatchKeys_Call) Return(_a0 error) *DB_StoreUnresolvedBatchKeys_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *DB_StoreUnresolvedBatchKeys_Call) RunAndReturn(run func(context.Context, []types.BatchKey) error) *DB_StoreUnresolvedBatchKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }

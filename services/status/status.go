@@ -15,25 +15,17 @@ import (
 // APISTATUS is the namespace of the status service
 const APISTATUS = "status"
 
-// GapsDetector is an interface for detecting gaps in the offchain data
-type GapsDetector interface {
-	// Gaps returns a map of gaps in the offchain data
-	Gaps() map[uint64]uint64
-}
-
 // Endpoints contains implementations for the "status" RPC endpoints
 type Endpoints struct {
-	db           db.DB
-	startTime    time.Time
-	gapsDetector GapsDetector
+	db        db.DB
+	startTime time.Time
 }
 
 // NewEndpoints returns Endpoints
-func NewEndpoints(db db.DB, gapsDetector GapsDetector) *Endpoints {
+func NewEndpoints(db db.DB) *Endpoints {
 	return &Endpoints{
-		db:           db,
-		startTime:    time.Now(),
-		gapsDetector: gapsDetector,
+		db:        db,
+		startTime: time.Now(),
 	}
 }
 
@@ -47,7 +39,7 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
 	}
 
-	backfillProgress, err := s.db.GetLastProcessedBlock(ctx, string(synchronizer.L1SyncTask))
+	lastSynchronizedBlock, err := s.db.GetLastProcessedBlock(ctx, string(synchronizer.L1SyncTask))
 	if err != nil {
 		log.Errorf("failed to get last block processed by the synchronizer: %v", err)
 	}
@@ -56,7 +48,6 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 		Version:               dataavailability.Version,
 		Uptime:                uptime,
 		KeyCount:              rowCount,
-		BackfillProgress:      backfillProgress,
-		OffchainDataGapsExist: len(s.gapsDetector.Gaps()) > 0,
+		LastSynchronizedBlock: lastSynchronizedBlock,
 	}, nil
 }

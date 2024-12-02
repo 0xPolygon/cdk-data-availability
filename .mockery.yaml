@@ -36,9 +36,3 @@ packages:
       SequencerTracker:
         config:
           filename: sequencer_tracker.generated.go
-  github.com/0xPolygon/cdk-data-availability/services/status:
-    config:
-    interfaces:
-      GapsDetector:
-        config:
-          filename: gaps_detector.generated.go

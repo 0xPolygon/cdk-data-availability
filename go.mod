@@ -2,7 +2,6 @@ module github.com/0xPolygon/cdk-data-availability
 
 go 1.22.4
 
-
 require (
 	github.com/0xPolygon/cdk v0.1.0
 	github.com/0xPolygon/cdk-contracts-tooling v0.0.0-20240826154954-f6182d2b17a2
@@ -11,7 +10,6 @@ require (
 	github.com/ethereum/go-ethereum v1.14.5
 	github.com/gorilla/websocket v1.5.1
 	github.com/hermeznetwork/tracerr v0.3.2
-	github.com/iden3/go-iden3-crypto v0.0.16
 	github.com/invopop/jsonschema v0.12.0
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.10.7
@@ -50,6 +48,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.1-0.20180906183839-65a6292f0157 // indirect
 	github.com/holiman/uint256 v1.2.4 // indirect
+	github.com/iden3/go-iden3-crypto v0.0.16 // indirect
 	github.com/klauspost/compress v1.17.2 // indirect
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
