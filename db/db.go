@@ -141,7 +141,7 @@ func (db *pgDB) StoreMissingBatchKeys(ctx context.Context, bks []types.BatchKey)
 		for i, bk := range bks {
 			batchNumbers[i] = fmt.Sprintf("%d", bk.Number)
 		}
-		return fmt.Errorf("failed to store missing batches (batch number: %s): %w", strings.Join(batchNumbers, ", "), err)
+		return fmt.Errorf("failed to store missing batches (batch numbers: %s): %w", strings.Join(batchNumbers, ", "), err)
 	}
 
 	return nil
