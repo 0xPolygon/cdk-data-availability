@@ -68,7 +68,7 @@ func TestEndpoints_GetStatus(t *testing.T) {
 				require.NotEmpty(t, dacStatus.Uptime)
 				require.Equal(t, "v0.1.0", dacStatus.Version)
 				require.Equal(t, tt.countOffchainData, dacStatus.KeyCount)
-				require.Equal(t, tt.getLastProcessedBlock, dacStatus.BackfillProgress)
+				require.Equal(t, tt.getLastProcessedBlock, dacStatus.LastSynchronizedBlock)
 			}
 		})
 	}

@@ -137,7 +137,11 @@ func (db *pgDB) StoreMissingBatchKeys(ctx context.Context, bks []types.BatchKey)
 	query, args := buildBatchKeysInsertQuery(bks)
 
 	if _, err := db.pg.ExecContext(ctx, query, args...); err != nil {
-		return fmt.Errorf("failed to store misisng batches: %w", err)
+		batchNumbers := make([]string, len(bks))
+		for i, bk := range bks {
+			batchNumbers[i] = fmt.Sprintf("%d", bk.Number)
+		}
+		return fmt.Errorf("failed to store missing batches (BatchKey.Number: %s): %w", strings.Join(batchNumbers, ", "), err)
 	}
 
 	return nil
