@@ -35,7 +35,7 @@ func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Error)
 	data, err := z.db.GetOffChainData(context.Background(), hash.Hash())
 	if err != nil {
 		log.Errorf("failed to get the offchain requested data from the DB: %v", err)
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to get the requested data")
 	}
 
 	return types.ArgBytes(data.Value), nil
@@ -45,7 +45,7 @@ func (z *Endpoints) GetOffChainData(hash types.ArgHash) (interface{}, rpc.Error)
 func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.Error) {
 	if len(hashes) > maxListHashes {
 		log.Errorf("too many hashes requested in ListOffChainData: %d", len(hashes))
-		return "0x0", rpc.NewRPCError(rpc.InvalidRequestErrorCode, "too many hashes requested")
+		return nil, rpc.NewRPCError(rpc.InvalidRequestErrorCode, "too many hashes requested")
 	}
 
 	keys := make([]common.Hash, len(hashes))
@@ -56,10 +56,10 @@ func (z *Endpoints) ListOffChainData(hashes []types.ArgHash) (interface{}, rpc.E
 	list, err := z.db.ListOffChainData(context.Background(), keys)
 	if err != nil {
 		log.Errorf("failed to list the requested data from the DB: %v", err)
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to list the requested data")
 	}
 
-	listMap := make(map[common.Hash]types.ArgBytes)
+	listMap := make(map[common.Hash]types.ArgBytes, len(list))
 	for _, data := range list {
 		listMap[data.Key] = data.Value
 	}
