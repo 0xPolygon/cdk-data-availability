@@ -1,13 +1,7 @@
 ---
 run:
   timeout: 5m
-  skip-dirs:
-    - state/runtime/fakevm
-    - state/runtime/instrumentation
-    - test
-    - ci
-    - mocks
-
+ 
 linters:
   enable:
   - whitespace # Tool for detection of leading and trailing whitespace
@@ -50,6 +44,12 @@ issues:
         linters:
           - gosec
           - lll
+  exclude-dirs:
+    - state/runtime/fakevm
+    - state/runtime/instrumentation
+    - test
+    - ci
+    - mocks
   include:
   - EXC0012  # EXC0012 revive: Annoying issue about not having a comment. The rare codebase has such comments
   - EXC0014  # EXC0014 revive: Annoying issue about not having a comment. The rare codebase has such comments
