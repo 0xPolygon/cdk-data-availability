@@ -51,23 +51,23 @@ func (d *Endpoints) signSequence(signedSequence types.SignedSequenceInterface) (
 	// Verify that the request comes from the sequencer
 	sender, err := signedSequence.Signer()
 	if err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "failed to verify sender")
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to verify sender")
 	}
 
 	if sender != d.sequencerTracker.GetAddr() {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "unauthorized")
 	}
 
 	// Store off-chain data by hash (hash(L2Data): L2Data)
 	if err = d.db.StoreOffChainData(context.Background(), signedSequence.OffChainData()); err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode,
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode,
 			fmt.Errorf("failed to store offchain data. Error: %w", err).Error())
 	}
 
 	// Sign
 	signature, err := signedSequence.Sign(d.privateKey)
 	if err != nil {
-		return "0x0", rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, fmt.Errorf("failed to sign. Error: %w", err).Error())
 	}
 	// Return signature
 	return signature, nil

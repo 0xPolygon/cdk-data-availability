@@ -37,11 +37,15 @@ func (s *Endpoints) GetStatus() (interface{}, rpc.Error) {
 	rowCount, err := s.db.CountOffchainData(ctx)
 	if err != nil {
 		log.Errorf("failed to get the key count from the offchain_data table: %v", err)
+
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to retrieve data from the storage")
 	}
 
 	lastSynchronizedBlock, err := s.db.GetLastProcessedBlock(ctx, string(synchronizer.L1SyncTask))
 	if err != nil {
 		log.Errorf("failed to get last block processed by the synchronizer: %v", err)
+
+		return nil, rpc.NewRPCError(rpc.DefaultErrorCode, "failed to retrieve data from the storage")
 	}
 
 	return types.DACStatus{

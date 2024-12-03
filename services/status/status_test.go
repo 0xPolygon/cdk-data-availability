@@ -30,11 +30,13 @@ func TestEndpoints_GetStatus(t *testing.T) {
 			name:                  "failed to count offchain data",
 			countOffchainDataErr:  errors.New("test error"),
 			getLastProcessedBlock: 2,
+			expectedError:         errors.New("failed to retrieve data from the storage"),
 		},
 		{
 			name:                     "failed to count offchain data and last processed block",
 			countOffchainDataErr:     errors.New("test error"),
 			getLastProcessedBlockErr: errors.New("test error"),
+			expectedError:            errors.New("failed to retrieve data from the storage"),
 		},
 	}
 
@@ -50,7 +52,7 @@ func TestEndpoints_GetStatus(t *testing.T) {
 				Return(tt.countOffchainData, tt.countOffchainDataErr)
 
 			dbMock.On("GetLastProcessedBlock", mock.Anything, mock.Anything).
-				Return(tt.getLastProcessedBlock, tt.getLastProcessedBlockErr)
+				Return(tt.getLastProcessedBlock, tt.getLastProcessedBlockErr).Maybe()
 
 			statusEndpoints := NewEndpoints(dbMock)
 

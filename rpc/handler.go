@@ -197,7 +197,7 @@ func (h *Handler) registerService(service Service) {
 			fv: mv.Func,
 		}
 		var err error
-		if fd.inNum, fd.reqt, err = validateFunc(funcName, fd.fv, true); err != nil {
+		if fd.inNum, fd.reqt, err = validateFunc(funcName, fd.fv); err != nil {
 			panic(fmt.Sprintf("jsonrpc: %s", err))
 		}
 		// check if last item is a pointer
@@ -217,10 +217,11 @@ func (h *Handler) registerService(service Service) {
 }
 
 func (h *Handler) getFnHandler(req Request) (*serviceData, *funcData, Error) {
+	const endpointNameParts = 2
 	methodNotFoundErrorMessage := fmt.Sprintf("the method %s does not exist/is not available", req.Method)
 
-	callName := strings.SplitN(req.Method, "_", 2) //nolint:mnd
-	if len(callName) != 2 {                        //nolint:mnd
+	callName := strings.SplitN(req.Method, "_", endpointNameParts)
+	if len(callName) != endpointNameParts {
 		return nil, nil, NewRPCError(NotFoundErrorCode, methodNotFoundErrorMessage)
 	}
 
@@ -238,9 +239,9 @@ func (h *Handler) getFnHandler(req Request) (*serviceData, *funcData, Error) {
 	return service, fd, nil
 }
 
-func validateFunc(funcName string, fv reflect.Value, isMethod bool) (inNum int, reqt []reflect.Type, err error) {
+func validateFunc(funcName string, fv reflect.Value) (inNum int, reqt []reflect.Type, err error) {
 	if funcName == "" {
-		err = fmt.Errorf("getBlockNumByArg cannot be empty")
+		err = fmt.Errorf("function name cannot be empty")
 		return
 	}
 
