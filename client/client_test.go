@@ -251,7 +251,7 @@ func TestClient_ListOffChainData(t *testing.T) {
 		err        error
 	}{
 		{
-			name:   "successfully got offhcain data",
+			name:   "successfully got offchain data",
 			hashes: []common.Hash{common.BytesToHash([]byte("hash"))},
 			result: fmt.Sprintf(`{"result":{"%s":"%s"}}`,
 				common.BytesToHash([]byte("hash")).Hex(), hex.EncodeToString([]byte("offchaindata"))),
