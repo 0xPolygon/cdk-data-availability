@@ -32,14 +32,14 @@ type Config struct {
 	// MaxConns is the maximum number of connections in the pool.
 	MaxConns int `mapstructure:"MaxConns"`
 
-	// SslMode: "require", "verify-full", "verify-ca", and "disable"
-	SslMode string `mapstructure:"SslMode"`
+	// SSLMode: "require", "verify-full", "verify-ca", and "disable"
+	SSLMode string `mapstructure:"SSLMode"`
 }
 
 // InitContext initializes DB connection by the given config
 func InitContext(ctx context.Context, cfg Config) (*sqlx.DB, error) {
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SslMode)
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name, cfg.SSLMode)
 
 	conn, err := sqlx.ConnectContext(ctx, "postgres", psqlInfo)
 	if err != nil {
