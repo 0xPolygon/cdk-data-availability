@@ -52,7 +52,7 @@ jobs:
           fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Download code coverage results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: code-coverage-report
 
