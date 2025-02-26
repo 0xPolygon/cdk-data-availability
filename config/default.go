@@ -35,6 +35,7 @@ Host = "cdk-data-availability-db"
 Port = "5432"
 EnableLog = false
 MaxConns = 200
+SSLMode = "disable"
 
 [RPC]
 Host = "0.0.0.0"
