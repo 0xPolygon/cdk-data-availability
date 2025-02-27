@@ -18,6 +18,7 @@ RUN cd /antithesis/customer && make build
 FROM debian:bookworm-slim
 
 COPY --from=build /antithesis/customer/dist/cdk-data-availability /app/cdk-data-availability
+COPY --from=build /antithesis/symbols /symbols
 
 EXPOSE 8444
 
