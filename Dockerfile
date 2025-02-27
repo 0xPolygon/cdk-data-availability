@@ -9,12 +9,15 @@ RUN go mod download
 
 # BUILD BINARY
 COPY . .
+RUN go install github.com/antithesishq/antithesis-sdk-go/tools/antithesis-go-instrumentor@v0.4.3 \
+  && mkdir /antithesis \
+  && antithesis-go-instrumentor /go/src/github.com/0xPolygon/cdk-data-availability /antithesis
 RUN make build
 
 # CONTAINER FOR RUNNING BINARY
-FROM alpine:3.16.0
+FROM debian:bookworm-slim
 
-COPY --from=build /go/src/github.com/0xPolygon/cdk-data-availability/dist/cdk-data-availability /app/cdk-data-availability
+COPY --from=build /antithesis/customer/dist/cdk-data-availability /app/cdk-data-availability
 
 EXPOSE 8444
 
