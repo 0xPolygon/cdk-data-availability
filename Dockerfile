@@ -11,8 +11,8 @@ RUN go mod download
 COPY . .
 RUN go install github.com/antithesishq/antithesis-sdk-go/tools/antithesis-go-instrumentor@v0.4.3 \
   && mkdir /antithesis \
-  && antithesis-go-instrumentor /go/src/github.com/0xPolygon/cdk-data-availability /antithesis
-RUN make build
+  && antithesis-go-instrumentor . /antithesis
+RUN cd /antithesis && make build
 
 # CONTAINER FOR RUNNING BINARY
 FROM debian:bookworm-slim
