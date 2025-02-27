@@ -12,7 +12,7 @@ COPY . .
 RUN go install github.com/antithesishq/antithesis-sdk-go/tools/antithesis-go-instrumentor@v0.4.3 \
   && mkdir /antithesis \
   && antithesis-go-instrumentor . /antithesis
-RUN cd /antithesis && make build
+RUN cd /antithesis/customer && make build
 
 # CONTAINER FOR RUNNING BINARY
 FROM debian:bookworm-slim
