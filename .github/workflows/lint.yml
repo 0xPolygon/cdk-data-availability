@@ -20,6 +20,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Lint
-        uses: golangci/golangci-lint-action@v6.0.1
+        uses: golangci/golangci-lint-action@v6.5.0
         with:
           args: --timeout 10m --verbose
