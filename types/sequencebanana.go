@@ -4,8 +4,8 @@ import (
 	"crypto/ecdsa"
 	"errors"
 
-	cdkCommon "github.com/0xPolygon/cdk/common"
-	cdkLog "github.com/0xPolygon/cdk/log"
+	aggkitCommon "github.com/agglayer/aggkit/common"
+	aggkitLog "github.com/agglayer/aggkit/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -33,8 +33,8 @@ type SequenceBanana struct {
 func (s *SequenceBanana) HashToSign() []byte {
 	accInputHash := s.OldAccInputHash
 	for _, b := range s.Batches {
-		accInputHash = cdkCommon.CalculateAccInputHash(
-			cdkLog.GetDefaultLogger(),
+		accInputHash = aggkitCommon.CalculateAccInputHash(
+			aggkitLog.GetDefaultLogger(),
 			accInputHash,
 			b.L2Data,
 			s.L1InfoRoot,
