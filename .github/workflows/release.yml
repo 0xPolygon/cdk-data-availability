@@ -1,11 +1,6 @@
 name: Release
 
-on:
-  push:
-    tags:
-      - 'v*.*.*'
-      - 'v*.*.*-*'
-  workflow_dispatch: {}
+on: push
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -48,10 +43,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=0.0.13
 
       - name: Image name builder
         id: image_builder
