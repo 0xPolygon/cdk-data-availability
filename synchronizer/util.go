@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	bananaValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/banana/polygonvalidiumetrog"
-	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
-	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
+	bananaValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/fep/banana/polygonvalidiumetrog"
+	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/fep/elderberry/polygonvalidiumetrog"
+	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/fep/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/log"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"

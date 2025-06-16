@@ -4,7 +4,6 @@ import (
 	"crypto/ecdsa"
 	"errors"
 
-	aggkitCommon "github.com/agglayer/aggkit/common"
 	aggkitLog "github.com/agglayer/aggkit/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,7 +32,7 @@ type SequenceBanana struct {
 func (s *SequenceBanana) HashToSign() []byte {
 	accInputHash := s.OldAccInputHash
 	for _, b := range s.Batches {
-		accInputHash = aggkitCommon.CalculateAccInputHash(
+		accInputHash = CalculateAccInputHash(
 			aggkitLog.GetDefaultLogger(),
 			accInputHash,
 			b.L2Data,

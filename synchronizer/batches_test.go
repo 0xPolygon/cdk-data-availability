@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/elderberry/polygonvalidiumetrog"
-	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/etrog/polygonvalidiumetrog"
+	elderberryValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/fep/elderberry/polygonvalidiumetrog"
+	etrogValidium "github.com/0xPolygon/cdk-contracts-tooling/contracts/fep/etrog/polygonvalidiumetrog"
 	"github.com/0xPolygon/cdk-data-availability/etherman"
 	"github.com/0xPolygon/cdk-data-availability/mocks"
 	"github.com/0xPolygon/cdk-data-availability/sequencer"
