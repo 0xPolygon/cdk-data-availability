@@ -5,7 +5,7 @@ go 1.24.4
 require (
 	github.com/0xPolygon/cdk-contracts-tooling v0.0.4
 	github.com/DATA-DOG/go-sqlmock v1.5.1
-	github.com/agglayer/aggkit v0.4.0-beta1.0.20250613175003-d3699057130a
+	github.com/agglayer/aggkit v0.5.0-beta1
 	github.com/didip/tollbooth/v6 v6.1.2
 	github.com/ethereum/go-ethereum v1.15.5
 	github.com/gorilla/websocket v1.5.3
